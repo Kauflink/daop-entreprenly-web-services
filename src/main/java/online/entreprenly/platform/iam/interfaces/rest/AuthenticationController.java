@@ -10,6 +10,7 @@ import online.entreprenly.platform.iam.interfaces.rest.transform.SignInCommandFr
 import online.entreprenly.platform.iam.interfaces.rest.transform.SignUpCommandFromResourceAssembler;
 import online.entreprenly.platform.iam.interfaces.rest.transform.UserResourceFromEntityAssembler;
 import online.entreprenly.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -47,7 +48,7 @@ public class AuthenticationController {
 
     /**
      * Handles the sign-in request.
-     * @param signInResource the sign-in request body with username and password.
+     * @param signInResource the sign-in request body with email and password.
      * @return the authenticated user resource with JWT token.
      */
     @PostMapping("/sign-in")
@@ -71,11 +72,11 @@ public class AuthenticationController {
             ),
             @ApiResponse(
                 responseCode = "404",
-                description = "User not found with provided username",
+                description = "User not found with provided email",
                 content = @Content(mediaType = "application/json")
             )
     })
-    public ResponseEntity<?> signIn(@RequestBody SignInResource signInResource) {
+    public ResponseEntity<?> signIn(@Valid @RequestBody SignInResource signInResource) {
         var signInCommand = SignInCommandFromResourceAssembler.toCommandFromResource(signInResource);
         var result = userCommandService.handle(signInCommand);
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -87,8 +88,8 @@ public class AuthenticationController {
 
     /**
      * Handles the sign-up request.
-     * @param signUpResource the sign-up request body with username, password, and roles.
-     * @return the created user resource with assigned roles.
+     * @param signUpResource the sign-up request body with email and password.
+     * @return the created user resource with the default assigned role.
      */
     @PostMapping("/sign-up")
     @Operation(
@@ -106,16 +107,16 @@ public class AuthenticationController {
             ),
             @ApiResponse(
                 responseCode = "400",
-                description = "Invalid input data or username already exists",
+                description = "Invalid input data or email already exists",
                 content = @Content(mediaType = "application/json")
             ),
             @ApiResponse(
                 responseCode = "409",
-                description = "Conflict - username already taken",
+                description = "Conflict - email already taken",
                 content = @Content(mediaType = "application/json")
             )
     })
-    public ResponseEntity<?> signUp(@RequestBody SignUpResource signUpResource) {
+    public ResponseEntity<?> signUp(@Valid @RequestBody SignUpResource signUpResource) {
         var signUpCommand = SignUpCommandFromResourceAssembler.toCommandFromResource(signUpResource);
         var result = userCommandService.handle(signUpCommand);
         return ResponseEntityAssembler.toResponseEntityFromResult(

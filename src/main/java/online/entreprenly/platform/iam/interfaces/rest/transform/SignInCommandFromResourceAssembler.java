@@ -14,6 +14,6 @@ public class SignInCommandFromResourceAssembler {
      * @return sign-in command consumed by the application layer
      */
     public static SignInCommand toCommandFromResource(SignInResource signInResource) {
-        return new SignInCommand(signInResource.username(), signInResource.password());
+        return new SignInCommand(signInResource.email(), signInResource.password());
     }
 }

@@ -1,10 +1,7 @@
 package online.entreprenly.platform.iam.interfaces.rest.transform;
 
 import online.entreprenly.platform.iam.domain.model.commands.SignUpCommand;
-import online.entreprenly.platform.iam.domain.model.entities.Role;
 import online.entreprenly.platform.iam.interfaces.rest.resources.SignUpResource;
-
-import java.util.ArrayList;
 
 /**
  * Assembler that translates {@link SignUpResource} into {@link SignUpCommand}.
@@ -17,7 +14,6 @@ public class SignUpCommandFromResourceAssembler {
      * @return sign-up command consumed by the application layer
      */
     public static SignUpCommand toCommandFromResource(SignUpResource resource) {
-        var roles = resource.roles() != null ? resource.roles().stream().map(name -> Role.toRoleFromName(name)).toList() : new ArrayList<Role>();
-        return new SignUpCommand(resource.username(), resource.password(), roles);
+        return new SignUpCommand(resource.email(), resource.password());
     }
 }

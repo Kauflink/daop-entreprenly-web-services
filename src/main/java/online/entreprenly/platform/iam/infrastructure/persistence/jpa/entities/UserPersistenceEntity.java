@@ -19,8 +19,8 @@ import java.util.Set;
 @NoArgsConstructor
 public class UserPersistenceEntity extends AuditableAbstractPersistenceEntity {
 
-    @Column(name = "username", nullable = false, unique = true, length = 50)
-    private String username;
+    @Column(name = "email", nullable = false, unique = true, length = 120)
+    private String email;
 
     @Column(name = "password", nullable = false, length = 120)
     private String password;

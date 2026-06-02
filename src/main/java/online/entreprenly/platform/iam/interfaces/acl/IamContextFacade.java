@@ -3,13 +3,9 @@ package online.entreprenly.platform.iam.interfaces.acl;
 import online.entreprenly.platform.iam.application.commandservices.UserCommandService;
 import online.entreprenly.platform.iam.application.queryservices.UserQueryService;
 import online.entreprenly.platform.iam.domain.model.commands.SignUpCommand;
-import online.entreprenly.platform.iam.domain.model.entities.Role;
+import online.entreprenly.platform.iam.domain.model.queries.GetUserByEmailQuery;
 import online.entreprenly.platform.iam.domain.model.queries.GetUserByIdQuery;
-import online.entreprenly.platform.iam.domain.model.queries.GetUserByUsernameQuery;
 import org.apache.logging.log4j.util.Strings;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * ACL facade that exposes IAM bounded context capabilities to other contexts.
@@ -27,14 +23,14 @@ public class IamContextFacade {
     }
 
     /**
-     * Creates a new user assigning the default role.
+     * Creates a new user with the default role.
      *
-     * @param username username to register
+     * @param email    email to register
      * @param password raw password
      * @return created user identifier, or {@code 0L} when creation fails
      */
-    public Long createUser(String username, String password) {
-        var signUpCommand = new SignUpCommand(username, password, List.of(Role.getDefaultRole()));
+    public Long createUser(String email, String password) {
+        var signUpCommand = new SignUpCommand(email, password);
         var result = userCommandService.handle(signUpCommand);
         if (result instanceof online.entreprenly.platform.shared.application.result.Result.Success(var user)) {
             return user.getId();
@@ -43,47 +39,29 @@ public class IamContextFacade {
     }
 
     /**
-     * Creates a new user with explicit role names.
+     * Fetches the identifier for an email.
      *
-     * @param username username to register
-     * @param password raw password
-     * @param roleNames role names to assign; unknown names are ignored
-     * @return created user identifier, or {@code 0L} when creation fails
-     */
-    public Long createUser(String username, String password, List<String> roleNames) {
-        var roles = roleNames != null ? roleNames.stream().map(Role::toRoleFromName).toList() : new ArrayList<Role>();
-        var signUpCommand = new SignUpCommand(username, password, roles);
-        var result = userCommandService.handle(signUpCommand);
-        if (result instanceof online.entreprenly.platform.shared.application.result.Result.Success(var user)) {
-            return user.getId();
-        }
-        return 0L;
-    }
-
-    /**
-     * Fetches the identifier for a username.
-     *
-     * @param username username to search
+     * @param email email to search
      * @return user identifier, or {@code 0L} when user is not found
      */
-    public Long fetchUserIdByUsername(String username) {
-        var getUserByUsernameQuery = new GetUserByUsernameQuery(username);
-        var result = userQueryService.handle(getUserByUsernameQuery);
+    public Long fetchUserIdByEmail(String email) {
+        var getUserByEmailQuery = new GetUserByEmailQuery(email);
+        var result = userQueryService.handle(getUserByEmailQuery);
         if (result.isEmpty()) return 0L;
         return result.get().getId();
     }
 
     /**
-     * Fetches the username for a user identifier.
+     * Fetches the email for a user identifier.
      *
      * @param userId user identifier
-     * @return username, or an empty string when user is not found
+     * @return email, or an empty string when user is not found
      */
-    public String fetchUsernameByUserId(Long userId) {
+    public String fetchEmailByUserId(Long userId) {
         var getUserByIdQuery = new GetUserByIdQuery(userId);
         var result = userQueryService.handle(getUserByIdQuery);
         if (result.isEmpty()) return Strings.EMPTY;
-        return result.get().getUsername();
+        return result.get().getEmail();
     }
 
 }

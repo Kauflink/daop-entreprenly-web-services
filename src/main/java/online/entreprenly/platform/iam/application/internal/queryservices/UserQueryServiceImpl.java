@@ -4,7 +4,7 @@ import online.entreprenly.platform.iam.application.queryservices.UserQueryServic
 import online.entreprenly.platform.iam.domain.model.aggregates.User;
 import online.entreprenly.platform.iam.domain.model.queries.GetAllUsersQuery;
 import online.entreprenly.platform.iam.domain.model.queries.GetUserByIdQuery;
-import online.entreprenly.platform.iam.domain.model.queries.GetUserByUsernameQuery;
+import online.entreprenly.platform.iam.domain.model.queries.GetUserByEmailQuery;
 import online.entreprenly.platform.iam.domain.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +33,7 @@ public class UserQueryServiceImpl implements UserQueryService {
     }
 
     @Override
-    public Optional<User> handle(GetUserByUsernameQuery query) {
-        return userRepository.findByUsername(query.username());
+    public Optional<User> handle(GetUserByEmailQuery query) {
+        return userRepository.findByEmail(query.email());
     }
 }

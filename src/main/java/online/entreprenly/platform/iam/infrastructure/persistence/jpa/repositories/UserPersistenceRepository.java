@@ -13,18 +13,18 @@ import java.util.Optional;
 public interface UserPersistenceRepository extends JpaRepository<UserPersistenceEntity, Long>
 {
     /**
-     * This method is responsible for finding the user by username.
-     * @param username The username.
+     * This method is responsible for finding the user by email.
+     * @param email The email.
      * @return The user object.
      */
-    Optional<UserPersistenceEntity> findByUsername(String username);
+    Optional<UserPersistenceEntity> findByEmail(String email);
 
     /**
-     * This method is responsible for checking if the user exists by username.
-     * @param username The username.
+     * This method is responsible for checking if the user exists by email.
+     * @param email The email.
      * @return True if the user exists, false otherwise.
      */
-    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
 
 }
 

@@ -1,6 +1,9 @@
 package online.entreprenly.platform.iam.interfaces.rest.resources;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
  * Resource received to authenticate an existing user.
@@ -8,16 +11,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(
     name = "SignInRequest",
     description = "User sign-in request with credentials",
-    example = "{\"username\": \"john.doe\", \"password\": \"SecurePass123!\"}"
+    example = "{\"email\": \"john.doe@example.com\", \"password\": \"SecurePass123!\"}"
 )
 public record SignInResource(
     @Schema(
-        description = "Username",
-        example = "john.doe",
-        minLength = 3,
-        maxLength = 50
+        description = "User email",
+        example = "john.doe@example.com",
+        maxLength = 120
     )
-    String username,
+    @NotBlank
+    @Email
+    @Size(max = 120)
+    String email,
 
     @Schema(
         description = "User password",
@@ -25,6 +30,8 @@ public record SignInResource(
         minLength = 8,
         maxLength = 255
     )
+    @NotBlank
+    @Size(min = 8, max = 255)
     String password
 ) {
 }

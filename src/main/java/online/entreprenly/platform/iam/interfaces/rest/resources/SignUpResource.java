@@ -1,24 +1,29 @@
 package online.entreprenly.platform.iam.interfaces.rest.resources;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
- * Resource received to register a new IAM user.
+ * Resource received to register a new IAM user. The default role is assigned by
+ * the server, so the client only provides credentials.
  */
 @Schema(
     name = "SignUpRequest",
-    description = "User sign-up request with credentials and roles",
-    example = "{\"username\": \"john.doe\", \"password\": \"SecurePass123!\", \"roles\": [\"ROLE_USER\"]}"
+    description = "User sign-up request with credentials",
+    example = "{\"email\": \"john.doe@example.com\", \"password\": \"SecurePass123!\"}"
 )
 public record SignUpResource(
     @Schema(
-        description = "Desired username",
-        example = "john.doe",
-        minLength = 3,
-        maxLength = 50
+        description = "User email",
+        example = "john.doe@example.com",
+        maxLength = 120
     )
-    String username,
+    @NotBlank
+    @Email
+    @Size(max = 120)
+    String email,
 
     @Schema(
         description = "User password (minimum 8 characters)",
@@ -26,12 +31,8 @@ public record SignUpResource(
         minLength = 8,
         maxLength = 255
     )
-    String password,
-
-    @Schema(
-        description = "Roles to assign to the user",
-        example = "[\"ROLE_USER\"]"
-    )
-    List<String> roles
+    @NotBlank
+    @Size(min = 8, max = 255)
+    String password
 ) {
 }

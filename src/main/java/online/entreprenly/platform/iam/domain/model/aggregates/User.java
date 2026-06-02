@@ -18,7 +18,7 @@ public class User extends AbstractDomainAggregateRoot<User> {
     @Setter
     private Long id;
     @Setter
-    private String username;
+    private String email;
     @Setter
     private String password;
     @Setter
@@ -28,14 +28,14 @@ public class User extends AbstractDomainAggregateRoot<User> {
         this.roles = new HashSet<>();
     }
 
-    public User(String username, String password) {
-        this.username = username;
+    public User(String email, String password) {
+        this.email = email;
         this.password = password;
         this.roles = new HashSet<>();
     }
 
-    public User(String username, String password, List<Role> roles) {
-        this(username, password);
+    public User(String email, String password, List<Role> roles) {
+        this(email, password);
         addRoles(roles);
     }
 
