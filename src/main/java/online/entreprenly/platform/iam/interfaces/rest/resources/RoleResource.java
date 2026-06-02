@@ -14,7 +14,7 @@ public record RoleResource(
     @Schema(description = "Role unique identifier", example = "1")
     Long id,
 
-    @Schema(description = "Role name", example = "ROLE_USER", allowableValues = {"ROLE_USER", "ROLE_INSTRUCTOR", "ROLE_ADMIN"})
+    @Schema(description = "Role name", example = "ROLE_USER", allowableValues = {"ROLE_USER", "ROLE_ADMIN"})
     String name
 ) {
 }

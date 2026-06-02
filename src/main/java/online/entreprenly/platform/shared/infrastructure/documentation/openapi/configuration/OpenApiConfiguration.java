@@ -1,7 +1,6 @@
 package online.entreprenly.platform.shared.infrastructure.documentation.openapi.configuration;
 
 import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
@@ -38,7 +37,7 @@ public class OpenApiConfiguration {
      * @return configured OpenAPI descriptor
      */
     @Bean
-    public OpenAPI learningPlatformOpenApi() {
+    public OpenAPI entreprenlyPlatformOpenApi() {
 
         // General configuration
         var openApi = new OpenAPI();
@@ -48,26 +47,19 @@ public class OpenApiConfiguration {
                         .description(this.applicationDescription)
                         .version(this.applicationVersion)
                         .contact(new Contact()
-                                .name("ACME Learning Center Support")
-                                .email("support@acme-learning.com")
-                                .url("https://acme-learning.com/support"))
+                                .name("Entreprenly")
+                                .url("https://entreprenly.online"))
                         .license(new License()
-                                .name("Apache 2.0")
-                                .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
-                .externalDocs(new ExternalDocumentation()
-                        .description("ACME Learning Platform wiki Documentation")
-                        .url("https://acme-learning-platform.wiki.github.io/docs"));
+                                .name("MIT License")
+                                .url("https://opensource.org/licenses/MIT")));
 
         // Add server configurations
         openApi.servers(List.of(
                 new Server()
-                        .url("http://localhost:8080")
+                        .url("http://localhost:8092")
                         .description("Local Development Environment"),
                 new Server()
-                        .url("https://staging-api.acme-learning.com")
-                        .description("Staging Environment"),
-                new Server()
-                        .url("https://api.acme-learning.com")
+                        .url("https://db.entreprenly.online")
                         .description("Production Environment")
         ));
 

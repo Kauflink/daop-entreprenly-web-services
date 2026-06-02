@@ -9,7 +9,7 @@ import java.util.List;
 @Schema(
     name = "UserResponse",
     description = "User information response",
-    example = "{\"id\": 1, \"username\": \"john.doe\", \"roles\": [\"ROLE_USER\", \"ROLE_INSTRUCTOR\"]}"
+    example = "{\"id\": 1, \"username\": \"john.doe\", \"roles\": [\"ROLE_USER\", \"ROLE_ADMIN\"]}"
 )
 public record UserResource(
     @Schema(description = "User unique identifier", example = "1")
