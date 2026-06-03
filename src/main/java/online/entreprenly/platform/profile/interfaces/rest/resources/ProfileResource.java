@@ -19,6 +19,9 @@ public record ProfileResource(
     @Schema(description = "Last name", example = "INC")
     String lastName,
 
+    @Schema(description = "Phone number", example = "+51 999 888 777", nullable = true)
+    String phone,
+
     @Schema(description = "Avatar URL", example = "https://cdn.entreprenly.online/avatars/1.png", nullable = true)
     String avatarUrl,
 

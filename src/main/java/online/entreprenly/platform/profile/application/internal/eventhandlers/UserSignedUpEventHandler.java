@@ -32,8 +32,10 @@ public class UserSignedUpEventHandler {
      */
     @EventListener
     public void on(UserSignedUpEvent event) {
-        var firstName = deriveFirstName(event.email());
-        var command = new CreateProfileCommand(event.userId(), firstName, "", DEFAULT_ROLE, DEFAULT_PLAN);
+        var firstName = isBlank(event.firstName()) ? deriveFirstName(event.email()) : event.firstName();
+        var lastName = isBlank(event.lastName()) ? "" : event.lastName();
+        var command = new CreateProfileCommand(event.userId(), firstName, lastName, DEFAULT_ROLE, DEFAULT_PLAN,
+                event.phone(), event.timezone());
         var result = profileCommandService.handle(command);
         if (result.isFailure()) {
             log.warn("Could not auto-create profile for user {}: profile may already exist", event.userId());
@@ -46,5 +48,9 @@ public class UserSignedUpEventHandler {
         if (email == null || email.isBlank()) return "";
         int at = email.indexOf('@');
         return at > 0 ? email.substring(0, at) : email;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

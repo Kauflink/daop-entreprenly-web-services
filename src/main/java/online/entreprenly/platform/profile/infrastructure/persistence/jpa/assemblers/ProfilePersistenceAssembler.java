@@ -36,6 +36,7 @@ public final class ProfilePersistenceAssembler {
                 entity.getUserId(),
                 entity.getFirstName(),
                 entity.getLastName(),
+                entity.getPhone(),
                 entity.getAvatarUrl(),
                 entity.getRole(),
                 entity.getPlan(),
@@ -53,6 +54,7 @@ public final class ProfilePersistenceAssembler {
         entity.setUserId(profile.getUserId());
         entity.setFirstName(profile.getFirstName());
         entity.setLastName(profile.getLastName());
+        entity.setPhone(profile.getPhone());
         entity.setAvatarUrl(profile.getAvatarUrl());
         entity.setRole(profile.getRole());
         entity.setPlan(profile.getPlan());

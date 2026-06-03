@@ -19,6 +19,10 @@ public record UpdateProfileResource(
     @Size(max = 80)
     String lastName,
 
+    @Schema(description = "Phone number", example = "+51 999 888 777", nullable = true)
+    @Size(max = 30)
+    String phone,
+
     @Schema(description = "Avatar URL", example = "https://cdn.entreprenly.online/avatars/1.png", nullable = true)
     @Size(max = 512)
     String avatarUrl
