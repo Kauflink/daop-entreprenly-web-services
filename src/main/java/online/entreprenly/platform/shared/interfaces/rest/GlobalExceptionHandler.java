@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.text.MessageFormat;
 import java.util.MissingResourceException;
@@ -62,6 +63,19 @@ public class GlobalExceptionHandler {
                 resolveMessageOrDefault("validation.request.argument", "request-argument"),
                 ex.getMessage() != null ? ex.getMessage() : resolveMessageOrDefault("validation.request.failed", "Request validation failed")
         );
+        return ErrorResponseAssembler.toErrorResponseFromApplicationError(applicationError);
+    }
+
+    /**
+     * Handles requests to unmapped routes (no matching handler or static resource).
+     * Maps to a 404 response instead of a generic 500.
+     *
+     * @param ex the no-resource-found exception
+     * @return error response with NOT_FOUND status
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> handleNoResourceFound(NoResourceFoundException ex) {
+        var applicationError = ApplicationError.notFound("Endpoint", ex.getResourcePath());
         return ErrorResponseAssembler.toErrorResponseFromApplicationError(applicationError);
     }
 
