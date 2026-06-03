@@ -23,8 +23,8 @@ public record UpdateProfileResource(
     @Size(max = 30)
     String phone,
 
-    @Schema(description = "Avatar URL", example = "https://cdn.entreprenly.online/avatars/1.png", nullable = true)
-    @Size(max = 512)
+    @Schema(description = "Avatar as a URL or base64 data URI", nullable = true)
+    @Size(max = 8_000_000)
     String avatarUrl
 ) {
 }
