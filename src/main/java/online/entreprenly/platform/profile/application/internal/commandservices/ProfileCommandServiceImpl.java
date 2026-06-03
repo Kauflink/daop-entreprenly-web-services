@@ -30,7 +30,8 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         if (profileRepository.existsByUserId(command.userId())) {
             return Result.failure(ApplicationError.conflict("Profile", "A profile already exists for this user"));
         }
-        var profile = new Profile(command.userId(), command.firstName(), command.lastName(), command.role(), command.plan());
+        var profile = new Profile(command.userId(), command.firstName(), command.lastName(),
+                command.role(), command.plan(), command.phone(), command.timezone());
         return Result.success(profileRepository.save(profile));
     }
 
@@ -38,7 +39,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     public Result<Profile, ApplicationError> handle(UpdateProfileCommand command) {
         return profileRepository.findById(command.profileId())
                 .<Result<Profile, ApplicationError>>map(profile -> {
-                    profile.updateProfile(command.firstName(), command.lastName(), command.avatarUrl());
+                    profile.updateProfile(command.firstName(), command.lastName(), command.phone(), command.avatarUrl());
                     return Result.success(profileRepository.save(profile));
                 })
                 .orElseGet(() -> Result.failure(ApplicationError.notFound("Profile", String.valueOf(command.profileId()))));

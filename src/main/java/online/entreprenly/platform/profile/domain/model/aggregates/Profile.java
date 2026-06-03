@@ -20,6 +20,7 @@ public class Profile extends AbstractDomainAggregateRoot<Profile> {
     private Long userId;
     private String firstName;
     private String lastName;
+    private String phone;
     private String avatarUrl;
     private String role;
     private String plan;
@@ -29,14 +30,19 @@ public class Profile extends AbstractDomainAggregateRoot<Profile> {
     public Profile() {
     }
 
-    public Profile(Long userId, String firstName, String lastName, String role, String plan) {
+    public Profile(Long userId, String firstName, String lastName, String role, String plan,
+                   String phone, String timezone) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.phone = phone;
         this.avatarUrl = null;
         this.role = role;
         this.plan = plan;
-        this.preferences = Preferences.defaults();
+        var defaults = Preferences.defaults();
+        this.preferences = (timezone == null || timezone.isBlank())
+                ? defaults
+                : new Preferences(defaults.language(), timezone, defaults.theme(), defaults.currency());
         this.notificationSettings = NotificationSettings.defaults();
     }
 
@@ -45,12 +51,14 @@ public class Profile extends AbstractDomainAggregateRoot<Profile> {
      *
      * @param firstName new first name
      * @param lastName  new last name
+     * @param phone     new phone number (nullable)
      * @param avatarUrl new avatar URL (nullable)
      * @return this profile
      */
-    public Profile updateProfile(String firstName, String lastName, String avatarUrl) {
+    public Profile updateProfile(String firstName, String lastName, String phone, String avatarUrl) {
         this.firstName = firstName;
         this.lastName = lastName;
+        this.phone = phone;
         this.avatarUrl = avatarUrl;
         return this;
     }
@@ -81,13 +89,14 @@ public class Profile extends AbstractDomainAggregateRoot<Profile> {
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a profile that already carries identity and full state.
      */
-    public void restoreState(Long id, Long userId, String firstName, String lastName, String avatarUrl,
-                             String role, String plan, Preferences preferences,
+    public void restoreState(Long id, Long userId, String firstName, String lastName, String phone,
+                             String avatarUrl, String role, String plan, Preferences preferences,
                              NotificationSettings notificationSettings) {
         this.id = id;
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.phone = phone;
         this.avatarUrl = avatarUrl;
         this.role = role;
         this.plan = plan;
