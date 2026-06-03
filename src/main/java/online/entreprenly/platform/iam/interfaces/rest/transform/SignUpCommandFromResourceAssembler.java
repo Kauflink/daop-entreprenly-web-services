@@ -14,6 +14,7 @@ public class SignUpCommandFromResourceAssembler {
      * @return sign-up command consumed by the application layer
      */
     public static SignUpCommand toCommandFromResource(SignUpResource resource) {
-        return new SignUpCommand(resource.email(), resource.password());
+        return new SignUpCommand(resource.email(), resource.password(), resource.firstName(),
+                resource.lastName(), resource.phone(), resource.timezone());
     }
 }

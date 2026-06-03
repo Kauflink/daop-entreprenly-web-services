@@ -30,7 +30,7 @@ public class IamContextFacade {
      * @return created user identifier, or {@code 0L} when creation fails
      */
     public Long createUser(String email, String password) {
-        var signUpCommand = new SignUpCommand(email, password);
+        var signUpCommand = new SignUpCommand(email, password, null, null, null, null);
         var result = userCommandService.handle(signUpCommand);
         if (result instanceof online.entreprenly.platform.shared.application.result.Result.Success(var user)) {
             return user.getId();

@@ -33,6 +33,22 @@ public record SignUpResource(
     )
     @NotBlank
     @Size(min = 8, max = 255)
-    String password
+    String password,
+
+    @Schema(description = "First name", example = "Lionel", nullable = true)
+    @Size(max = 80)
+    String firstName,
+
+    @Schema(description = "Last name", example = "Gutierrez", nullable = true)
+    @Size(max = 80)
+    String lastName,
+
+    @Schema(description = "Phone number", example = "+51 999 888 777", nullable = true)
+    @Size(max = 30)
+    String phone,
+
+    @Schema(description = "Preferred timezone", example = "America/Lima (UTC-05:00)", nullable = true)
+    @Size(max = 60)
+    String timezone
 ) {
 }

@@ -69,7 +69,8 @@ public class UserCommandServiceImpl implements UserCommandService {
         userRepository.save(user);
         return userRepository.findByEmail(command.email())
                 .<Result<User, ApplicationError>>map(savedUser -> {
-                    eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId(), savedUser.getEmail()));
+                    eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId(), savedUser.getEmail(),
+                            command.firstName(), command.lastName(), command.phone(), command.timezone()));
                     return Result.success(savedUser);
                 })
                 .orElseGet(() -> Result.failure(ApplicationError.unexpected("sign-up", "Created user could not be reloaded")));

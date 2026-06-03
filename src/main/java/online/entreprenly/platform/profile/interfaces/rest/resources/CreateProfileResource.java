@@ -30,6 +30,14 @@ public record CreateProfileResource(
 
     @Schema(description = "Display plan", example = "Plan Control")
     @Size(max = 60)
-    String plan
+    String plan,
+
+    @Schema(description = "Phone number", example = "+51 999 888 777", nullable = true)
+    @Size(max = 30)
+    String phone,
+
+    @Schema(description = "Preferred display timezone", example = "America/Lima (UTC-05:00)", nullable = true)
+    @Size(max = 60)
+    String timezone
 ) {
 }

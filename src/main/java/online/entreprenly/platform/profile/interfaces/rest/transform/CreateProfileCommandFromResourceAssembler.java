@@ -13,6 +13,8 @@ public class CreateProfileCommandFromResourceAssembler {
                 resource.firstName(),
                 resource.lastName(),
                 resource.role(),
-                resource.plan());
+                resource.plan(),
+                resource.phone(),
+                resource.timezone());
     }
 }
