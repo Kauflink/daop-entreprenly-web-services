@@ -26,7 +26,7 @@ public class Profile extends AbstractDomainAggregateRoot<Profile> {
     private Preferences preferences;
     private NotificationSettings notificationSettings;
 
-    protected Profile() {
+    public Profile() {
     }
 
     public Profile(Long userId, String firstName, String lastName, String role, String plan) {
