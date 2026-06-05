@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * REST controller that exposes unit product resources.
+ * REST controller that exposes unit product resources for the authenticated account.
  */
 @RestController
 @RequestMapping(value = "/api/v1/inventory-unit-products", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -54,7 +54,7 @@ public class UnitProductsController {
     @PostMapping
     @Operation(
         summary = "Create a unit product",
-        description = "Registers a new product tracked and sold per unit.",
+        description = "Registers a new product tracked and sold per unit, owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -64,7 +64,8 @@ public class UnitProductsController {
             @ApiResponse(responseCode = "409", description = "A unit product already exists with the QR code")
     })
     public ResponseEntity<?> createUnitProduct(@Valid @RequestBody CreateUnitProductResource resource) {
-        var command = CreateUnitProductCommandFromResourceAssembler.toCommandFromResource(resource);
+        var command = CreateUnitProductCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), resource);
         var result = unitProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -73,12 +74,12 @@ public class UnitProductsController {
     @GetMapping
     @Operation(
         summary = "List unit products",
-        description = "Retrieves every registered unit product.",
+        description = "Retrieves every unit product owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Unit products found")
     public ResponseEntity<List<UnitProductResource>> getAllUnitProducts() {
-        var resources = unitProductQueryService.handle(new GetAllUnitProductsQuery()).stream()
+        var resources = unitProductQueryService.handle(new GetAllUnitProductsQuery(AuthenticatedUser.email())).stream()
                 .map(UnitProductResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -87,7 +88,7 @@ public class UnitProductsController {
     @GetMapping("/{unitProductId}")
     @Operation(
         summary = "Get unit product by ID",
-        description = "Retrieves a unit product by its unique identifier.",
+        description = "Retrieves a unit product owned by the authenticated account by its identifier.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -96,7 +97,7 @@ public class UnitProductsController {
             @ApiResponse(responseCode = "404", description = "Unit product not found")
     })
     public ResponseEntity<UnitProductResource> getUnitProductById(@PathVariable Long unitProductId) {
-        return unitProductQueryService.handle(new GetUnitProductByIdQuery(unitProductId))
+        return unitProductQueryService.handle(new GetUnitProductByIdQuery(AuthenticatedUser.email(), unitProductId))
                 .map(UnitProductResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -105,7 +106,7 @@ public class UnitProductsController {
     @PutMapping("/{unitProductId}")
     @Operation(
         summary = "Update a unit product",
-        description = "Updates the attributes of an existing unit product.",
+        description = "Updates a unit product owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -116,7 +117,8 @@ public class UnitProductsController {
     })
     public ResponseEntity<?> updateUnitProduct(@PathVariable Long unitProductId,
                                                @Valid @RequestBody UpdateUnitProductResource resource) {
-        var command = UpdateUnitProductCommandFromResourceAssembler.toCommandFromResource(unitProductId, resource);
+        var command = UpdateUnitProductCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), unitProductId, resource);
         var result = unitProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
@@ -125,7 +127,7 @@ public class UnitProductsController {
     @DeleteMapping("/{unitProductId}")
     @Operation(
         summary = "Delete a unit product",
-        description = "Deletes a unit product by its unique identifier.",
+        description = "Deletes a unit product owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -133,7 +135,8 @@ public class UnitProductsController {
             @ApiResponse(responseCode = "404", description = "Unit product not found")
     })
     public ResponseEntity<?> deleteUnitProduct(@PathVariable Long unitProductId) {
-        var result = unitProductCommandService.handle(new DeleteUnitProductCommand(unitProductId));
+        var result = unitProductCommandService.handle(
+                new DeleteUnitProductCommand(AuthenticatedUser.email(), unitProductId));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, id -> null, HttpStatus.NO_CONTENT);
     }

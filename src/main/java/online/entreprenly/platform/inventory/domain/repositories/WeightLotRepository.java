@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Weight lot repository port.
+ * Weight lot repository port. All lookups are scoped to the owner account.
  */
 public interface WeightLotRepository {
-    List<WeightLot> findAll();
+    List<WeightLot> findAllByOwnerEmail(String ownerEmail);
 
-    Optional<WeightLot> findById(Long id);
+    Optional<WeightLot> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
-    boolean existsById(Long id);
+    boolean existsByIdAndOwnerEmail(Long id, String ownerEmail);
 
     WeightLot save(WeightLot weightLot);
 

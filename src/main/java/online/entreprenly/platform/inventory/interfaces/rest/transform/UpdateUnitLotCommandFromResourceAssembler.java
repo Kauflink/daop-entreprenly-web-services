@@ -8,8 +8,10 @@ import online.entreprenly.platform.inventory.interfaces.rest.resources.UpdateUni
  */
 public class UpdateUnitLotCommandFromResourceAssembler {
 
-    public static UpdateUnitLotCommand toCommandFromResource(Long unitLotId, UpdateUnitLotResource resource) {
+    public static UpdateUnitLotCommand toCommandFromResource(String ownerEmail, Long unitLotId,
+                                                             UpdateUnitLotResource resource) {
         return new UpdateUnitLotCommand(
+                ownerEmail,
                 unitLotId,
                 resource.productId(),
                 resource.codeQR(),

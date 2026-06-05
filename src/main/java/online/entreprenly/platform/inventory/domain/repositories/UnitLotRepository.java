@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Unit lot repository port.
+ * Unit lot repository port. All lookups are scoped to the owner account.
  */
 public interface UnitLotRepository {
-    List<UnitLot> findAll();
+    List<UnitLot> findAllByOwnerEmail(String ownerEmail);
 
-    Optional<UnitLot> findById(Long id);
+    Optional<UnitLot> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
-    boolean existsById(Long id);
+    boolean existsByIdAndOwnerEmail(Long id, String ownerEmail);
 
     UnitLot save(UnitLot unitLot);
 

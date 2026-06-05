@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service that resolves weight lot read queries.
+ * Application service that resolves weight lot read queries, scoped to the owner account.
  */
 @Service
 public class WeightLotQueryServiceImpl implements WeightLotQueryService {
@@ -24,11 +24,11 @@ public class WeightLotQueryServiceImpl implements WeightLotQueryService {
 
     @Override
     public List<WeightLot> handle(GetAllWeightLotsQuery query) {
-        return weightLotRepository.findAll();
+        return weightLotRepository.findAllByOwnerEmail(query.ownerEmail());
     }
 
     @Override
     public Optional<WeightLot> handle(GetWeightLotByIdQuery query) {
-        return weightLotRepository.findById(query.weightLotId());
+        return weightLotRepository.findByIdAndOwnerEmail(query.weightLotId(), query.ownerEmail());
     }
 }

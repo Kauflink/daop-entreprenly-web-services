@@ -46,7 +46,7 @@ public class StockAlertsController {
     )
     @ApiResponse(responseCode = "200", description = "Stock alerts computed")
     public ResponseEntity<List<StockAlertResource>> getAllStockAlerts() {
-        var resources = stockAlertQueryService.handle(new GetAllStockAlertsQuery()).stream()
+        var resources = stockAlertQueryService.handle(new GetAllStockAlertsQuery(AuthenticatedUser.email())).stream()
                 .map(StockAlertResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -64,7 +64,7 @@ public class StockAlertsController {
             @ApiResponse(responseCode = "404", description = "Stock alert not found")
     })
     public ResponseEntity<StockAlertResource> getStockAlertById(@PathVariable Long stockAlertId) {
-        return stockAlertQueryService.handle(new GetStockAlertByIdQuery(stockAlertId))
+        return stockAlertQueryService.handle(new GetStockAlertByIdQuery(AuthenticatedUser.email(), stockAlertId))
                 .map(StockAlertResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

@@ -8,15 +8,16 @@ import lombok.Setter;
 /**
  * Weight product aggregate root.
  *
- * <p>Represents a catalog product that is tracked and sold by weight. Its commercial
- * attribute is the {@code pricePerKg}. Its {@link ProductType} is always
- * {@link ProductType#WEIGHT}.</p>
+ * <p>Represents a catalog product that is tracked and sold by weight, owned by the account
+ * ({@code ownerEmail}) that created it. Its commercial attribute is the {@code pricePerKg}.
+ * Its {@link ProductType} is always {@link ProductType#WEIGHT}.</p>
  */
 @Getter
 public class WeightProduct extends AbstractDomainAggregateRoot<WeightProduct> {
 
     @Setter
     private Long id;
+    private String ownerEmail;
     private String name;
     private String description;
     private String codeQR;
@@ -25,7 +26,8 @@ public class WeightProduct extends AbstractDomainAggregateRoot<WeightProduct> {
     public WeightProduct() {
     }
 
-    public WeightProduct(String name, String description, String codeQR, double pricePerKg) {
+    public WeightProduct(String ownerEmail, String name, String description, String codeQR, double pricePerKg) {
+        this.ownerEmail = ownerEmail;
         this.name = name;
         this.description = description;
         this.codeQR = codeQR;
@@ -62,8 +64,10 @@ public class WeightProduct extends AbstractDomainAggregateRoot<WeightProduct> {
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a weight product that already carries identity and full state.
      */
-    public void restoreState(Long id, String name, String description, String codeQR, double pricePerKg) {
+    public void restoreState(Long id, String ownerEmail, String name, String description, String codeQR,
+                             double pricePerKg) {
         this.id = id;
+        this.ownerEmail = ownerEmail;
         this.name = name;
         this.description = description;
         this.codeQR = codeQR;

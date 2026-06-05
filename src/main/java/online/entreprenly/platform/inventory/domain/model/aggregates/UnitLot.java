@@ -10,15 +10,17 @@ import java.time.Instant;
 /**
  * Unit lot aggregate root.
  *
- * <p>Represents a batch of a {@link UnitProduct} that entered stock on a given
- * {@code entryDate}, holding a {@code quantity} of units and an {@code expiryDate}.
- * Its {@link ProductType} is always {@link ProductType#UNIT}.</p>
+ * <p>Represents a batch of a {@code UnitProduct} that entered stock on a given
+ * {@code entryDate}, owned by the account ({@code ownerEmail}) that created it. It holds a
+ * {@code quantity} of units and an {@code expiryDate}. Its {@link ProductType} is always
+ * {@link ProductType#UNIT}.</p>
  */
 @Getter
 public class UnitLot extends AbstractDomainAggregateRoot<UnitLot> {
 
     @Setter
     private Long id;
+    private String ownerEmail;
     private Long productId;
     private String codeQR;
     private Instant entryDate;
@@ -28,7 +30,9 @@ public class UnitLot extends AbstractDomainAggregateRoot<UnitLot> {
     public UnitLot() {
     }
 
-    public UnitLot(Long productId, String codeQR, Instant entryDate, int quantity, Instant expiryDate) {
+    public UnitLot(String ownerEmail, Long productId, String codeQR, Instant entryDate, int quantity,
+                   Instant expiryDate) {
+        this.ownerEmail = ownerEmail;
         this.productId = productId;
         this.codeQR = codeQR;
         this.entryDate = entryDate == null ? Instant.now() : entryDate;
@@ -68,9 +72,10 @@ public class UnitLot extends AbstractDomainAggregateRoot<UnitLot> {
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a unit lot that already carries identity and full state.
      */
-    public void restoreState(Long id, Long productId, String codeQR, Instant entryDate, int quantity,
-                             Instant expiryDate) {
+    public void restoreState(Long id, String ownerEmail, Long productId, String codeQR, Instant entryDate,
+                             int quantity, Instant expiryDate) {
         this.id = id;
+        this.ownerEmail = ownerEmail;
         this.productId = productId;
         this.codeQR = codeQR;
         this.entryDate = entryDate;

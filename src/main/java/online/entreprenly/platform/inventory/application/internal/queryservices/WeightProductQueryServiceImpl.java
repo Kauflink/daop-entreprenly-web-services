@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service that resolves weight product read queries.
+ * Application service that resolves weight product read queries, scoped to the owner account.
  */
 @Service
 public class WeightProductQueryServiceImpl implements WeightProductQueryService {
@@ -24,11 +24,11 @@ public class WeightProductQueryServiceImpl implements WeightProductQueryService 
 
     @Override
     public List<WeightProduct> handle(GetAllWeightProductsQuery query) {
-        return weightProductRepository.findAll();
+        return weightProductRepository.findAllByOwnerEmail(query.ownerEmail());
     }
 
     @Override
     public Optional<WeightProduct> handle(GetWeightProductByIdQuery query) {
-        return weightProductRepository.findById(query.weightProductId());
+        return weightProductRepository.findByIdAndOwnerEmail(query.weightProductId(), query.ownerEmail());
     }
 }

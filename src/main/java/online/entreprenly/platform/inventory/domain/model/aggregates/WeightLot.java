@@ -10,15 +10,17 @@ import java.time.Instant;
 /**
  * Weight lot aggregate root.
  *
- * <p>Represents a batch of a {@link WeightProduct} that entered stock on a given
- * {@code entryDate}, holding a {@code quantityKg} in kilograms. Its
- * {@link ProductType} is always {@link ProductType#WEIGHT}.</p>
+ * <p>Represents a batch of a {@code WeightProduct} that entered stock on a given
+ * {@code entryDate}, owned by the account ({@code ownerEmail}) that created it. It holds a
+ * {@code quantityKg} in kilograms. Its {@link ProductType} is always
+ * {@link ProductType#WEIGHT}.</p>
  */
 @Getter
 public class WeightLot extends AbstractDomainAggregateRoot<WeightLot> {
 
     @Setter
     private Long id;
+    private String ownerEmail;
     private Long productId;
     private String codeQR;
     private Instant entryDate;
@@ -27,7 +29,8 @@ public class WeightLot extends AbstractDomainAggregateRoot<WeightLot> {
     public WeightLot() {
     }
 
-    public WeightLot(Long productId, String codeQR, Instant entryDate, double quantityKg) {
+    public WeightLot(String ownerEmail, Long productId, String codeQR, Instant entryDate, double quantityKg) {
+        this.ownerEmail = ownerEmail;
         this.productId = productId;
         this.codeQR = codeQR;
         this.entryDate = entryDate == null ? Instant.now() : entryDate;
@@ -64,8 +67,10 @@ public class WeightLot extends AbstractDomainAggregateRoot<WeightLot> {
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a weight lot that already carries identity and full state.
      */
-    public void restoreState(Long id, Long productId, String codeQR, Instant entryDate, double quantityKg) {
+    public void restoreState(Long id, String ownerEmail, Long productId, String codeQR, Instant entryDate,
+                             double quantityKg) {
         this.id = id;
+        this.ownerEmail = ownerEmail;
         this.productId = productId;
         this.codeQR = codeQR;
         this.entryDate = entryDate;

@@ -22,26 +22,26 @@ public class UnitProductRepositoryImpl implements UnitProductRepository {
     }
 
     @Override
-    public List<UnitProduct> findAll() {
-        return unitProductPersistenceRepository.findAll().stream()
+    public List<UnitProduct> findAllByOwnerEmail(String ownerEmail) {
+        return unitProductPersistenceRepository.findAllByOwnerEmail(ownerEmail).stream()
                 .map(UnitProductPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public Optional<UnitProduct> findById(Long id) {
-        return unitProductPersistenceRepository.findById(id)
+    public Optional<UnitProduct> findByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return unitProductPersistenceRepository.findByIdAndOwnerEmail(id, ownerEmail)
                 .map(UnitProductPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
-    public boolean existsById(Long id) {
-        return unitProductPersistenceRepository.existsById(id);
+    public boolean existsByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return unitProductPersistenceRepository.existsByIdAndOwnerEmail(id, ownerEmail);
     }
 
     @Override
-    public boolean existsByCodeQR(String codeQR) {
-        return unitProductPersistenceRepository.existsByCodeQR(codeQR);
+    public boolean existsByCodeQRAndOwnerEmail(String codeQR, String ownerEmail) {
+        return unitProductPersistenceRepository.existsByCodeQRAndOwnerEmail(codeQR, ownerEmail);
     }
 
     @Override
