@@ -2,10 +2,12 @@ package online.entreprenly.platform.subscription.application.internal.outboundse
 
 import online.entreprenly.platform.subscription.domain.model.valueobjects.Money;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.PaymentStatus;
+import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 
 /**
  * Fake payment gateway request.
  */
 public record PaymentGatewayRequest(Long subscriptionId, Long userId, Long planId, Money amount,
-                                    String paymentMethod, String cardToken, PaymentStatus requestedStatus) {
+                                    String paymentMethod, String cardToken, PaymentStatus requestedStatus,
+                                    BillingPeriod billingPeriod) {
 }

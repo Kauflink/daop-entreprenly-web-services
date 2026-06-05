@@ -14,6 +14,9 @@ public record SubscriptionPlanResource(
         @Schema(description = "Plan unique identifier", example = "1")
         Long id,
 
+        @Schema(description = "Plan stable code", example = "plan-control")
+        String code,
+
         @Schema(description = "Plan name", example = "Premium")
         String name,
 
@@ -22,6 +25,9 @@ public record SubscriptionPlanResource(
 
         @Schema(description = "Plan price amount", example = "49.90")
         BigDecimal amount,
+
+        @Schema(description = "Annual plan price amount", example = "890.00")
+        BigDecimal annualAmount,
 
         @Schema(description = "Plan currency", example = "USD")
         String currency,

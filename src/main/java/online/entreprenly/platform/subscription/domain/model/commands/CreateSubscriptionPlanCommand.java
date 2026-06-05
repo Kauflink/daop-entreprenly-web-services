@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * Command to create a subscription plan.
  */
-public record CreateSubscriptionPlanCommand(String name, String description, BigDecimal amount, String currency,
-                                            BillingPeriod billingPeriod, List<String> features, Boolean active) {
+public record CreateSubscriptionPlanCommand(String code, String name, String description, BigDecimal amount,
+                                            BigDecimal annualAmount, String currency, BillingPeriod billingPeriod,
+                                            List<String> features, Boolean active) {
 }

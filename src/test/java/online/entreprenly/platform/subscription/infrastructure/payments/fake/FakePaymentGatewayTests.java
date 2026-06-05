@@ -1,6 +1,7 @@
 package online.entreprenly.platform.subscription.infrastructure.payments.fake;
 
 import online.entreprenly.platform.subscription.application.internal.outboundservices.payments.PaymentGatewayRequest;
+import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.Money;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.PaymentStatus;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ class FakePaymentGatewayTests {
     void processUsesRequestedPaymentStatus() {
         var gateway = new FakePaymentGateway();
         var request = new PaymentGatewayRequest(1L, 1L, 1L, new Money(BigDecimal.TEN, "USD"),
-                "FAKE_CARD", "fake-token", PaymentStatus.DECLINED);
+                "FAKE_CARD", "fake-token", PaymentStatus.DECLINED, BillingPeriod.MONTHLY);
 
         var response = gateway.process(request);
 
@@ -28,7 +29,7 @@ class FakePaymentGatewayTests {
     void processDefaultsToApprovedWhenNoStatusRequested() {
         var gateway = new FakePaymentGateway();
         var request = new PaymentGatewayRequest(1L, 1L, 1L, new Money(BigDecimal.TEN, "USD"),
-                "FAKE_CARD", "fake-token", null);
+                "FAKE_CARD", "fake-token", null, BillingPeriod.MONTHLY);
 
         var response = gateway.process(request);
 

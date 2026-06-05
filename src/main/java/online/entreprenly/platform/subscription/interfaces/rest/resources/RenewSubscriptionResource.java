@@ -1,6 +1,7 @@
 package online.entreprenly.platform.subscription.interfaces.rest.resources;
 
 import online.entreprenly.platform.subscription.domain.model.valueobjects.PaymentStatus;
+import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -15,6 +16,9 @@ public record RenewSubscriptionResource(
         String cardToken,
 
         @Schema(description = "Requested fake payment result", example = "APPROVED")
-        PaymentStatus requestedPaymentStatus
+        PaymentStatus requestedPaymentStatus,
+
+        @Schema(description = "Selected billing period", example = "YEARLY")
+        BillingPeriod billingPeriod
 ) {
 }

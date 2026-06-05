@@ -25,6 +25,7 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
     private Instant currentPeriodEnd;
     private Instant cancelledAt;
     private Long latestPaymentId;
+    private BillingPeriod billingPeriod;
 
     public Subscription() {
     }
@@ -37,6 +38,7 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
         this.currentPeriodEnd = null;
         this.cancelledAt = null;
         this.latestPaymentId = null;
+        this.billingPeriod = BillingPeriod.MONTHLY;
     }
 
     public void applyPayment(Payment payment, BillingPeriod billingPeriod) {
@@ -53,8 +55,16 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
     }
 
     public void activate(BillingPeriod billingPeriod) {
+        this.billingPeriod = billingPeriod == null ? BillingPeriod.MONTHLY : billingPeriod;
         this.status = SubscriptionStatus.ACTIVE;
-        this.currentPeriodEnd = calculatePeriodEnd(Instant.now(), billingPeriod);
+        this.currentPeriodEnd = calculatePeriodEnd(Instant.now(), this.billingPeriod);
+        this.cancelledAt = null;
+    }
+
+    public void activateWithoutExpiration() {
+        this.billingPeriod = BillingPeriod.MONTHLY;
+        this.status = SubscriptionStatus.ACTIVE;
+        this.currentPeriodEnd = null;
         this.cancelledAt = null;
     }
 
@@ -65,12 +75,12 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
 
     public boolean isActiveAt(Instant instant) {
         return status == SubscriptionStatus.ACTIVE
-                && currentPeriodEnd != null
-                && currentPeriodEnd.isAfter(instant);
+                && (currentPeriodEnd == null || currentPeriodEnd.isAfter(instant));
     }
 
     public void restoreState(Long id, Long userId, Long planId, SubscriptionStatus status, Instant startedAt,
-                             Instant currentPeriodEnd, Instant cancelledAt, Long latestPaymentId) {
+                             Instant currentPeriodEnd, Instant cancelledAt, Long latestPaymentId,
+                             BillingPeriod billingPeriod) {
         this.id = id;
         this.userId = userId;
         this.planId = planId;
@@ -79,6 +89,7 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
         this.currentPeriodEnd = currentPeriodEnd;
         this.cancelledAt = cancelledAt;
         this.latestPaymentId = latestPaymentId;
+        this.billingPeriod = billingPeriod == null ? BillingPeriod.MONTHLY : billingPeriod;
     }
 
     private static Instant calculatePeriodEnd(Instant start, BillingPeriod billingPeriod) {

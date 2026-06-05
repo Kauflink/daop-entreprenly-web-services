@@ -24,6 +24,7 @@ public final class PaymentResourceFromEntityAssembler {
                 payment.getTransactionId(),
                 payment.getProviderMessage(),
                 payment.getRequestedStatus(),
+                payment.getBillingPeriod(),
                 payment.getRequestedAt(),
                 payment.getProcessedAt());
     }
