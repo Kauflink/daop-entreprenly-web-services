@@ -1,0 +1,78 @@
+package online.entreprenly.platform.chatbot.interfaces.rest;
+
+import online.entreprenly.platform.chatbot.application.commandservices.ChatMessageCommandService;
+import online.entreprenly.platform.chatbot.application.queryservices.ChatMessageQueryService;
+import online.entreprenly.platform.chatbot.domain.model.queries.GetAllChatMessagesQuery;
+import online.entreprenly.platform.chatbot.domain.model.queries.GetChatMessagesByConversationIdQuery;
+import online.entreprenly.platform.chatbot.interfaces.rest.resources.ChatMessageResource;
+import online.entreprenly.platform.chatbot.interfaces.rest.resources.CreateChatMessageResource;
+import online.entreprenly.platform.chatbot.interfaces.rest.transform.ChatMessageResourceFromEntityAssembler;
+import online.entreprenly.platform.chatbot.interfaces.rest.transform.CreateChatMessageCommandFromResourceAssembler;
+import online.entreprenly.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+/**
+ * REST controller exposing chat message resources.
+ */
+@RestController
+@RequestMapping(value = "/api/v1/chat-messages", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "Chatbot - Chat Messages", description = "Conversation message endpoints")
+public class ChatMessagesController {
+
+    private final ChatMessageCommandService commandService;
+    private final ChatMessageQueryService queryService;
+
+    public ChatMessagesController(ChatMessageCommandService commandService,
+                                  ChatMessageQueryService queryService) {
+        this.commandService = commandService;
+        this.queryService = queryService;
+    }
+
+    @GetMapping
+    @Operation(summary = "List chat messages",
+            description = "Retrieves every message, or only those of a conversation when conversationId is provided.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "Messages found")
+    public ResponseEntity<List<ChatMessageResource>> getMessages(
+            @RequestParam(name = "conversationId", required = false) Long conversationId) {
+        var messages = (conversationId == null
+                ? queryService.handle(new GetAllChatMessagesQuery())
+                : queryService.handle(new GetChatMessagesByConversationIdQuery(conversationId)))
+                .stream()
+                .map(ChatMessageResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(messages);
+    }
+
+    @PostMapping
+    @Operation(summary = "Append a chat message", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Message appended",
+                    content = @Content(schema = @Schema(implementation = ChatMessageResource.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data")
+    })
+    public ResponseEntity<?> createMessage(@Valid @RequestBody CreateChatMessageResource resource) {
+        var command = CreateChatMessageCommandFromResourceAssembler.toCommandFromResource(resource);
+        var result = commandService.handle(command);
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result, ChatMessageResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
+    }
+}

@@ -104,6 +104,11 @@ public class WebSecurityConfiguration {
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(
                                 "/api/v1/authentication/**",
+                                // Inbound WhatsApp webhook + bridge relay (the provider/bridge cannot
+                                // present a JWT; bridge writes are guarded by a shared token) and the
+                                // browser EventSource stream (EventSource cannot send Authorization headers).
+                                "/api/v1/chatbot/whatsapp/**",
+                                "/api/v1/chatbot/stream/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",

@@ -43,9 +43,18 @@ jobs:
       - name: Roll out on the VM
         run: |
           TOKEN="$(gcloud auth print-access-token)"
-          gcloud compute ssh "${{ vars.GCE_INSTANCE }}" \
-            --zone "${{ vars.GCP_ZONE }}" \
-            --project "${{ vars.GCP_PROJECT_ID }}" \
-            --strict-host-key-checking=no \
-            --quiet \
-            --command "echo $TOKEN | sudo docker login -u oauth2accesstoken --password-stdin ${{ vars.GCP_REGION }}-docker.pkg.dev && cd /opt/entreprenly && sudo docker compose pull && sudo docker compose up -d && sudo docker image prune -f"
+          for attempt in 1 2 3 4 5; do
+            if gcloud compute ssh "${{ vars.GCE_INSTANCE }}" \
+              --zone "${{ vars.GCP_ZONE }}" \
+              --project "${{ vars.GCP_PROJECT_ID }}" \
+              --strict-host-key-checking=no \
+              --quiet \
+              --command "echo $TOKEN | sudo docker login -u oauth2accesstoken --password-stdin ${{ vars.GCP_REGION }}-docker.pkg.dev && cd /opt/entreprenly && sudo docker compose pull && sudo docker compose up -d && sudo docker image prune -f"; then
+              echo "Roll out succeeded on attempt $attempt"
+              exit 0
+            fi
+            echo "SSH attempt $attempt failed (likely key propagation); retrying in 15s..."
+            sleep 15
+          done
+          echo "All SSH attempts failed" >&2
+          exit 1
