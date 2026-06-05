@@ -22,21 +22,21 @@ public class WeightLotRepositoryImpl implements WeightLotRepository {
     }
 
     @Override
-    public List<WeightLot> findAll() {
-        return weightLotPersistenceRepository.findAll().stream()
+    public List<WeightLot> findAllByOwnerEmail(String ownerEmail) {
+        return weightLotPersistenceRepository.findAllByOwnerEmail(ownerEmail).stream()
                 .map(WeightLotPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public Optional<WeightLot> findById(Long id) {
-        return weightLotPersistenceRepository.findById(id)
+    public Optional<WeightLot> findByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return weightLotPersistenceRepository.findByIdAndOwnerEmail(id, ownerEmail)
                 .map(WeightLotPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
-    public boolean existsById(Long id) {
-        return weightLotPersistenceRepository.existsById(id);
+    public boolean existsByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return weightLotPersistenceRepository.existsByIdAndOwnerEmail(id, ownerEmail);
     }
 
     @Override

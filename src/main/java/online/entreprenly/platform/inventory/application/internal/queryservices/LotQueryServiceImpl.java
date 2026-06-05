@@ -15,7 +15,7 @@ import java.util.Optional;
 
 /**
  * Application service that assembles the combined lot read view from the unit and
- * weight lot aggregates.
+ * weight lot aggregates owned by an account.
  */
 @Service
 public class LotQueryServiceImpl implements LotQueryService {
@@ -30,17 +30,18 @@ public class LotQueryServiceImpl implements LotQueryService {
 
     @Override
     public List<Lot> handle(GetAllLotsQuery query) {
+        var ownerEmail = query.ownerEmail();
         List<Lot> lots = new ArrayList<>();
-        unitLotRepository.findAll().forEach(lot -> lots.add(new Lot(
+        unitLotRepository.findAllByOwnerEmail(ownerEmail).forEach(lot -> lots.add(new Lot(
                 lot.getId(), lot.getProductId(), lot.getCodeQR(), lot.getEntryDate(), ProductType.UNIT)));
-        weightLotRepository.findAll().forEach(lot -> lots.add(new Lot(
+        weightLotRepository.findAllByOwnerEmail(ownerEmail).forEach(lot -> lots.add(new Lot(
                 lot.getId(), lot.getProductId(), lot.getCodeQR(), lot.getEntryDate(), ProductType.WEIGHT)));
         return lots;
     }
 
     @Override
     public Optional<Lot> handle(GetLotByIdQuery query) {
-        return handle(new GetAllLotsQuery()).stream()
+        return handle(new GetAllLotsQuery(query.ownerEmail())).stream()
                 .filter(lot -> lot.getId().equals(query.lotId()))
                 .findFirst();
     }

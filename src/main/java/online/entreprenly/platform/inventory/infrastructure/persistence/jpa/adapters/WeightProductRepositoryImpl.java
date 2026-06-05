@@ -22,26 +22,26 @@ public class WeightProductRepositoryImpl implements WeightProductRepository {
     }
 
     @Override
-    public List<WeightProduct> findAll() {
-        return weightProductPersistenceRepository.findAll().stream()
+    public List<WeightProduct> findAllByOwnerEmail(String ownerEmail) {
+        return weightProductPersistenceRepository.findAllByOwnerEmail(ownerEmail).stream()
                 .map(WeightProductPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public Optional<WeightProduct> findById(Long id) {
-        return weightProductPersistenceRepository.findById(id)
+    public Optional<WeightProduct> findByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return weightProductPersistenceRepository.findByIdAndOwnerEmail(id, ownerEmail)
                 .map(WeightProductPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
-    public boolean existsById(Long id) {
-        return weightProductPersistenceRepository.existsById(id);
+    public boolean existsByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return weightProductPersistenceRepository.existsByIdAndOwnerEmail(id, ownerEmail);
     }
 
     @Override
-    public boolean existsByCodeQR(String codeQR) {
-        return weightProductPersistenceRepository.existsByCodeQR(codeQR);
+    public boolean existsByCodeQRAndOwnerEmail(String codeQR, String ownerEmail) {
+        return weightProductPersistenceRepository.existsByCodeQRAndOwnerEmail(codeQR, ownerEmail);
     }
 
     @Override

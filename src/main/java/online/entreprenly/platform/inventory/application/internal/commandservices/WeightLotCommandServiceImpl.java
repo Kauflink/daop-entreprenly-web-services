@@ -12,7 +12,7 @@ import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 
 /**
- * Weight lot command service implementation.
+ * Weight lot command service implementation. All operations are scoped to the owner account.
  */
 @Service
 public class WeightLotCommandServiceImpl implements WeightLotCommandService {
@@ -28,26 +28,30 @@ public class WeightLotCommandServiceImpl implements WeightLotCommandService {
 
     @Override
     public Result<WeightLot, ApplicationError> handle(CreateWeightLotCommand command) {
+        if (command.ownerEmail() == null || command.ownerEmail().isBlank()) {
+            return Result.failure(ApplicationError.validationError("owner", "An authenticated owner is required"));
+        }
         if (command.productId() == null) {
             return Result.failure(ApplicationError.validationError("productId", "A weight product is required"));
         }
-        if (!weightProductRepository.existsById(command.productId())) {
+        if (!weightProductRepository.existsByIdAndOwnerEmail(command.productId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("WeightProduct", String.valueOf(command.productId())));
         }
         if (command.quantityKg() < 0) {
             return Result.failure(ApplicationError.validationError("quantityKg", "Quantity cannot be negative"));
         }
-        var weightLot = new WeightLot(command.productId(), command.codeQR(), command.entryDate(),
-                command.quantityKg());
+        var weightLot = new WeightLot(command.ownerEmail(), command.productId(), command.codeQR(),
+                command.entryDate(), command.quantityKg());
         return Result.success(weightLotRepository.save(weightLot));
     }
 
     @Override
     public Result<WeightLot, ApplicationError> handle(UpdateWeightLotCommand command) {
-        if (command.productId() != null && !weightProductRepository.existsById(command.productId())) {
+        if (command.productId() != null
+                && !weightProductRepository.existsByIdAndOwnerEmail(command.productId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("WeightProduct", String.valueOf(command.productId())));
         }
-        return weightLotRepository.findById(command.weightLotId())
+        return weightLotRepository.findByIdAndOwnerEmail(command.weightLotId(), command.ownerEmail())
                 .<Result<WeightLot, ApplicationError>>map(weightLot -> {
                     weightLot.updateInfo(command.productId(), command.codeQR(), command.entryDate(),
                             command.quantityKg());
@@ -59,7 +63,7 @@ public class WeightLotCommandServiceImpl implements WeightLotCommandService {
 
     @Override
     public Result<Long, ApplicationError> handle(DeleteWeightLotCommand command) {
-        if (!weightLotRepository.existsById(command.weightLotId())) {
+        if (!weightLotRepository.existsByIdAndOwnerEmail(command.weightLotId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("WeightLot", String.valueOf(command.weightLotId())));
         }
         weightLotRepository.deleteById(command.weightLotId());

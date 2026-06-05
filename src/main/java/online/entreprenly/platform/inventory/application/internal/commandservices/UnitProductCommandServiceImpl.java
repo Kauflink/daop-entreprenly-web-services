@@ -11,7 +11,7 @@ import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 
 /**
- * Unit product command service implementation.
+ * Unit product command service implementation. All operations are scoped to the owner account.
  */
 @Service
 public class UnitProductCommandServiceImpl implements UnitProductCommandService {
@@ -24,22 +24,25 @@ public class UnitProductCommandServiceImpl implements UnitProductCommandService 
 
     @Override
     public Result<UnitProduct, ApplicationError> handle(CreateUnitProductCommand command) {
+        if (command.ownerEmail() == null || command.ownerEmail().isBlank()) {
+            return Result.failure(ApplicationError.validationError("owner", "An authenticated owner is required"));
+        }
         if (command.name() == null || command.name().isBlank()) {
             return Result.failure(ApplicationError.validationError("name", "A product name is required"));
         }
         if (command.codeQR() != null && !command.codeQR().isBlank()
-                && unitProductRepository.existsByCodeQR(command.codeQR())) {
+                && unitProductRepository.existsByCodeQRAndOwnerEmail(command.codeQR(), command.ownerEmail())) {
             return Result.failure(ApplicationError.conflict("UnitProduct",
                     "A unit product already exists with this QR code"));
         }
-        var unitProduct = new UnitProduct(command.name(), command.description(), command.codeQR(),
-                command.price(), command.weightGrams(), command.brand());
+        var unitProduct = new UnitProduct(command.ownerEmail(), command.name(), command.description(),
+                command.codeQR(), command.price(), command.weightGrams(), command.brand());
         return Result.success(unitProductRepository.save(unitProduct));
     }
 
     @Override
     public Result<UnitProduct, ApplicationError> handle(UpdateUnitProductCommand command) {
-        return unitProductRepository.findById(command.unitProductId())
+        return unitProductRepository.findByIdAndOwnerEmail(command.unitProductId(), command.ownerEmail())
                 .<Result<UnitProduct, ApplicationError>>map(unitProduct -> {
                     unitProduct.updateInfo(command.name(), command.description(), command.codeQR(),
                             command.price(), command.weightGrams(), command.brand());
@@ -51,7 +54,7 @@ public class UnitProductCommandServiceImpl implements UnitProductCommandService 
 
     @Override
     public Result<Long, ApplicationError> handle(DeleteUnitProductCommand command) {
-        if (!unitProductRepository.existsById(command.unitProductId())) {
+        if (!unitProductRepository.existsByIdAndOwnerEmail(command.unitProductId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("UnitProduct", String.valueOf(command.unitProductId())));
         }
         unitProductRepository.deleteById(command.unitProductId());

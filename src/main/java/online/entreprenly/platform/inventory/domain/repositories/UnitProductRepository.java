@@ -6,16 +6,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Unit product repository port.
+ * Unit product repository port. All lookups are scoped to the owner account.
  */
 public interface UnitProductRepository {
-    List<UnitProduct> findAll();
+    List<UnitProduct> findAllByOwnerEmail(String ownerEmail);
 
-    Optional<UnitProduct> findById(Long id);
+    Optional<UnitProduct> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
-    boolean existsById(Long id);
+    boolean existsByIdAndOwnerEmail(Long id, String ownerEmail);
 
-    boolean existsByCodeQR(String codeQR);
+    boolean existsByCodeQRAndOwnerEmail(String codeQR, String ownerEmail);
 
     UnitProduct save(UnitProduct unitProduct);
 

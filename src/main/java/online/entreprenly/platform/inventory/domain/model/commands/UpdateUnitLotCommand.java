@@ -3,8 +3,9 @@ package online.entreprenly.platform.inventory.domain.model.commands;
 import java.time.Instant;
 
 /**
- * Command to update an existing unit lot.
+ * Command to update an existing unit lot owned by an account.
  *
+ * @param ownerEmail the email of the account that owns the lot
  * @param unitLotId  the identifier of the lot to update
  * @param productId  the unit product this lot belongs to
  * @param codeQR     the QR code identifying the lot
@@ -12,6 +13,6 @@ import java.time.Instant;
  * @param quantity   the number of units in the lot
  * @param expiryDate the lot expiry date
  */
-public record UpdateUnitLotCommand(Long unitLotId, Long productId, String codeQR, Instant entryDate, int quantity,
-                                   Instant expiryDate) {
+public record UpdateUnitLotCommand(String ownerEmail, Long unitLotId, Long productId, String codeQR, Instant entryDate,
+                                   int quantity, Instant expiryDate) {
 }

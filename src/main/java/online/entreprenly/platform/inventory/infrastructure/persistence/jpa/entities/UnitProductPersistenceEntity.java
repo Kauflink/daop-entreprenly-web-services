@@ -18,6 +18,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UnitProductPersistenceEntity extends AuditableAbstractPersistenceEntity {
 
+    @Column(name = "owner_email", nullable = false, length = 120)
+    private String ownerEmail;
+
     @Column(name = "name", nullable = false, length = 160)
     private String name;
 

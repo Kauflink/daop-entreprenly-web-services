@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service that resolves unit lot read queries.
+ * Application service that resolves unit lot read queries, scoped to the owner account.
  */
 @Service
 public class UnitLotQueryServiceImpl implements UnitLotQueryService {
@@ -24,11 +24,11 @@ public class UnitLotQueryServiceImpl implements UnitLotQueryService {
 
     @Override
     public List<UnitLot> handle(GetAllUnitLotsQuery query) {
-        return unitLotRepository.findAll();
+        return unitLotRepository.findAllByOwnerEmail(query.ownerEmail());
     }
 
     @Override
     public Optional<UnitLot> handle(GetUnitLotByIdQuery query) {
-        return unitLotRepository.findById(query.unitLotId());
+        return unitLotRepository.findByIdAndOwnerEmail(query.unitLotId(), query.ownerEmail());
     }
 }

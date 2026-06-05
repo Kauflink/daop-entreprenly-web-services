@@ -8,8 +8,10 @@ import online.entreprenly.platform.inventory.interfaces.rest.resources.CreateWei
  */
 public class CreateWeightProductCommandFromResourceAssembler {
 
-    public static CreateWeightProductCommand toCommandFromResource(CreateWeightProductResource resource) {
+    public static CreateWeightProductCommand toCommandFromResource(String ownerEmail,
+                                                                   CreateWeightProductResource resource) {
         return new CreateWeightProductCommand(
+                ownerEmail,
                 resource.name(),
                 resource.description(),
                 resource.codeQR(),

@@ -11,7 +11,7 @@ import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 
 /**
- * Weight product command service implementation.
+ * Weight product command service implementation. All operations are scoped to the owner account.
  */
 @Service
 public class WeightProductCommandServiceImpl implements WeightProductCommandService {
@@ -24,22 +24,25 @@ public class WeightProductCommandServiceImpl implements WeightProductCommandServ
 
     @Override
     public Result<WeightProduct, ApplicationError> handle(CreateWeightProductCommand command) {
+        if (command.ownerEmail() == null || command.ownerEmail().isBlank()) {
+            return Result.failure(ApplicationError.validationError("owner", "An authenticated owner is required"));
+        }
         if (command.name() == null || command.name().isBlank()) {
             return Result.failure(ApplicationError.validationError("name", "A product name is required"));
         }
         if (command.codeQR() != null && !command.codeQR().isBlank()
-                && weightProductRepository.existsByCodeQR(command.codeQR())) {
+                && weightProductRepository.existsByCodeQRAndOwnerEmail(command.codeQR(), command.ownerEmail())) {
             return Result.failure(ApplicationError.conflict("WeightProduct",
                     "A weight product already exists with this QR code"));
         }
-        var weightProduct = new WeightProduct(command.name(), command.description(), command.codeQR(),
-                command.pricePerKg());
+        var weightProduct = new WeightProduct(command.ownerEmail(), command.name(), command.description(),
+                command.codeQR(), command.pricePerKg());
         return Result.success(weightProductRepository.save(weightProduct));
     }
 
     @Override
     public Result<WeightProduct, ApplicationError> handle(UpdateWeightProductCommand command) {
-        return weightProductRepository.findById(command.weightProductId())
+        return weightProductRepository.findByIdAndOwnerEmail(command.weightProductId(), command.ownerEmail())
                 .<Result<WeightProduct, ApplicationError>>map(weightProduct -> {
                     weightProduct.updateInfo(command.name(), command.description(), command.codeQR(),
                             command.pricePerKg());
@@ -51,7 +54,7 @@ public class WeightProductCommandServiceImpl implements WeightProductCommandServ
 
     @Override
     public Result<Long, ApplicationError> handle(DeleteWeightProductCommand command) {
-        if (!weightProductRepository.existsById(command.weightProductId())) {
+        if (!weightProductRepository.existsByIdAndOwnerEmail(command.weightProductId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("WeightProduct",
                     String.valueOf(command.weightProductId())));
         }

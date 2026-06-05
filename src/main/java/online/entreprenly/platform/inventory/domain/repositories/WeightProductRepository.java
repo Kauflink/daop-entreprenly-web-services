@@ -6,16 +6,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Weight product repository port.
+ * Weight product repository port. All lookups are scoped to the owner account.
  */
 public interface WeightProductRepository {
-    List<WeightProduct> findAll();
+    List<WeightProduct> findAllByOwnerEmail(String ownerEmail);
 
-    Optional<WeightProduct> findById(Long id);
+    Optional<WeightProduct> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
-    boolean existsById(Long id);
+    boolean existsByIdAndOwnerEmail(Long id, String ownerEmail);
 
-    boolean existsByCodeQR(String codeQR);
+    boolean existsByCodeQRAndOwnerEmail(String codeQR, String ownerEmail);
 
     WeightProduct save(WeightProduct weightProduct);
 

@@ -12,7 +12,7 @@ import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 
 /**
- * Unit lot command service implementation.
+ * Unit lot command service implementation. All operations are scoped to the owner account.
  */
 @Service
 public class UnitLotCommandServiceImpl implements UnitLotCommandService {
@@ -28,26 +28,30 @@ public class UnitLotCommandServiceImpl implements UnitLotCommandService {
 
     @Override
     public Result<UnitLot, ApplicationError> handle(CreateUnitLotCommand command) {
+        if (command.ownerEmail() == null || command.ownerEmail().isBlank()) {
+            return Result.failure(ApplicationError.validationError("owner", "An authenticated owner is required"));
+        }
         if (command.productId() == null) {
             return Result.failure(ApplicationError.validationError("productId", "A unit product is required"));
         }
-        if (!unitProductRepository.existsById(command.productId())) {
+        if (!unitProductRepository.existsByIdAndOwnerEmail(command.productId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("UnitProduct", String.valueOf(command.productId())));
         }
         if (command.quantity() < 0) {
             return Result.failure(ApplicationError.validationError("quantity", "Quantity cannot be negative"));
         }
-        var unitLot = new UnitLot(command.productId(), command.codeQR(), command.entryDate(),
+        var unitLot = new UnitLot(command.ownerEmail(), command.productId(), command.codeQR(), command.entryDate(),
                 command.quantity(), command.expiryDate());
         return Result.success(unitLotRepository.save(unitLot));
     }
 
     @Override
     public Result<UnitLot, ApplicationError> handle(UpdateUnitLotCommand command) {
-        if (command.productId() != null && !unitProductRepository.existsById(command.productId())) {
+        if (command.productId() != null
+                && !unitProductRepository.existsByIdAndOwnerEmail(command.productId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("UnitProduct", String.valueOf(command.productId())));
         }
-        return unitLotRepository.findById(command.unitLotId())
+        return unitLotRepository.findByIdAndOwnerEmail(command.unitLotId(), command.ownerEmail())
                 .<Result<UnitLot, ApplicationError>>map(unitLot -> {
                     unitLot.updateInfo(command.productId(), command.codeQR(), command.entryDate(),
                             command.quantity(), command.expiryDate());
@@ -59,7 +63,7 @@ public class UnitLotCommandServiceImpl implements UnitLotCommandService {
 
     @Override
     public Result<Long, ApplicationError> handle(DeleteUnitLotCommand command) {
-        if (!unitLotRepository.existsById(command.unitLotId())) {
+        if (!unitLotRepository.existsByIdAndOwnerEmail(command.unitLotId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("UnitLot", String.valueOf(command.unitLotId())));
         }
         unitLotRepository.deleteById(command.unitLotId());

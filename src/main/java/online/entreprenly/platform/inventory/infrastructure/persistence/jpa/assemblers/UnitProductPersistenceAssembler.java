@@ -16,6 +16,7 @@ public final class UnitProductPersistenceAssembler {
         var unitProduct = new UnitProduct();
         unitProduct.restoreState(
                 entity.getId(),
+                entity.getOwnerEmail(),
                 entity.getName(),
                 entity.getDescription(),
                 entity.getCodeQR(),
@@ -31,6 +32,7 @@ public final class UnitProductPersistenceAssembler {
         if (unitProduct.getId() != null) {
             entity.setId(unitProduct.getId());
         }
+        entity.setOwnerEmail(unitProduct.getOwnerEmail());
         entity.setName(unitProduct.getName());
         entity.setDescription(unitProduct.getDescription());
         entity.setCodeQR(unitProduct.getCodeQR());
