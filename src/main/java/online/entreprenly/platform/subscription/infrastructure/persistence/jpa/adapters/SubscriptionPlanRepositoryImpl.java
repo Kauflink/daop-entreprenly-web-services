@@ -34,8 +34,18 @@ public class SubscriptionPlanRepositoryImpl implements SubscriptionPlanRepositor
     }
 
     @Override
+    public Optional<SubscriptionPlan> findByCode(String code) {
+        return persistenceRepository.findByCode(code).map(SubscriptionPlanPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
     public boolean existsByNameIgnoreCase(String name) {
         return persistenceRepository.existsByNameIgnoreCase(name);
+    }
+
+    @Override
+    public boolean existsByCode(String code) {
+        return persistenceRepository.existsByCode(code);
     }
 
     @Override

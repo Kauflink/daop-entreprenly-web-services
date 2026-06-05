@@ -17,6 +17,7 @@ public final class ProcessSubscriptionPaymentCommandFromResourceAssembler {
                 subscriptionId,
                 resource.paymentMethod(),
                 resource.cardToken(),
-                resource.requestedPaymentStatus());
+                resource.requestedPaymentStatus(),
+                resource.billingPeriod());
     }
 }

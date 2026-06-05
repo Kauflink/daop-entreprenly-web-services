@@ -22,7 +22,8 @@ public final class SubscriptionPersistenceAssembler {
                 entity.getStartedAt(),
                 entity.getCurrentPeriodEnd(),
                 entity.getCancelledAt(),
-                entity.getLatestPaymentId());
+                entity.getLatestPaymentId(),
+                entity.getBillingPeriod());
         return subscription;
     }
 
@@ -39,6 +40,7 @@ public final class SubscriptionPersistenceAssembler {
         entity.setCurrentPeriodEnd(subscription.getCurrentPeriodEnd());
         entity.setCancelledAt(subscription.getCancelledAt());
         entity.setLatestPaymentId(subscription.getLatestPaymentId());
+        entity.setBillingPeriod(subscription.getBillingPeriod());
         return entity;
     }
 }

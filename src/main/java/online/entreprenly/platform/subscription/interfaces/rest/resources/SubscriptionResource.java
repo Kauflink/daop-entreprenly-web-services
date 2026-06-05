@@ -1,6 +1,7 @@
 package online.entreprenly.platform.subscription.interfaces.rest.resources;
 
 import online.entreprenly.platform.subscription.domain.model.valueobjects.SubscriptionStatus;
+import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -32,6 +33,9 @@ public record SubscriptionResource(
         Instant cancelledAt,
 
         @Schema(description = "Latest fake payment identifier", example = "1", nullable = true)
-        Long latestPaymentId
+        Long latestPaymentId,
+
+        @Schema(description = "Billing period selected by the subscription", example = "MONTHLY")
+        BillingPeriod billingPeriod
 ) {
 }

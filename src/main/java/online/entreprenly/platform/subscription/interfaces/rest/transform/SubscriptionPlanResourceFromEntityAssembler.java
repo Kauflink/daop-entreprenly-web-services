@@ -14,9 +14,11 @@ public final class SubscriptionPlanResourceFromEntityAssembler {
     public static SubscriptionPlanResource toResourceFromEntity(SubscriptionPlan plan) {
         return new SubscriptionPlanResource(
                 plan.getId(),
+                plan.getCode(),
                 plan.getName(),
                 plan.getDescription(),
                 plan.getPrice().amount(),
+                plan.getAnnualPrice().amount(),
                 plan.getPrice().currency(),
                 plan.getBillingPeriod(),
                 plan.getFeatures(),

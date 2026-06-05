@@ -21,7 +21,8 @@ class SubscriptionTests {
         var subscription = new Subscription(1L, plan);
         subscription.setId(1L);
         var payment = new Payment(1L, 1L, 1L, plan.getPrice(), "FAKE_CARD",
-                PaymentStatus.APPROVED, "fake_tx_1", "Fake payment approved", PaymentStatus.APPROVED);
+                PaymentStatus.APPROVED, "fake_tx_1", "Fake payment approved", PaymentStatus.APPROVED,
+                BillingPeriod.MONTHLY);
         payment.setId(1L);
 
         subscription.applyPayment(payment, plan.getBillingPeriod());
@@ -37,7 +38,8 @@ class SubscriptionTests {
         var subscription = new Subscription(1L, plan);
         subscription.setId(1L);
         var payment = new Payment(1L, 1L, 1L, plan.getPrice(), "FAKE_CARD",
-                PaymentStatus.DECLINED, "fake_tx_2", "Fake payment declined", PaymentStatus.DECLINED);
+                PaymentStatus.DECLINED, "fake_tx_2", "Fake payment declined", PaymentStatus.DECLINED,
+                BillingPeriod.MONTHLY);
         payment.setId(2L);
 
         subscription.applyPayment(payment, plan.getBillingPeriod());
@@ -47,7 +49,9 @@ class SubscriptionTests {
     }
 
     private static SubscriptionPlan plan() {
-        var plan = new SubscriptionPlan("Premium", "Premium plan", new Money(BigDecimal.valueOf(49.90), "USD"),
+        var plan = new SubscriptionPlan("plan-control", "Premium", "Premium plan",
+                new Money(BigDecimal.valueOf(49.90), "USD"),
+                new Money(BigDecimal.valueOf(499.00), "USD"),
                 BillingPeriod.MONTHLY, List.of("dashboard"), true);
         plan.setId(1L);
         return plan;

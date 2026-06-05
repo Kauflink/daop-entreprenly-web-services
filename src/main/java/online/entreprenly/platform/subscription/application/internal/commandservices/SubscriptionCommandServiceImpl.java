@@ -58,9 +58,10 @@ public class SubscriptionCommandServiceImpl implements SubscriptionCommandServic
                         return Result.failure(ApplicationError.businessRuleViolation("Inactive plan", "Cannot subscribe to an inactive plan"));
                     }
                     var subscription = subscriptionRepository.save(new Subscription(command.userId(), plan));
+                    var billingPeriod = command.billingPeriod() == null ? plan.getBillingPeriod() : command.billingPeriod();
                     var payment = processPayment(subscription, plan, command.paymentMethod(), command.cardToken(),
-                            command.requestedPaymentStatus());
-                    subscription.applyPayment(payment, plan.getBillingPeriod());
+                            command.requestedPaymentStatus(), billingPeriod);
+                    subscription.applyPayment(payment, billingPeriod);
                     return Result.success(subscriptionRepository.save(subscription));
                 })
                 .orElseGet(() -> Result.failure(ApplicationError.notFound("SubscriptionPlan", String.valueOf(command.planId()))));
@@ -74,9 +75,10 @@ public class SubscriptionCommandServiceImpl implements SubscriptionCommandServic
                             if (!plan.isActive()) {
                                 return Result.failure(ApplicationError.businessRuleViolation("Inactive plan", "Cannot renew an inactive plan"));
                             }
+                            var billingPeriod = command.billingPeriod() == null ? subscription.getBillingPeriod() : command.billingPeriod();
                             var payment = processPayment(subscription, plan, command.paymentMethod(), command.cardToken(),
-                                    command.requestedPaymentStatus());
-                            subscription.applyPayment(payment, plan.getBillingPeriod());
+                                    command.requestedPaymentStatus(), billingPeriod);
+                            subscription.applyPayment(payment, billingPeriod);
                             return Result.success(subscriptionRepository.save(subscription));
                         })
                         .orElseGet(() -> Result.failure(ApplicationError.notFound("SubscriptionPlan", String.valueOf(subscription.getPlanId())))))
@@ -98,9 +100,10 @@ public class SubscriptionCommandServiceImpl implements SubscriptionCommandServic
         return subscriptionRepository.findById(command.subscriptionId())
                 .<Result<Payment, ApplicationError>>map(subscription -> subscriptionPlanRepository.findById(subscription.getPlanId())
                         .<Result<Payment, ApplicationError>>map(plan -> {
+                            var billingPeriod = command.billingPeriod() == null ? subscription.getBillingPeriod() : command.billingPeriod();
                             var payment = processPayment(subscription, plan, command.paymentMethod(), command.cardToken(),
-                                    command.requestedPaymentStatus());
-                            subscription.applyPayment(payment, plan.getBillingPeriod());
+                                    command.requestedPaymentStatus(), billingPeriod);
+                            subscription.applyPayment(payment, billingPeriod);
                             subscriptionRepository.save(subscription);
                             return Result.success(payment);
                         })
@@ -109,26 +112,29 @@ public class SubscriptionCommandServiceImpl implements SubscriptionCommandServic
     }
 
     private Payment processPayment(Subscription subscription, SubscriptionPlan plan, String paymentMethod,
-                                   String cardToken, PaymentStatus requestedStatus) {
+                                   String cardToken, PaymentStatus requestedStatus,
+                                   online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod billingPeriod) {
         var request = new PaymentGatewayRequest(
                 subscription.getId(),
                 subscription.getUserId(),
                 plan.getId(),
-                plan.getPrice(),
+                plan.getPriceFor(billingPeriod),
                 paymentMethod,
                 cardToken,
-                requestedStatus);
+                requestedStatus,
+                billingPeriod);
         var response = paymentGateway.process(request);
         var payment = new Payment(
                 subscription.getId(),
                 subscription.getUserId(),
                 plan.getId(),
-                plan.getPrice(),
+                plan.getPriceFor(billingPeriod),
                 paymentMethod,
                 response.status(),
                 response.transactionId(),
                 response.message(),
-                requestedStatus);
+                requestedStatus,
+                billingPeriod);
         return paymentRepository.save(payment);
     }
 }

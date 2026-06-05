@@ -1,6 +1,7 @@
 package online.entreprenly.platform.subscription.infrastructure.persistence.jpa.entities;
 
 import online.entreprenly.platform.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
+import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.SubscriptionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,4 +45,8 @@ public class SubscriptionPersistenceEntity extends AuditableAbstractPersistenceE
 
     @Column(name = "latest_payment_id")
     private Long latestPaymentId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "billing_period", nullable = false, length = 20)
+    private BillingPeriod billingPeriod;
 }

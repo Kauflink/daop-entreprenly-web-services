@@ -30,14 +30,23 @@ public class SubscriptionPlanCommandServiceImpl implements SubscriptionPlanComma
         if (command.amount() == null) {
             return Result.failure(ApplicationError.validationError("amount", "A plan amount is required"));
         }
+        var code = command.code() == null || command.code().isBlank()
+                ? command.name().trim().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "")
+                : command.code().trim().toLowerCase();
+        if (subscriptionPlanRepository.existsByCode(code)) {
+            return Result.failure(ApplicationError.conflict("SubscriptionPlan", "A plan with this code already exists"));
+        }
         if (subscriptionPlanRepository.existsByNameIgnoreCase(command.name().trim())) {
             return Result.failure(ApplicationError.conflict("SubscriptionPlan", "A plan with this name already exists"));
         }
         var price = new Money(command.amount(), command.currency());
+        var annualPrice = new Money(command.annualAmount() == null ? command.amount() : command.annualAmount(), command.currency());
         var plan = new SubscriptionPlan(
+                code,
                 command.name().trim(),
                 command.description(),
                 price,
+                annualPrice,
                 command.billingPeriod() == null ? BillingPeriod.MONTHLY : command.billingPeriod(),
                 command.features(),
                 command.active() == null || command.active());
