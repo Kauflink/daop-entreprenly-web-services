@@ -17,9 +17,11 @@ public final class SubscriptionPlanPersistenceAssembler {
         var plan = new SubscriptionPlan();
         plan.restoreState(
                 entity.getId(),
+                entity.getCode(),
                 entity.getName(),
                 entity.getDescription(),
                 new Money(entity.getAmount(), entity.getCurrency()),
+                new Money(entity.getAnnualAmount(), entity.getCurrency()),
                 entity.getBillingPeriod(),
                 entity.getFeatures(),
                 entity.isActive());
@@ -32,9 +34,11 @@ public final class SubscriptionPlanPersistenceAssembler {
         if (plan.getId() != null) {
             entity.setId(plan.getId());
         }
+        entity.setCode(plan.getCode());
         entity.setName(plan.getName());
         entity.setDescription(plan.getDescription());
         entity.setAmount(plan.getPrice().amount());
+        entity.setAnnualAmount(plan.getAnnualPrice().amount());
         entity.setCurrency(plan.getPrice().currency());
         entity.setBillingPeriod(plan.getBillingPeriod());
         entity.setFeatures(new java.util.ArrayList<>(plan.getFeatures()));

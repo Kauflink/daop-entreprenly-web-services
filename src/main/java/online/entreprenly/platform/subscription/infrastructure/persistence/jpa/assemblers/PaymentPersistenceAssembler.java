@@ -26,6 +26,7 @@ public final class PaymentPersistenceAssembler {
                 entity.getTransactionId(),
                 entity.getProviderMessage(),
                 entity.getRequestedStatus(),
+                entity.getBillingPeriod(),
                 entity.getRequestedAt(),
                 entity.getProcessedAt());
         return payment;
@@ -47,6 +48,7 @@ public final class PaymentPersistenceAssembler {
         entity.setTransactionId(payment.getTransactionId());
         entity.setProviderMessage(payment.getProviderMessage());
         entity.setRequestedStatus(payment.getRequestedStatus());
+        entity.setBillingPeriod(payment.getBillingPeriod());
         entity.setRequestedAt(payment.getRequestedAt());
         entity.setProcessedAt(payment.getProcessedAt());
         return entity;

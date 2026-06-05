@@ -1,6 +1,7 @@
 package online.entreprenly.platform.subscription.interfaces.rest.resources;
 
 import online.entreprenly.platform.subscription.domain.model.valueobjects.PaymentStatus;
+import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -43,6 +44,9 @@ public record PaymentResource(
 
         @Schema(description = "Requested fake payment status", example = "APPROVED")
         PaymentStatus requestedStatus,
+
+        @Schema(description = "Billing period charged by this fake payment", example = "MONTHLY")
+        BillingPeriod billingPeriod,
 
         @Schema(description = "Instant the fake payment was requested")
         Instant requestedAt,

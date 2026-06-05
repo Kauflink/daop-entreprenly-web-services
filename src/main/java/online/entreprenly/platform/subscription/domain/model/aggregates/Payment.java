@@ -25,6 +25,7 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
     private String transactionId;
     private String providerMessage;
     private PaymentStatus requestedStatus;
+    private online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod billingPeriod;
     private Instant requestedAt;
     private Instant processedAt;
 
@@ -33,7 +34,8 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
 
     public Payment(Long subscriptionId, Long userId, Long planId, Money amount, String paymentMethod,
                    PaymentStatus status, String transactionId, String providerMessage,
-                   PaymentStatus requestedStatus) {
+                   PaymentStatus requestedStatus,
+                   online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod billingPeriod) {
         this.subscriptionId = subscriptionId;
         this.userId = userId;
         this.planId = planId;
@@ -43,13 +45,18 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
         this.transactionId = transactionId;
         this.providerMessage = providerMessage;
         this.requestedStatus = requestedStatus;
+        this.billingPeriod = billingPeriod == null
+                ? online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod.MONTHLY
+                : billingPeriod;
         this.requestedAt = Instant.now();
         this.processedAt = status == PaymentStatus.PENDING ? null : this.requestedAt;
     }
 
     public void restoreState(Long id, Long subscriptionId, Long userId, Long planId, Money amount,
                              String paymentMethod, PaymentStatus status, String transactionId,
-                             String providerMessage, PaymentStatus requestedStatus, Instant requestedAt,
+                             String providerMessage, PaymentStatus requestedStatus,
+                             online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod billingPeriod,
+                             Instant requestedAt,
                              Instant processedAt) {
         this.id = id;
         this.subscriptionId = subscriptionId;
@@ -61,6 +68,9 @@ public class Payment extends AbstractDomainAggregateRoot<Payment> {
         this.transactionId = transactionId;
         this.providerMessage = providerMessage;
         this.requestedStatus = requestedStatus;
+        this.billingPeriod = billingPeriod == null
+                ? online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod.MONTHLY
+                : billingPeriod;
         this.requestedAt = requestedAt;
         this.processedAt = processedAt;
     }

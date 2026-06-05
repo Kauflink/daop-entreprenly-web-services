@@ -14,6 +14,9 @@ import java.util.List;
  */
 @Schema(name = "CreateSubscriptionPlanRequest", description = "Request to create a subscription plan")
 public record CreateSubscriptionPlanResource(
+        @Schema(description = "Plan stable code", example = "plan-control")
+        String code,
+
         @Schema(description = "Plan name", example = "Premium")
         @NotBlank
         String name,
@@ -25,6 +28,10 @@ public record CreateSubscriptionPlanResource(
         @NotNull
         @DecimalMin("0.00")
         BigDecimal amount,
+
+        @Schema(description = "Annual plan price amount", example = "890.00")
+        @DecimalMin("0.00")
+        BigDecimal annualAmount,
 
         @Schema(description = "Plan currency", example = "USD")
         @NotBlank

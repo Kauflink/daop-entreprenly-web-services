@@ -20,6 +20,7 @@ public final class SubscriptionResourceFromEntityAssembler {
                 subscription.getStartedAt(),
                 subscription.getCurrentPeriodEnd(),
                 subscription.getCancelledAt(),
-                subscription.getLatestPaymentId());
+                subscription.getLatestPaymentId(),
+                subscription.getBillingPeriod());
     }
 }

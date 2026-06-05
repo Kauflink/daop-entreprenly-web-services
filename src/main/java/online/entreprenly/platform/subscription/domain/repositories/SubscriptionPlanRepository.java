@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface SubscriptionPlanRepository {
     List<SubscriptionPlan> findAll();
     Optional<SubscriptionPlan> findById(Long id);
+    Optional<SubscriptionPlan> findByCode(String code);
     boolean existsByNameIgnoreCase(String name);
+    boolean existsByCode(String code);
     SubscriptionPlan save(SubscriptionPlan plan);
 }

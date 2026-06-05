@@ -17,6 +17,7 @@ public final class CreateSubscriptionCommandFromResourceAssembler {
                 resource.planId(),
                 resource.paymentMethod(),
                 resource.cardToken(),
-                resource.requestedPaymentStatus());
+                resource.requestedPaymentStatus(),
+                resource.billingPeriod());
     }
 }

@@ -16,6 +16,7 @@ public final class RenewSubscriptionCommandFromResourceAssembler {
                 subscriptionId,
                 resource.paymentMethod(),
                 resource.cardToken(),
-                resource.requestedPaymentStatus());
+                resource.requestedPaymentStatus(),
+                resource.billingPeriod());
     }
 }

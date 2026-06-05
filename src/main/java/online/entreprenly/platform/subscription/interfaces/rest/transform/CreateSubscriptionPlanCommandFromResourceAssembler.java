@@ -13,9 +13,11 @@ public final class CreateSubscriptionPlanCommandFromResourceAssembler {
 
     public static CreateSubscriptionPlanCommand toCommandFromResource(CreateSubscriptionPlanResource resource) {
         return new CreateSubscriptionPlanCommand(
+                resource.code(),
                 resource.name(),
                 resource.description(),
                 resource.amount(),
+                resource.annualAmount(),
                 resource.currency(),
                 resource.billingPeriod(),
                 resource.features(),
