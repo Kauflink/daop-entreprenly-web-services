@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service that resolves unit product read queries.
+ * Application service that resolves unit product read queries, scoped to the owner account.
  */
 @Service
 public class UnitProductQueryServiceImpl implements UnitProductQueryService {
@@ -24,11 +24,11 @@ public class UnitProductQueryServiceImpl implements UnitProductQueryService {
 
     @Override
     public List<UnitProduct> handle(GetAllUnitProductsQuery query) {
-        return unitProductRepository.findAll();
+        return unitProductRepository.findAllByOwnerEmail(query.ownerEmail());
     }
 
     @Override
     public Optional<UnitProduct> handle(GetUnitProductByIdQuery query) {
-        return unitProductRepository.findById(query.unitProductId());
+        return unitProductRepository.findByIdAndOwnerEmail(query.unitProductId(), query.ownerEmail());
     }
 }

@@ -20,6 +20,9 @@ import java.time.Instant;
 @NoArgsConstructor
 public class UnitLotPersistenceEntity extends AuditableAbstractPersistenceEntity {
 
+    @Column(name = "owner_email", nullable = false, length = 120)
+    private String ownerEmail;
+
     @Column(name = "product_id", nullable = false)
     private Long productId;
 

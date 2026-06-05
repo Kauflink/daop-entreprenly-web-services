@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * REST controller that exposes weight product resources.
+ * REST controller that exposes weight product resources for the authenticated account.
  */
 @RestController
 @RequestMapping(value = "/api/v1/inventory-weight-products", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -54,7 +54,7 @@ public class WeightProductsController {
     @PostMapping
     @Operation(
         summary = "Create a weight product",
-        description = "Registers a new product tracked and sold by weight.",
+        description = "Registers a new product tracked and sold by weight, owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -64,7 +64,8 @@ public class WeightProductsController {
             @ApiResponse(responseCode = "409", description = "A weight product already exists with the QR code")
     })
     public ResponseEntity<?> createWeightProduct(@Valid @RequestBody CreateWeightProductResource resource) {
-        var command = CreateWeightProductCommandFromResourceAssembler.toCommandFromResource(resource);
+        var command = CreateWeightProductCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), resource);
         var result = weightProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, WeightProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -73,12 +74,13 @@ public class WeightProductsController {
     @GetMapping
     @Operation(
         summary = "List weight products",
-        description = "Retrieves every registered weight product.",
+        description = "Retrieves every weight product owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Weight products found")
     public ResponseEntity<List<WeightProductResource>> getAllWeightProducts() {
-        var resources = weightProductQueryService.handle(new GetAllWeightProductsQuery()).stream()
+        var resources = weightProductQueryService.handle(new GetAllWeightProductsQuery(AuthenticatedUser.email()))
+                .stream()
                 .map(WeightProductResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -87,7 +89,7 @@ public class WeightProductsController {
     @GetMapping("/{weightProductId}")
     @Operation(
         summary = "Get weight product by ID",
-        description = "Retrieves a weight product by its unique identifier.",
+        description = "Retrieves a weight product owned by the authenticated account by its identifier.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -96,7 +98,7 @@ public class WeightProductsController {
             @ApiResponse(responseCode = "404", description = "Weight product not found")
     })
     public ResponseEntity<WeightProductResource> getWeightProductById(@PathVariable Long weightProductId) {
-        return weightProductQueryService.handle(new GetWeightProductByIdQuery(weightProductId))
+        return weightProductQueryService.handle(new GetWeightProductByIdQuery(AuthenticatedUser.email(), weightProductId))
                 .map(WeightProductResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -105,7 +107,7 @@ public class WeightProductsController {
     @PutMapping("/{weightProductId}")
     @Operation(
         summary = "Update a weight product",
-        description = "Updates the attributes of an existing weight product.",
+        description = "Updates a weight product owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -116,7 +118,8 @@ public class WeightProductsController {
     })
     public ResponseEntity<?> updateWeightProduct(@PathVariable Long weightProductId,
                                                  @Valid @RequestBody UpdateWeightProductResource resource) {
-        var command = UpdateWeightProductCommandFromResourceAssembler.toCommandFromResource(weightProductId, resource);
+        var command = UpdateWeightProductCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), weightProductId, resource);
         var result = weightProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, WeightProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
@@ -125,7 +128,7 @@ public class WeightProductsController {
     @DeleteMapping("/{weightProductId}")
     @Operation(
         summary = "Delete a weight product",
-        description = "Deletes a weight product by its unique identifier.",
+        description = "Deletes a weight product owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -133,7 +136,8 @@ public class WeightProductsController {
             @ApiResponse(responseCode = "404", description = "Weight product not found")
     })
     public ResponseEntity<?> deleteWeightProduct(@PathVariable Long weightProductId) {
-        var result = weightProductCommandService.handle(new DeleteWeightProductCommand(weightProductId));
+        var result = weightProductCommandService.handle(
+                new DeleteWeightProductCommand(AuthenticatedUser.email(), weightProductId));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, id -> null, HttpStatus.NO_CONTENT);
     }

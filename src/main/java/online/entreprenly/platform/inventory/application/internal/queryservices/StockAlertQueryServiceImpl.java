@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service that derives stock alerts from the current inventory snapshot.
+ * Application service that derives stock alerts from the current inventory snapshot of an account.
  */
 @Service
 public class StockAlertQueryServiceImpl implements StockAlertQueryService {
@@ -38,17 +38,18 @@ public class StockAlertQueryServiceImpl implements StockAlertQueryService {
 
     @Override
     public List<StockAlert> handle(GetAllStockAlertsQuery query) {
+        var ownerEmail = query.ownerEmail();
         return StockAlertGenerator.generate(
-                unitProductRepository.findAll(),
-                weightProductRepository.findAll(),
-                unitLotRepository.findAll(),
-                weightLotRepository.findAll(),
+                unitProductRepository.findAllByOwnerEmail(ownerEmail),
+                weightProductRepository.findAllByOwnerEmail(ownerEmail),
+                unitLotRepository.findAllByOwnerEmail(ownerEmail),
+                weightLotRepository.findAllByOwnerEmail(ownerEmail),
                 Instant.now());
     }
 
     @Override
     public Optional<StockAlert> handle(GetStockAlertByIdQuery query) {
-        return handle(new GetAllStockAlertsQuery()).stream()
+        return handle(new GetAllStockAlertsQuery(query.ownerEmail())).stream()
                 .filter(alert -> alert.getId().equals(query.stockAlertId()))
                 .findFirst();
     }

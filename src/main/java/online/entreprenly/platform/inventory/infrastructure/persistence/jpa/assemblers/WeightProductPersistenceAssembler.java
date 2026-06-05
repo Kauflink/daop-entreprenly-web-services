@@ -16,6 +16,7 @@ public final class WeightProductPersistenceAssembler {
         var weightProduct = new WeightProduct();
         weightProduct.restoreState(
                 entity.getId(),
+                entity.getOwnerEmail(),
                 entity.getName(),
                 entity.getDescription(),
                 entity.getCodeQR(),
@@ -29,6 +30,7 @@ public final class WeightProductPersistenceAssembler {
         if (weightProduct.getId() != null) {
             entity.setId(weightProduct.getId());
         }
+        entity.setOwnerEmail(weightProduct.getOwnerEmail());
         entity.setName(weightProduct.getName());
         entity.setDescription(weightProduct.getDescription());
         entity.setCodeQR(weightProduct.getCodeQR());

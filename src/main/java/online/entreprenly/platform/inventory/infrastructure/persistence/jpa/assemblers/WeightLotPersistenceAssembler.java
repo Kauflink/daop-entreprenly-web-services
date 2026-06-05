@@ -16,6 +16,7 @@ public final class WeightLotPersistenceAssembler {
         var weightLot = new WeightLot();
         weightLot.restoreState(
                 entity.getId(),
+                entity.getOwnerEmail(),
                 entity.getProductId(),
                 entity.getCodeQR(),
                 entity.getEntryDate(),
@@ -29,6 +30,7 @@ public final class WeightLotPersistenceAssembler {
         if (weightLot.getId() != null) {
             entity.setId(weightLot.getId());
         }
+        entity.setOwnerEmail(weightLot.getOwnerEmail());
         entity.setProductId(weightLot.getProductId());
         entity.setCodeQR(weightLot.getCodeQR());
         entity.setEntryDate(weightLot.getEntryDate());

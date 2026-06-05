@@ -8,9 +8,10 @@ import online.entreprenly.platform.inventory.interfaces.rest.resources.UpdateWei
  */
 public class UpdateWeightProductCommandFromResourceAssembler {
 
-    public static UpdateWeightProductCommand toCommandFromResource(Long weightProductId,
+    public static UpdateWeightProductCommand toCommandFromResource(String ownerEmail, Long weightProductId,
                                                                    UpdateWeightProductResource resource) {
         return new UpdateWeightProductCommand(
+                ownerEmail,
                 weightProductId,
                 resource.name(),
                 resource.description(),

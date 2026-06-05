@@ -8,8 +8,10 @@ import online.entreprenly.platform.inventory.interfaces.rest.resources.CreateUni
  */
 public class CreateUnitProductCommandFromResourceAssembler {
 
-    public static CreateUnitProductCommand toCommandFromResource(CreateUnitProductResource resource) {
+    public static CreateUnitProductCommand toCommandFromResource(String ownerEmail,
+                                                                 CreateUnitProductResource resource) {
         return new CreateUnitProductCommand(
+                ownerEmail,
                 resource.name(),
                 resource.description(),
                 resource.codeQR(),

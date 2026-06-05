@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * REST controller that exposes unit lot resources.
+ * REST controller that exposes unit lot resources for the authenticated account.
  */
 @RestController
 @RequestMapping(value = "/api/v1/inventory-unit-lots", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -54,7 +54,7 @@ public class UnitLotsController {
     @PostMapping
     @Operation(
         summary = "Create a unit lot",
-        description = "Registers a new stock batch for a per-unit product.",
+        description = "Registers a new stock batch for a per-unit product owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -64,7 +64,8 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "404", description = "Referenced unit product not found")
     })
     public ResponseEntity<?> createUnitLot(@Valid @RequestBody CreateUnitLotResource resource) {
-        var command = CreateUnitLotCommandFromResourceAssembler.toCommandFromResource(resource);
+        var command = CreateUnitLotCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), resource);
         var result = unitLotCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitLotResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -73,12 +74,12 @@ public class UnitLotsController {
     @GetMapping
     @Operation(
         summary = "List unit lots",
-        description = "Retrieves every registered unit lot.",
+        description = "Retrieves every unit lot owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Unit lots found")
     public ResponseEntity<List<UnitLotResource>> getAllUnitLots() {
-        var resources = unitLotQueryService.handle(new GetAllUnitLotsQuery()).stream()
+        var resources = unitLotQueryService.handle(new GetAllUnitLotsQuery(AuthenticatedUser.email())).stream()
                 .map(UnitLotResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -87,7 +88,7 @@ public class UnitLotsController {
     @GetMapping("/{unitLotId}")
     @Operation(
         summary = "Get unit lot by ID",
-        description = "Retrieves a unit lot by its unique identifier.",
+        description = "Retrieves a unit lot owned by the authenticated account by its identifier.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -96,7 +97,7 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "404", description = "Unit lot not found")
     })
     public ResponseEntity<UnitLotResource> getUnitLotById(@PathVariable Long unitLotId) {
-        return unitLotQueryService.handle(new GetUnitLotByIdQuery(unitLotId))
+        return unitLotQueryService.handle(new GetUnitLotByIdQuery(AuthenticatedUser.email(), unitLotId))
                 .map(UnitLotResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -105,7 +106,7 @@ public class UnitLotsController {
     @PutMapping("/{unitLotId}")
     @Operation(
         summary = "Update a unit lot",
-        description = "Updates the attributes of an existing unit lot.",
+        description = "Updates a unit lot owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -116,7 +117,8 @@ public class UnitLotsController {
     })
     public ResponseEntity<?> updateUnitLot(@PathVariable Long unitLotId,
                                            @Valid @RequestBody UpdateUnitLotResource resource) {
-        var command = UpdateUnitLotCommandFromResourceAssembler.toCommandFromResource(unitLotId, resource);
+        var command = UpdateUnitLotCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), unitLotId, resource);
         var result = unitLotCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitLotResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
@@ -125,7 +127,7 @@ public class UnitLotsController {
     @DeleteMapping("/{unitLotId}")
     @Operation(
         summary = "Delete a unit lot",
-        description = "Deletes a unit lot by its unique identifier.",
+        description = "Deletes a unit lot owned by the authenticated account.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -133,7 +135,7 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "404", description = "Unit lot not found")
     })
     public ResponseEntity<?> deleteUnitLot(@PathVariable Long unitLotId) {
-        var result = unitLotCommandService.handle(new DeleteUnitLotCommand(unitLotId));
+        var result = unitLotCommandService.handle(new DeleteUnitLotCommand(AuthenticatedUser.email(), unitLotId));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, id -> null, HttpStatus.NO_CONTENT);
     }

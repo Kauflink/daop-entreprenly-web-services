@@ -47,7 +47,7 @@ public class LotsController {
     )
     @ApiResponse(responseCode = "200", description = "Lots found")
     public ResponseEntity<List<LotResource>> getAllLots() {
-        var resources = lotQueryService.handle(new GetAllLotsQuery()).stream()
+        var resources = lotQueryService.handle(new GetAllLotsQuery(AuthenticatedUser.email())).stream()
                 .map(LotResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -65,7 +65,7 @@ public class LotsController {
             @ApiResponse(responseCode = "404", description = "Lot not found")
     })
     public ResponseEntity<LotResource> getLotById(@PathVariable Long lotId) {
-        return lotQueryService.handle(new GetLotByIdQuery(lotId))
+        return lotQueryService.handle(new GetLotByIdQuery(AuthenticatedUser.email(), lotId))
                 .map(LotResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

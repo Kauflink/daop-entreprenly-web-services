@@ -16,6 +16,7 @@ public final class UnitLotPersistenceAssembler {
         var unitLot = new UnitLot();
         unitLot.restoreState(
                 entity.getId(),
+                entity.getOwnerEmail(),
                 entity.getProductId(),
                 entity.getCodeQR(),
                 entity.getEntryDate(),
@@ -30,6 +31,7 @@ public final class UnitLotPersistenceAssembler {
         if (unitLot.getId() != null) {
             entity.setId(unitLot.getId());
         }
+        entity.setOwnerEmail(unitLot.getOwnerEmail());
         entity.setProductId(unitLot.getProductId());
         entity.setCodeQR(unitLot.getCodeQR());
         entity.setEntryDate(unitLot.getEntryDate());

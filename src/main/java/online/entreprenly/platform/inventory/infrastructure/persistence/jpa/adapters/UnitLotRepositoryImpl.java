@@ -22,21 +22,21 @@ public class UnitLotRepositoryImpl implements UnitLotRepository {
     }
 
     @Override
-    public List<UnitLot> findAll() {
-        return unitLotPersistenceRepository.findAll().stream()
+    public List<UnitLot> findAllByOwnerEmail(String ownerEmail) {
+        return unitLotPersistenceRepository.findAllByOwnerEmail(ownerEmail).stream()
                 .map(UnitLotPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public Optional<UnitLot> findById(Long id) {
-        return unitLotPersistenceRepository.findById(id)
+    public Optional<UnitLot> findByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return unitLotPersistenceRepository.findByIdAndOwnerEmail(id, ownerEmail)
                 .map(UnitLotPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
-    public boolean existsById(Long id) {
-        return unitLotPersistenceRepository.existsById(id);
+    public boolean existsByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return unitLotPersistenceRepository.existsByIdAndOwnerEmail(id, ownerEmail);
     }
 
     @Override

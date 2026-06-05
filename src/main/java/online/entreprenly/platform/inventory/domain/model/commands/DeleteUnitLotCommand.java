@@ -1,9 +1,10 @@
 package online.entreprenly.platform.inventory.domain.model.commands;
 
 /**
- * Command to delete a unit lot by its identifier.
+ * Command to delete a unit lot owned by an account.
  *
- * @param unitLotId the identifier of the lot to delete
+ * @param ownerEmail the email of the account that owns the lot
+ * @param unitLotId  the identifier of the lot to delete
  */
-public record DeleteUnitLotCommand(Long unitLotId) {
+public record DeleteUnitLotCommand(String ownerEmail, Long unitLotId) {
 }
