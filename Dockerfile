@@ -4,16 +4,17 @@
 # and runs it on a lightweight Temurin 26 JRE. The 'prod' profile is active at
 # runtime and the service listens on the port defined by the PORT variable.
 
-# Step 1: Build the application using the Maven Wrapper on a Temurin 26 JDK
-FROM eclipse-temurin:26-jdk AS build
+# Step 1: Build the application using a Maven image that bundles Maven and a Temurin 26 JDK.
+# Using the official Maven image avoids downloading the Maven distribution at build time
+# (the previous Maven Wrapper bootstrap pulled it from repo.maven.apache.org on every build,
+# which intermittently returned HTTP 403 and broke the deploy). The BuildKit cache mount keeps
+# the local repository between builds so dependencies are not re-downloaded every time.
+FROM maven:3.9.16-eclipse-temurin-26 AS build
 WORKDIR /app
-COPY .mvn .mvn
-COPY mvnw .
 COPY pom.xml .
-RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests -B
 
 # Step 2: Create the runtime image
 FROM eclipse-temurin:26-jre AS runtime
