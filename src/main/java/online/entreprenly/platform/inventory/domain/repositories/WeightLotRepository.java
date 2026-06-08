@@ -18,4 +18,6 @@ public interface WeightLotRepository {
     WeightLot save(WeightLot weightLot);
 
     void deleteById(Long id);
+
+    void deleteByProductIdAndOwnerEmail(Long productId, String ownerEmail);
 }

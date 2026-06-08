@@ -18,4 +18,6 @@ public interface UnitLotRepository {
     UnitLot save(UnitLot unitLot);
 
     void deleteById(Long id);
+
+    void deleteByProductIdAndOwnerEmail(Long productId, String ownerEmail);
 }

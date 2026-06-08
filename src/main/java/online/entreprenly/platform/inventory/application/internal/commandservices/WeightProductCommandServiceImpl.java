@@ -5,10 +5,12 @@ import online.entreprenly.platform.inventory.domain.model.aggregates.WeightProdu
 import online.entreprenly.platform.inventory.domain.model.commands.CreateWeightProductCommand;
 import online.entreprenly.platform.inventory.domain.model.commands.DeleteWeightProductCommand;
 import online.entreprenly.platform.inventory.domain.model.commands.UpdateWeightProductCommand;
+import online.entreprenly.platform.inventory.domain.repositories.WeightLotRepository;
 import online.entreprenly.platform.inventory.domain.repositories.WeightProductRepository;
 import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Weight product command service implementation. All operations are scoped to the owner account.
@@ -17,9 +19,12 @@ import org.springframework.stereotype.Service;
 public class WeightProductCommandServiceImpl implements WeightProductCommandService {
 
     private final WeightProductRepository weightProductRepository;
+    private final WeightLotRepository weightLotRepository;
 
-    public WeightProductCommandServiceImpl(WeightProductRepository weightProductRepository) {
+    public WeightProductCommandServiceImpl(WeightProductRepository weightProductRepository,
+                                           WeightLotRepository weightLotRepository) {
         this.weightProductRepository = weightProductRepository;
+        this.weightLotRepository = weightLotRepository;
     }
 
     @Override
@@ -53,11 +58,13 @@ public class WeightProductCommandServiceImpl implements WeightProductCommandServ
     }
 
     @Override
+    @Transactional
     public Result<Long, ApplicationError> handle(DeleteWeightProductCommand command) {
         if (!weightProductRepository.existsByIdAndOwnerEmail(command.weightProductId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("WeightProduct",
                     String.valueOf(command.weightProductId())));
         }
+        weightLotRepository.deleteByProductIdAndOwnerEmail(command.weightProductId(), command.ownerEmail());
         weightProductRepository.deleteById(command.weightProductId());
         return Result.success(command.weightProductId());
     }
