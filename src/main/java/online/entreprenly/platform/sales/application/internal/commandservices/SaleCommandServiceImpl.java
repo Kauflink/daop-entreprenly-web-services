@@ -22,13 +22,16 @@ public class SaleCommandServiceImpl implements SaleCommandService {
 
     @Override
     public Result<Sale, ApplicationError> handle(CreateSaleCommand command) {
+        if (command.ownerEmail() == null || command.ownerEmail().isBlank()) {
+            return Result.failure(ApplicationError.validationError("owner", "An authenticated owner is required"));
+        }
         if (command.sellerId() == null) {
             return Result.failure(ApplicationError.validationError("sellerId", "A seller is required to register a sale"));
         }
         if (command.items() == null || command.items().isEmpty()) {
             return Result.failure(ApplicationError.validationError("items", "A sale must contain at least one item"));
         }
-        var sale = new Sale(command.sellerId(), command.items(), command.paymentMethod(),
+        var sale = new Sale(command.ownerEmail(), command.sellerId(), command.items(), command.paymentMethod(),
                 command.paymentReceipt(), command.status());
         return Result.success(saleRepository.save(sale));
     }

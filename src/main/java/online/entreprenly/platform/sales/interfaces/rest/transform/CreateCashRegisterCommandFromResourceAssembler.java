@@ -8,8 +8,9 @@ import online.entreprenly.platform.sales.interfaces.rest.resources.CreateCashReg
  */
 public class CreateCashRegisterCommandFromResourceAssembler {
 
-    public static CreateCashRegisterCommand toCommandFromResource(CreateCashRegisterResource resource) {
+    public static CreateCashRegisterCommand toCommandFromResource(String ownerEmail, CreateCashRegisterResource resource) {
         return new CreateCashRegisterCommand(
+                ownerEmail,
                 resource.date(),
                 resource.totalCash(),
                 resource.totalDigital());

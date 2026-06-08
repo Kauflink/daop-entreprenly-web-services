@@ -24,11 +24,11 @@ public class CashRegisterQueryServiceImpl implements CashRegisterQueryService {
 
     @Override
     public List<CashRegister> handle(GetAllCashRegistersQuery query) {
-        return cashRegisterRepository.findAll();
+        return cashRegisterRepository.findAllByOwnerEmail(query.ownerEmail());
     }
 
     @Override
     public Optional<CashRegister> handle(GetCashRegisterByDateQuery query) {
-        return cashRegisterRepository.findByDate(query.date());
+        return cashRegisterRepository.findByDateAndOwnerEmail(query.date(), query.ownerEmail());
     }
 }

@@ -23,27 +23,27 @@ public class CashRegisterRepositoryImpl implements CashRegisterRepository {
     }
 
     @Override
-    public List<CashRegister> findAll() {
-        return cashRegisterPersistenceRepository.findAll().stream()
+    public List<CashRegister> findAllByOwnerEmail(String ownerEmail) {
+        return cashRegisterPersistenceRepository.findAllByOwnerEmail(ownerEmail).stream()
                 .map(CashRegisterPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public Optional<CashRegister> findById(Long id) {
-        return cashRegisterPersistenceRepository.findById(id)
+    public Optional<CashRegister> findByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return cashRegisterPersistenceRepository.findByIdAndOwnerEmail(id, ownerEmail)
                 .map(CashRegisterPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
-    public Optional<CashRegister> findByDate(LocalDate date) {
-        return cashRegisterPersistenceRepository.findByDate(date)
+    public Optional<CashRegister> findByDateAndOwnerEmail(LocalDate date, String ownerEmail) {
+        return cashRegisterPersistenceRepository.findByDateAndOwnerEmail(date, ownerEmail)
                 .map(CashRegisterPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
-    public boolean existsByDate(LocalDate date) {
-        return cashRegisterPersistenceRepository.existsByDate(date);
+    public boolean existsByDateAndOwnerEmail(LocalDate date, String ownerEmail) {
+        return cashRegisterPersistenceRepository.existsByDateAndOwnerEmail(date, ownerEmail);
     }
 
     @Override

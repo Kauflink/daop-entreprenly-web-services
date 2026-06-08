@@ -22,15 +22,16 @@ public class SaleRepositoryImpl implements SaleRepository {
     }
 
     @Override
-    public List<Sale> findAll() {
-        return salePersistenceRepository.findAll().stream()
+    public List<Sale> findAllByOwnerEmail(String ownerEmail) {
+        return salePersistenceRepository.findAllByOwnerEmail(ownerEmail).stream()
                 .map(SalePersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public Optional<Sale> findById(Long id) {
-        return salePersistenceRepository.findById(id).map(SalePersistenceAssembler::toDomainFromPersistence);
+    public Optional<Sale> findByIdAndOwnerEmail(Long id, String ownerEmail) {
+        return salePersistenceRepository.findByIdAndOwnerEmail(id, ownerEmail)
+                .map(SalePersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
