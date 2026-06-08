@@ -5,10 +5,12 @@ import online.entreprenly.platform.inventory.domain.model.aggregates.UnitProduct
 import online.entreprenly.platform.inventory.domain.model.commands.CreateUnitProductCommand;
 import online.entreprenly.platform.inventory.domain.model.commands.DeleteUnitProductCommand;
 import online.entreprenly.platform.inventory.domain.model.commands.UpdateUnitProductCommand;
+import online.entreprenly.platform.inventory.domain.repositories.UnitLotRepository;
 import online.entreprenly.platform.inventory.domain.repositories.UnitProductRepository;
 import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Unit product command service implementation. All operations are scoped to the owner account.
@@ -17,9 +19,12 @@ import org.springframework.stereotype.Service;
 public class UnitProductCommandServiceImpl implements UnitProductCommandService {
 
     private final UnitProductRepository unitProductRepository;
+    private final UnitLotRepository unitLotRepository;
 
-    public UnitProductCommandServiceImpl(UnitProductRepository unitProductRepository) {
+    public UnitProductCommandServiceImpl(UnitProductRepository unitProductRepository,
+                                         UnitLotRepository unitLotRepository) {
         this.unitProductRepository = unitProductRepository;
+        this.unitLotRepository = unitLotRepository;
     }
 
     @Override
@@ -53,10 +58,12 @@ public class UnitProductCommandServiceImpl implements UnitProductCommandService 
     }
 
     @Override
+    @Transactional
     public Result<Long, ApplicationError> handle(DeleteUnitProductCommand command) {
         if (!unitProductRepository.existsByIdAndOwnerEmail(command.unitProductId(), command.ownerEmail())) {
             return Result.failure(ApplicationError.notFound("UnitProduct", String.valueOf(command.unitProductId())));
         }
+        unitLotRepository.deleteByProductIdAndOwnerEmail(command.unitProductId(), command.ownerEmail());
         unitProductRepository.deleteById(command.unitProductId());
         return Result.success(command.unitProductId());
     }
