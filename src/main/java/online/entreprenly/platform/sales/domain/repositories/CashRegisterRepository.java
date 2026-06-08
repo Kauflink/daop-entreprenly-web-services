@@ -7,16 +7,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Cash register repository port.
+ * Cash register repository port. All lookups are scoped to the owner account.
  */
 public interface CashRegisterRepository {
-    List<CashRegister> findAll();
+    List<CashRegister> findAllByOwnerEmail(String ownerEmail);
 
-    Optional<CashRegister> findById(Long id);
+    Optional<CashRegister> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
-    Optional<CashRegister> findByDate(LocalDate date);
+    Optional<CashRegister> findByDateAndOwnerEmail(LocalDate date, String ownerEmail);
 
-    boolean existsByDate(LocalDate date);
+    boolean existsByDateAndOwnerEmail(LocalDate date, String ownerEmail);
 
     CashRegister save(CashRegister cashRegister);
 }

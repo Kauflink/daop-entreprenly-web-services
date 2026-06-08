@@ -15,8 +15,9 @@ import java.util.List;
 /**
  * Sale aggregate root.
  *
- * <p>Represents a point-of-sale transaction made by a seller. It holds the list of
- * {@link SaleItem} lines, the authoritative {@code total}, the chosen
+ * <p>Represents a point-of-sale transaction made by a seller. It belongs to the account
+ * ({@code ownerEmail}) that registered it, so sales are isolated per tenant. It holds the
+ * list of {@link SaleItem} lines, the authoritative {@code total}, the chosen
  * {@link PaymentMethod}, an optional {@link PaymentReceipt} and the lifecycle
  * {@link SaleStatus}. The total is always recomputed from the line items so the
  * server remains the source of truth.</p>
@@ -26,6 +27,7 @@ public class Sale extends AbstractDomainAggregateRoot<Sale> {
 
     @Setter
     private Long id;
+    private String ownerEmail;
     private Long sellerId;
     private List<SaleItem> items;
     private double total;
@@ -38,8 +40,9 @@ public class Sale extends AbstractDomainAggregateRoot<Sale> {
     public Sale() {
     }
 
-    public Sale(Long sellerId, List<SaleItem> items, PaymentMethod paymentMethod,
+    public Sale(String ownerEmail, Long sellerId, List<SaleItem> items, PaymentMethod paymentMethod,
                 PaymentReceipt paymentReceipt, SaleStatus status) {
+        this.ownerEmail = ownerEmail;
         this.sellerId = sellerId;
         this.items = items == null ? new ArrayList<>() : new ArrayList<>(items);
         this.total = computeTotal(this.items);
@@ -65,10 +68,11 @@ public class Sale extends AbstractDomainAggregateRoot<Sale> {
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a sale that already carries identity and full state.
      */
-    public void restoreState(Long id, Long sellerId, List<SaleItem> items, double total,
+    public void restoreState(Long id, String ownerEmail, Long sellerId, List<SaleItem> items, double total,
                              PaymentMethod paymentMethod, PaymentReceipt paymentReceipt,
                              SaleStatus status, Instant createdAt, Instant completedAt) {
         this.id = id;
+        this.ownerEmail = ownerEmail;
         this.sellerId = sellerId;
         this.items = items == null ? new ArrayList<>() : new ArrayList<>(items);
         this.total = total;

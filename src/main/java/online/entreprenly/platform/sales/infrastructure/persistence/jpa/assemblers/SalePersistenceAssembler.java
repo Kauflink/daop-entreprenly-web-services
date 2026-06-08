@@ -32,6 +32,7 @@ public final class SalePersistenceAssembler {
         var sale = new Sale();
         sale.restoreState(
                 entity.getId(),
+                entity.getOwnerEmail(),
                 entity.getSellerId(),
                 items,
                 entity.getTotal(),
@@ -49,6 +50,7 @@ public final class SalePersistenceAssembler {
         if (sale.getId() != null) {
             entity.setId(sale.getId());
         }
+        entity.setOwnerEmail(sale.getOwnerEmail());
         entity.setSellerId(sale.getSellerId());
         entity.setItems(sale.getItems().stream()
                 .map(item -> new SaleItemEmbeddable(
