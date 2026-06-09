@@ -63,7 +63,8 @@ public class ChatbotWebhookController {
             description = "Persists the client message and returns the chatbot's automatic reply.")
     @ApiResponse(responseCode = "201", description = "Message processed and reply generated")
     public ResponseEntity<?> receive(@Valid @RequestBody InboundWhatsAppMessageResource resource) {
-        var command = new HandleInboundMessageCommand(resource.fromPhone(), resource.clientName(), resource.content());
+        var command = new HandleInboundMessageCommand(
+                resource.fromPhone(), resource.clientName(), resource.content(), resource.ownerEmail());
         var result = conversationService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, ChatMessageResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
