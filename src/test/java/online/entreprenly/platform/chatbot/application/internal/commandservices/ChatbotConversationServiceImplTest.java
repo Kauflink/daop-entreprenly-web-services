@@ -49,7 +49,7 @@ class ChatbotConversationServiceImplTest {
     private ChatbotConversationServiceImpl service(ProductCatalogService catalog, SellerEmailResolver resolver) {
         return new ChatbotConversationServiceImpl(conversations, conversationCommandService, messageCommandService,
                 sessions, new RuleBasedChatbotResponder(), whatsApp, catalog, resolver,
-                new RuleBasedProductReplyComposer());
+                new RuleBasedProductReplyComposer(), Optional::empty);
     }
 
     @Test

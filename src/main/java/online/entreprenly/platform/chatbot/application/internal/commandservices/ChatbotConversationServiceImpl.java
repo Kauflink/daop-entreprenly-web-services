@@ -3,6 +3,7 @@ package online.entreprenly.platform.chatbot.application.internal.commandservices
 import online.entreprenly.platform.chatbot.application.commandservices.ChatMessageCommandService;
 import online.entreprenly.platform.chatbot.application.commandservices.ChatbotConversationService;
 import online.entreprenly.platform.chatbot.application.commandservices.ConversationCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ConnectedSellerProvider;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ProductCatalogService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.whatsapp.WhatsAppMessagingService;
@@ -42,6 +43,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
     private final ProductCatalogService productCatalogService;
     private final SellerEmailResolver sellerEmailResolver;
     private final ProductReplyComposer productReplyComposer;
+    private final ConnectedSellerProvider connectedSellerProvider;
 
     public ChatbotConversationServiceImpl(ConversationRepository conversationRepository,
                                           ConversationCommandService conversationCommandService,
@@ -51,7 +53,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
                                           WhatsAppMessagingService whatsAppMessagingService,
                                           ProductCatalogService productCatalogService,
                                           SellerEmailResolver sellerEmailResolver,
-                                          ProductReplyComposer productReplyComposer) {
+                                          ProductReplyComposer productReplyComposer,
+                                          ConnectedSellerProvider connectedSellerProvider) {
         this.conversationRepository = conversationRepository;
         this.conversationCommandService = conversationCommandService;
         this.messageCommandService = messageCommandService;
@@ -61,6 +64,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         this.productCatalogService = productCatalogService;
         this.sellerEmailResolver = sellerEmailResolver;
         this.productReplyComposer = productReplyComposer;
+        this.connectedSellerProvider = connectedSellerProvider;
     }
 
     @Override
@@ -126,7 +130,11 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
      * real catalog (price, stock, totals); otherwise it falls back to the generic responder.
      */
     private String composeReply(String content, Conversation conversation) {
-        List<CatalogProduct> catalog = sellerEmailResolver.resolveEmail(conversation.getSellerId())
+        // Prefer the owner email reported by the connected bridge; otherwise resolve it
+        // from the conversation's seller id via IAM.
+        var ownerEmail = connectedSellerProvider.currentOwnerEmail()
+                .or(() -> sellerEmailResolver.resolveEmail(conversation.getSellerId()));
+        List<CatalogProduct> catalog = ownerEmail
                 .map(productCatalogService::findByOwner)
                 .orElseGet(List::of);
         return productReplyComposer.compose(content, catalog)

@@ -60,6 +60,7 @@ public class ChatbotBridgeController {
                                            @Valid @RequestBody BridgeStatusResource resource) {
         if (isUnauthorized(token)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         bridgeState.setConnected(resource.connected());
+        bridgeState.setOwnerEmail(resource.ownerEmail());
         sessionCommandService.handle(new ReportBridgeConnectionCommand(
                 resource.connected(), resource.phone(), resource.businessName(), resource.sellerId()));
         return ResponseEntity.noContent().build();
