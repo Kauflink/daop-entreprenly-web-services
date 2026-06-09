@@ -26,20 +26,44 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
 
     @Override
     public Optional<String> compose(String incomingContent, List<CatalogProduct> catalog) {
-        if (catalog == null || catalog.isEmpty() || incomingContent == null || incomingContent.isBlank()) {
+        if (incomingContent == null || incomingContent.isBlank()) {
             return Optional.empty();
         }
         var text = normalize(incomingContent);
+        var safeCatalog = catalog == null ? List.<CatalogProduct>of() : catalog;
 
-        var match = bestMatch(text, catalog);
+        var match = bestMatch(text, safeCatalog);
         if (match != null) {
             return Optional.of(replyForProduct(text, match));
         }
         if (mentionsAny(text, "catalogo", "productos", "que venden", "que vende", "que vendes",
                 "que tienes", "que hay", "menu", "lista", "ofrecen")) {
-            return Optional.of(replyWithCatalogue(catalog));
+            return Optional.of(replyWithCatalogue(safeCatalog));
+        }
+        // The client asked about a product/availability, but nothing specific matched.
+        if (isProductIntent(text)) {
+            return Optional.of(replyWhenProductNotFound(safeCatalog));
         }
         return Optional.empty();
+    }
+
+    /** True when the message looks like a product or availability question. */
+    private boolean isProductIntent(String text) {
+        return mentionsAny(text, "tienen", "tiene", "tienes", "precio", "cuanto cuesta", "cuesta",
+                "vale", "comprar", "vendes", "venden", "producto", "stock", "disponible",
+                "disponibilidad", "mercaderia", "consigo", "venta");
+    }
+
+    /** Reply when no product matched: suggest the available catalogue, or say there is none. */
+    private String replyWhenProductNotFound(List<CatalogProduct> catalog) {
+        var inStock = catalog.stream().filter(CatalogProduct::isInStock).toList();
+        if (inStock.isEmpty()) {
+            return "Por ahora no contamos con productos disponibles. ¡Pronto tendremos novedades!";
+        }
+        var items = inStock.stream()
+                .map(p -> "%s (%s %s)".formatted(p.name(), price(p.price()), p.soldByWeight() ? "por kg" : "c/u"))
+                .collect(Collectors.joining(", "));
+        return "No tenemos ese producto por ahora, pero sí contamos con: %s. ¿Te interesa alguno?".formatted(items);
     }
 
     private String replyForProduct(String text, CatalogProduct product) {
