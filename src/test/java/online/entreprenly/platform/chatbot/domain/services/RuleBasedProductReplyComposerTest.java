@@ -61,6 +61,22 @@ class RuleBasedProductReplyComposerTest {
     @DisplayName("returns empty for non-product messages so the generic reply takes over")
     void fallsBackForNonProduct() {
         assertThat(composer.compose("buenas tardes", CATALOG)).isEmpty();
-        assertThat(composer.compose("cualquier cosa", List.of())).isEmpty();
+        assertThat(composer.compose("hola, gracias", List.of())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("suggests the available catalogue when the asked product is not found")
+    void suggestsWhenProductNotFound() {
+        var reply = composer.compose("tienen pepsi?", CATALOG);
+        assertThat(reply).isPresent();
+        assertThat(reply.get()).containsIgnoringCase("no tenemos ese producto").contains("Manzana");
+    }
+
+    @Test
+    @DisplayName("informs when the seller has no products at all")
+    void informsWhenNoProducts() {
+        var reply = composer.compose("tienen pepsi?", List.of());
+        assertThat(reply).isPresent();
+        assertThat(reply.get()).containsIgnoringCase("no contamos con productos");
     }
 }
