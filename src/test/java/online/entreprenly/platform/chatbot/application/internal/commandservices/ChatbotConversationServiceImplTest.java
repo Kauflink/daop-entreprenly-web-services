@@ -6,9 +6,11 @@ import online.entreprenly.platform.chatbot.domain.model.aggregates.WhatsappSessi
 import online.entreprenly.platform.chatbot.domain.model.commands.HandleInboundMessageCommand;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.CatalogProduct;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.MessageSender;
+import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus;
 import online.entreprenly.platform.chatbot.domain.services.RuleBasedChatbotResponder;
 import online.entreprenly.platform.chatbot.domain.services.RuleBasedProductReplyComposer;
 import online.entreprenly.platform.chatbot.support.InMemoryChatMessageRepository;
+import online.entreprenly.platform.chatbot.support.InMemoryChatOrderRepository;
 import online.entreprenly.platform.chatbot.support.InMemoryConversationRepository;
 import online.entreprenly.platform.chatbot.support.InMemoryWhatsappSessionRepository;
 import online.entreprenly.platform.chatbot.support.RecordingEventPublisher;
@@ -30,6 +32,8 @@ class ChatbotConversationServiceImplTest {
     private RecordingWhatsAppMessagingService whatsApp;
     private ConversationCommandServiceImpl conversationCommandService;
     private ChatMessageCommandServiceImpl messageCommandService;
+    private InMemoryChatOrderRepository orders;
+    private ChatOrderCommandServiceImpl chatOrderCommandService;
 
     /** Empty catalog by default, so the generic responder is used. */
     private final ProductCatalogService emptyCatalog = ownerEmail -> List.of();
@@ -44,12 +48,14 @@ class ChatbotConversationServiceImplTest {
         whatsApp = new RecordingWhatsAppMessagingService();
         conversationCommandService = new ConversationCommandServiceImpl(conversations, publisher);
         messageCommandService = new ChatMessageCommandServiceImpl(messages, conversations, publisher);
+        orders = new InMemoryChatOrderRepository();
+        chatOrderCommandService = new ChatOrderCommandServiceImpl(orders, publisher);
     }
 
     private ChatbotConversationServiceImpl service(ProductCatalogService catalog, SellerEmailResolver resolver) {
         return new ChatbotConversationServiceImpl(conversations, conversationCommandService, messageCommandService,
                 sessions, new RuleBasedChatbotResponder(), whatsApp, catalog, resolver,
-                new RuleBasedProductReplyComposer(), Optional::empty);
+                new RuleBasedProductReplyComposer(), Optional::empty, chatOrderCommandService, orders);
     }
 
     @Test
@@ -102,5 +108,30 @@ class ChatbotConversationServiceImplTest {
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.toOptional().orElseThrow().getContent()).contains("22.50");
+    }
+
+    @Test
+    @DisplayName("registers a draft order and confirms it with the delivery address")
+    void createsOrderAndConfirmsDelivery() {
+        sessions.save(new WhatsappSession(1L, "+51 999 888 777", "Bodega", null));
+        SellerEmailResolver resolver = sellerId -> sellerId == 1L ? Optional.of("seller@test.com") : Optional.empty();
+        ProductCatalogService catalog = ownerEmail -> "seller@test.com".equals(ownerEmail)
+                ? List.of(new CatalogProduct("Coca Cola", 3.00, false, 10.0))
+                : List.of();
+        var service = service(catalog, resolver);
+
+        var first = service.handle(new HandleInboundMessageCommand("+51 977 000 111", "Cliente", "quiero 3 coca cola"));
+        assertThat(first.toOptional().orElseThrow().getContent()).contains("Coca Cola").contains("9.00");
+
+        var convId = conversations.findByClientPhone("+51 977 000 111").orElseThrow().getId();
+        assertThat(orders.findByConversationId(convId)).hasSize(1);
+        assertThat(orders.findByConversationId(convId).get(0).getStatus()).isEqualTo(OrderStatus.PENDING);
+
+        var second = service.handle(new HandleInboundMessageCommand("+51 977 000 111", "Cliente", "Av Los Olivos 123"));
+        assertThat(second.toOptional().orElseThrow().getContent()).containsIgnoringCase("pago");
+
+        var order = orders.findByConversationId(convId).get(0);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.WAITING_PAYMENT);
+        assertThat(order.getDeliveryAddress()).isEqualTo("Av Los Olivos 123");
     }
 }

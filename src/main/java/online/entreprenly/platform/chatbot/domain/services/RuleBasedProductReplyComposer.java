@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.domain.services;
 
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.CatalogProduct;
+import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderItem;
 import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
@@ -45,6 +46,27 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
             return Optional.of(replyWhenProductNotFound(safeCatalog));
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<OrderItem> detectOrder(String incomingContent, List<CatalogProduct> catalog) {
+        if (incomingContent == null || incomingContent.isBlank() || catalog == null || catalog.isEmpty()) {
+            return Optional.empty();
+        }
+        var text = normalize(incomingContent);
+        var product = bestMatch(text, catalog);
+        if (product == null) {
+            return Optional.empty();
+        }
+        var quantity = orderQuantity(text, product);
+        if (quantity.isEmpty()) {
+            return Optional.empty();
+        }
+        double qty = quantity.get();
+        if (qty <= 0 || !product.isInStock() || qty > product.availableStock()) {
+            return Optional.empty();
+        }
+        return Optional.of(new OrderItem(product.name(), (int) Math.round(qty), product.price()));
     }
 
     /** True when the message looks like a product or availability question. */

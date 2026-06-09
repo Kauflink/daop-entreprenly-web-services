@@ -35,6 +35,13 @@ public class ChatOrderRepositoryImpl implements ChatOrderRepository {
     }
 
     @Override
+    public List<ChatOrder> findByConversationId(Long conversationId) {
+        return persistenceRepository.findByConversationIdOrderByIdDesc(conversationId).stream()
+                .map(ChatOrderPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
     public long count() {
         return persistenceRepository.count();
     }
