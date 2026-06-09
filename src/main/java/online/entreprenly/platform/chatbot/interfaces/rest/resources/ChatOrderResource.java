@@ -42,6 +42,9 @@ public record ChatOrderResource(
         int rejectionCount,
 
         @Schema(description = "Instant the order was created")
-        Instant createdAt
+        Instant createdAt,
+
+        @Schema(description = "Payment receipt image as a data URL", nullable = true)
+        String receiptImage
 ) {
 }

@@ -11,11 +11,13 @@ import online.entreprenly.platform.chatbot.application.internal.outboundservices
 import online.entreprenly.platform.chatbot.domain.model.aggregates.ChatMessage;
 import online.entreprenly.platform.chatbot.domain.model.aggregates.ChatOrder;
 import online.entreprenly.platform.chatbot.domain.model.aggregates.Conversation;
+import online.entreprenly.platform.chatbot.domain.model.commands.AttachReceiptCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.ConfirmChatOrderDeliveryCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.CreateChatMessageCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.CreateChatOrderCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.CreateConversationCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.HandleInboundMessageCommand;
+import online.entreprenly.platform.chatbot.domain.model.commands.HandleInboundReceiptCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.UpdateConversationCommand;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.CatalogProduct;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.ConversationStatus;
@@ -119,6 +121,41 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         // Deliver the reply through the WhatsApp channel (no-op stub by default).
         whatsAppMessagingService.sendText(command.fromPhone(), replyText);
 
+        return outboundResult;
+    }
+
+    @Override
+    public Result<ChatMessage, ApplicationError> handle(HandleInboundReceiptCommand command) {
+        if (command.fromPhone() == null || command.fromPhone().isBlank()) {
+            return Result.failure(ApplicationError.validationError("fromPhone", "An origin phone is required"));
+        }
+        var conversationOpt = conversationRepository.findByClientPhone(command.fromPhone());
+        if (conversationOpt.isEmpty()) {
+            return Result.success(new ChatMessage(null, "Primero realiza tu pedido para validar tu pago.",
+                    MessageSender.BOT, MessageType.TEXT, Instant.now()));
+        }
+        var conversation = conversationOpt.get();
+
+        // Record the inbound receipt as an image message in the conversation.
+        messageCommandService.handle(new CreateChatMessageCommand(conversation.getId(),
+                "📷 Comprobante de pago", MessageSender.CLIENT, MessageType.IMAGE, Instant.now()));
+
+        var order = chatOrderRepository.findByConversationId(conversation.getId()).stream()
+                .filter(o -> o.getStatus() == OrderStatus.WAITING_PAYMENT)
+                .findFirst();
+
+        String replyText;
+        if (order.isPresent()) {
+            chatOrderCommandService.handle(new AttachReceiptCommand(order.get().getId(), command.image()));
+            replyText = "¡Recibí tu comprobante! Lo estamos validando y te confirmamos en breve.";
+        } else {
+            replyText = "Recibí tu imagen, pero no tienes un pedido pendiente de pago. ¿Deseas hacer un pedido?";
+        }
+
+        var outbound = new CreateChatMessageCommand(conversation.getId(), replyText,
+                MessageSender.BOT, MessageType.TEXT, Instant.now());
+        var outboundResult = messageCommandService.handle(outbound);
+        whatsAppMessagingService.sendText(command.fromPhone(), replyText);
         return outboundResult;
     }
 
