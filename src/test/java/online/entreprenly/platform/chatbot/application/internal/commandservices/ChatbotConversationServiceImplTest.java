@@ -4,6 +4,7 @@ import online.entreprenly.platform.chatbot.application.internal.outboundservices
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.domain.model.aggregates.WhatsappSession;
 import online.entreprenly.platform.chatbot.domain.model.commands.HandleInboundMessageCommand;
+import online.entreprenly.platform.chatbot.domain.model.commands.HandleInboundReceiptCommand;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.CatalogProduct;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.MessageSender;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus;
@@ -133,5 +134,26 @@ class ChatbotConversationServiceImplTest {
         var order = orders.findByConversationId(convId).get(0);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.WAITING_PAYMENT);
         assertThat(order.getDeliveryAddress()).isEqualTo("Av Los Olivos 123");
+    }
+
+    @Test
+    @DisplayName("attaches a receipt image to the order awaiting payment")
+    void attachesReceiptImage() {
+        ProductCatalogService catalog = ownerEmail -> "seller@test.com".equals(ownerEmail)
+                ? List.of(new CatalogProduct("Coca Cola", 3.00, false, 10.0))
+                : List.of();
+        var service = service(catalog, sellerId -> Optional.empty());
+        service.handle(new HandleInboundMessageCommand("+51 933 000 111", "Cliente", "quiero 2 coca cola", "seller@test.com"));
+        service.handle(new HandleInboundMessageCommand("+51 933 000 111", "Cliente", "Av Lima 100", "seller@test.com"));
+
+        var result = service.handle(
+                new HandleInboundReceiptCommand("+51 933 000 111", "seller@test.com", "data:image/png;base64,AAA"));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.toOptional().orElseThrow().getContent()).containsIgnoringCase("comprobante");
+        var convId = conversations.findByClientPhone("+51 933 000 111").orElseThrow().getId();
+        var order = orders.findByConversationId(convId).get(0);
+        assertThat(order.isHasReceipt()).isTrue();
+        assertThat(order.getReceiptImage()).isEqualTo("data:image/png;base64,AAA");
     }
 }

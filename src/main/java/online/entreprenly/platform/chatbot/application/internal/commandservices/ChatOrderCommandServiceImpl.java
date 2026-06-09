@@ -3,6 +3,7 @@ package online.entreprenly.platform.chatbot.application.internal.commandservices
 import online.entreprenly.platform.chatbot.application.commandservices.ChatOrderCommandService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.events.ChatbotEventPublisher;
 import online.entreprenly.platform.chatbot.domain.model.aggregates.ChatOrder;
+import online.entreprenly.platform.chatbot.domain.model.commands.AttachReceiptCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.ConfirmChatOrderDeliveryCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.CreateChatOrderCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.UpdateChatOrderCommand;
@@ -69,6 +70,19 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
         return orderRepository.findById(command.orderId())
                 .map(order -> {
                     order.confirmDelivery(command.deliveryAddress());
+                    var saved = orderRepository.save(order);
+                    eventPublisher.publishOrderChanged(saved);
+                    return Result.<ChatOrder, ApplicationError>success(saved);
+                })
+                .orElseGet(() -> Result.failure(
+                        ApplicationError.notFound("ChatOrder", String.valueOf(command.orderId()))));
+    }
+
+    @Override
+    public Result<ChatOrder, ApplicationError> handle(AttachReceiptCommand command) {
+        return orderRepository.findById(command.orderId())
+                .map(order -> {
+                    order.attachReceipt(command.receiptImage());
                     var saved = orderRepository.save(order);
                     eventPublisher.publishOrderChanged(saved);
                     return Result.<ChatOrder, ApplicationError>success(saved);

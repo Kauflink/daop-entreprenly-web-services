@@ -37,6 +37,7 @@ public class ChatOrder extends AbstractDomainAggregateRoot<ChatOrder> {
     private boolean hasReceipt;
     private int rejectionCount;
     private Instant createdAt;
+    private String receiptImage;
 
     public ChatOrder() {
     }
@@ -90,6 +91,16 @@ public class ChatOrder extends AbstractDomainAggregateRoot<ChatOrder> {
     }
 
     /**
+     * Attaches a payment receipt together with its image (data URL) sent by the client.
+     *
+     * @param image the receipt image as a data URL (nullable)
+     */
+    public void attachReceipt(String image) {
+        attachReceipt();
+        this.receiptImage = image;
+    }
+
+    /**
      * Applies a status transition that is not part of the receipt-review flow
      * (e.g. cancelling or re-opening an order).
      *
@@ -129,7 +140,7 @@ public class ChatOrder extends AbstractDomainAggregateRoot<ChatOrder> {
      */
     public void restoreState(Long id, Long conversationId, String orderNumber, List<OrderItem> items,
                              double total, String deliveryAddress, String paymentMethod, OrderStatus status,
-                             boolean hasReceipt, int rejectionCount, Instant createdAt) {
+                             boolean hasReceipt, int rejectionCount, Instant createdAt, String receiptImage) {
         this.id = id;
         this.conversationId = conversationId;
         this.orderNumber = orderNumber;
@@ -141,5 +152,6 @@ public class ChatOrder extends AbstractDomainAggregateRoot<ChatOrder> {
         this.hasReceipt = hasReceipt;
         this.rejectionCount = rejectionCount;
         this.createdAt = createdAt;
+        this.receiptImage = receiptImage;
     }
 }

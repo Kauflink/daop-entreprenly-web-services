@@ -61,4 +61,7 @@ public class ChatOrderPersistenceEntity extends AuditableAbstractPersistenceEnti
 
     @Column(name = "order_created_at")
     private Instant orderCreatedAt;
+
+    @Column(name = "receipt_image", columnDefinition = "LONGTEXT")
+    private String receiptImage;
 }

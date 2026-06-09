@@ -2,7 +2,9 @@ package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.ChatbotConversationService;
 import online.entreprenly.platform.chatbot.domain.model.commands.HandleInboundMessageCommand;
+import online.entreprenly.platform.chatbot.domain.model.commands.HandleInboundReceiptCommand;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.ChatMessageResource;
+import online.entreprenly.platform.chatbot.interfaces.rest.resources.InboundReceiptResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.InboundWhatsAppMessageResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.transform.ChatMessageResourceFromEntityAssembler;
 import online.entreprenly.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
@@ -65,6 +67,18 @@ public class ChatbotWebhookController {
     public ResponseEntity<?> receive(@Valid @RequestBody InboundWhatsAppMessageResource resource) {
         var command = new HandleInboundMessageCommand(
                 resource.fromPhone(), resource.clientName(), resource.content(), resource.ownerEmail());
+        var result = conversationService.handle(command);
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result, ChatMessageResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/receipt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Receive a WhatsApp payment receipt",
+            description = "Attaches the receipt image to the order awaiting payment for the seller to review.")
+    @ApiResponse(responseCode = "201", description = "Receipt attached")
+    public ResponseEntity<?> receiveReceipt(@Valid @RequestBody InboundReceiptResource resource) {
+        var command = new HandleInboundReceiptCommand(
+                resource.fromPhone(), resource.ownerEmail(), resource.image());
         var result = conversationService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, ChatMessageResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);

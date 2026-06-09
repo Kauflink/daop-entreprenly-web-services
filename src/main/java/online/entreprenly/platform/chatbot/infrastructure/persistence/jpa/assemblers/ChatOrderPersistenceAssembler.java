@@ -34,7 +34,8 @@ public final class ChatOrderPersistenceAssembler {
                 entity.getStatus(),
                 entity.isHasReceipt(),
                 entity.getRejectionCount(),
-                entity.getOrderCreatedAt());
+                entity.getOrderCreatedAt(),
+                entity.getReceiptImage());
         return order;
     }
 
@@ -56,6 +57,7 @@ public final class ChatOrderPersistenceAssembler {
         entity.setHasReceipt(order.isHasReceipt());
         entity.setRejectionCount(order.getRejectionCount());
         entity.setOrderCreatedAt(order.getCreatedAt());
+        entity.setReceiptImage(order.getReceiptImage());
         return entity;
     }
 }
