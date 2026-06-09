@@ -108,7 +108,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
 
         // Produce and persist the automatic reply, grounded in the seller's real catalog
         // when the message is about products, and falling back to the generic responder.
-        var replyText = composeReply(command.content(), conversation);
+        var replyText = composeReply(command.content(), conversation, command.ownerEmail());
         var outbound = new CreateChatMessageCommand(conversation.getId(), replyText,
                 MessageSender.BOT, MessageType.TEXT, Instant.now());
         var outboundResult = messageCommandService.handle(outbound);
@@ -150,8 +150,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
      *   <li>otherwise it answers catalogue questions or falls back to the generic responder.</li>
      * </ol>
      */
-    private String composeReply(String content, Conversation conversation) {
-        var catalog = resolveCatalog(conversation);
+    private String composeReply(String content, Conversation conversation, String ownerEmailFromBridge) {
+        var catalog = resolveCatalog(conversation, ownerEmailFromBridge);
 
         var orderLine = productReplyComposer.detectOrder(content, catalog);
         if (orderLine.isPresent()) {
@@ -167,12 +167,17 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
                 .orElseGet(() -> responder.reply(content, conversation.getClientName()));
     }
 
-    /** Resolves the seller's catalog, preferring the email reported by the connected bridge. */
-    private List<CatalogProduct> resolveCatalog(Conversation conversation) {
-        return connectedSellerProvider.currentOwnerEmail()
-                .or(() -> sellerEmailResolver.resolveEmail(conversation.getSellerId()))
-                .map(productCatalogService::findByOwner)
-                .orElseGet(List::of);
+    /**
+     * Resolves the seller's catalog. Prefers the email the receiving bridge sent with this
+     * message (true multi-tenant: each seller's messages carry their own email); otherwise
+     * falls back to the last connected bridge email or the conversation's seller id.
+     */
+    private List<CatalogProduct> resolveCatalog(Conversation conversation, String ownerEmailFromBridge) {
+        var email = (ownerEmailFromBridge != null && !ownerEmailFromBridge.isBlank())
+                ? Optional.of(ownerEmailFromBridge)
+                : connectedSellerProvider.currentOwnerEmail()
+                        .or(() -> sellerEmailResolver.resolveEmail(conversation.getSellerId()));
+        return email.map(productCatalogService::findByOwner).orElseGet(List::of);
     }
 
     private Optional<ChatOrder> findPendingOrder(Long conversationId) {

@@ -62,7 +62,7 @@ class ChatbotConversationServiceImplTest {
     @DisplayName("creates a conversation, stores client and bot messages, sends the reply and returns it")
     void handlesInboundMessageEndToEnd() {
         var service = service(emptyCatalog, noEmail);
-        var command = new HandleInboundMessageCommand("+51 987 654 321", "Andrea", "Hola, quiero hacer un pedido");
+        var command = new HandleInboundMessageCommand("+51 987 654 321", "Andrea", "Hola, quiero hacer un pedido", null);
         var result = service.handle(command);
 
         assertThat(result.isSuccess()).isTrue();
@@ -85,8 +85,8 @@ class ChatbotConversationServiceImplTest {
     @DisplayName("reuses an existing conversation for a known phone number")
     void reusesExistingConversation() {
         var service = service(emptyCatalog, noEmail);
-        service.handle(new HandleInboundMessageCommand("+51 900 000 000", "Cliente", "Hola"));
-        service.handle(new HandleInboundMessageCommand("+51 900 000 000", "Cliente", "Buenas"));
+        service.handle(new HandleInboundMessageCommand("+51 900 000 000", "Cliente", "Hola", null));
+        service.handle(new HandleInboundMessageCommand("+51 900 000 000", "Cliente", "Buenas", null));
 
         assertThat(conversations.findAll()).hasSize(1);
         var convId = conversations.findByClientPhone("+51 900 000 000").orElseThrow().getId();
@@ -104,7 +104,7 @@ class ChatbotConversationServiceImplTest {
 
         var service = service(catalog, resolver);
         var result = service.handle(
-                new HandleInboundMessageCommand("+51 987 000 111", "Cliente", "quiero 5 kilos de manzana"));
+                new HandleInboundMessageCommand("+51 987 000 111", "Cliente", "quiero 5 kilos de manzana", "seller@test.com"));
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.toOptional().orElseThrow().getContent()).contains("22.50");
@@ -120,14 +120,14 @@ class ChatbotConversationServiceImplTest {
                 : List.of();
         var service = service(catalog, resolver);
 
-        var first = service.handle(new HandleInboundMessageCommand("+51 977 000 111", "Cliente", "quiero 3 coca cola"));
+        var first = service.handle(new HandleInboundMessageCommand("+51 977 000 111", "Cliente", "quiero 3 coca cola", "seller@test.com"));
         assertThat(first.toOptional().orElseThrow().getContent()).contains("Coca Cola").contains("9.00");
 
         var convId = conversations.findByClientPhone("+51 977 000 111").orElseThrow().getId();
         assertThat(orders.findByConversationId(convId)).hasSize(1);
         assertThat(orders.findByConversationId(convId).get(0).getStatus()).isEqualTo(OrderStatus.PENDING);
 
-        var second = service.handle(new HandleInboundMessageCommand("+51 977 000 111", "Cliente", "Av Los Olivos 123"));
+        var second = service.handle(new HandleInboundMessageCommand("+51 977 000 111", "Cliente", "Av Los Olivos 123", "seller@test.com"));
         assertThat(second.toOptional().orElseThrow().getContent()).containsIgnoringCase("pago");
 
         var order = orders.findByConversationId(convId).get(0);
