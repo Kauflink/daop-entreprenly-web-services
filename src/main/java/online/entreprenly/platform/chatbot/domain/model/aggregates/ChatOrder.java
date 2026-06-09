@@ -101,6 +101,23 @@ public class ChatOrder extends AbstractDomainAggregateRoot<ChatOrder> {
     }
 
     /**
+     * Confirms the delivery address, moving the order from draft to awaiting payment.
+     *
+     * @param deliveryAddress the address agreed with the client
+     */
+    public void confirmDelivery(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+        this.status = OrderStatus.WAITING_PAYMENT;
+    }
+
+    /**
+     * @return {@code true} while the order is still a draft awaiting its delivery address
+     */
+    public boolean isPending() {
+        return this.status == OrderStatus.PENDING;
+    }
+
+    /**
      * @return {@code true} when the order has reached its rejection limit
      */
     public boolean isBlocked() {

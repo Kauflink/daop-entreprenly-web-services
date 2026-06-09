@@ -14,6 +14,8 @@ public interface ChatOrderRepository {
 
     Optional<ChatOrder> findById(Long id);
 
+    List<ChatOrder> findByConversationId(Long conversationId);
+
     long count();
 
     ChatOrder save(ChatOrder order);
