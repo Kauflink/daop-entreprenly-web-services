@@ -19,6 +19,9 @@ public record BridgeStatusResource(
         String businessName,
 
         @Schema(description = "Owning seller id", example = "1")
-        Long sellerId
+        Long sellerId,
+
+        @Schema(description = "Seller e-mail (used to key the per-seller bridge state)", example = "vendedor@exemple.com")
+        String ownerEmail
 ) {
 }
