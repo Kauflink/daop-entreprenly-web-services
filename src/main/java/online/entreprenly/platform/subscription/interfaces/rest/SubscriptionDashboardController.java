@@ -97,7 +97,7 @@ public class SubscriptionDashboardController {
                 "monthly",
                 currentPlan,
                 toControlPlan(controlPlan, Optional.empty(), true),
-                defaultLimits(),
+                limitsForPlan(currentPlan),
                 emptyBillingSetup(),
                 defaultActivity(currentPlan));
     }
@@ -161,7 +161,14 @@ public class SubscriptionDashboardController {
                         new SubscriptionDashboardResource.DashboardPlanFeatureResource("Chatbot de WhatsApp y alertas operativas incluidas.", true)));
     }
 
-    private List<SubscriptionDashboardResource.DashboardLimitResource> defaultLimits() {
+    private List<SubscriptionDashboardResource.DashboardLimitResource> limitsForPlan(
+            SubscriptionDashboardResource.DashboardPlanResource currentPlan) {
+        if (SubscriptionCatalogReadyEventHandler.FREE_PLAN_CODE.equals(currentPlan.id())) {
+            return List.of(
+                    new SubscriptionDashboardResource.DashboardLimitResource("products", "Productos", 0, 40),
+                    new SubscriptionDashboardResource.DashboardLimitResource("active-batches", "Lotes activos", 0, 20),
+                    new SubscriptionDashboardResource.DashboardLimitResource("users", "Usuarios", 1, 1));
+        }
         return List.of(
                 new SubscriptionDashboardResource.DashboardLimitResource("products", "Productos", 0, 0),
                 new SubscriptionDashboardResource.DashboardLimitResource("active-batches", "Lotes activos", 0, 0),

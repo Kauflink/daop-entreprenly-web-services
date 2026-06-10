@@ -10,14 +10,14 @@ import java.util.List;
  */
 public class RecordingWhatsAppMessagingService implements WhatsAppMessagingService {
 
-    public record Sent(String toPhone, String content) {
+    public record Sent(String ownerEmail, String toPhone, String content) {
     }
 
     public final List<Sent> sent = new ArrayList<>();
 
     @Override
-    public boolean sendText(String toPhone, String content) {
-        sent.add(new Sent(toPhone, content));
+    public boolean sendText(String ownerEmail, String toPhone, String content) {
+        sent.add(new Sent(ownerEmail, toPhone, content));
         return true;
     }
 }
