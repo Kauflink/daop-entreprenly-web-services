@@ -80,7 +80,7 @@ public class ChatbotBridgeController {
     @GetMapping("/qr")
     @Operation(summary = "Get the current pairing QR and link state (for the frontend)")
     public ResponseEntity<BridgeQrStateResource> getQrState(Authentication authentication) {
-        String email = authentication.getName();
+        String email = (authentication != null) ? authentication.getName() : null;
         return ResponseEntity.ok(new BridgeQrStateResource(
                 bridgeState.getQr(email),
                 bridgeState.isConnected(email)));
