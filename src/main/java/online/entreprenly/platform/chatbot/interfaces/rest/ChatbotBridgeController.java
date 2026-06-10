@@ -67,12 +67,7 @@ public class ChatbotBridgeController {
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @Valid @RequestBody BridgeStatusResource resource) {
         if (isUnauthorized(token)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-<<<<<<< HEAD
-        bridgeState.setConnected(resource.connected());
-        bridgeState.setOwnerEmail(resource.ownerEmail());
-=======
         bridgeState.setConnected(resource.ownerEmail(), resource.connected());
->>>>>>> feature/chatbot
         sessionCommandService.handle(new ReportBridgeConnectionCommand(
                 resource.connected(), resource.phone(), resource.businessName(), resource.sellerId()));
         return ResponseEntity.noContent().build();
