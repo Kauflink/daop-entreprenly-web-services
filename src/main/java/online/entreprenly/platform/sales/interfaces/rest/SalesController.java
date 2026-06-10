@@ -87,7 +87,7 @@ public class SalesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sale found",
                     content = @Content(schema = @Schema(implementation = SaleResource.class))),
-            @ApiResponse(responseCode = "404", description = "Sale not found")
+            @ApiResponse(responseCode = "404", description = "Sale not found", content = @Content)
     })
     public ResponseEntity<SaleResource> getSaleById(@PathVariable Long saleId) {
         return saleQueryService.handle(new GetSaleByIdQuery(AuthenticatedUser.email(), saleId))

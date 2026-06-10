@@ -61,7 +61,7 @@ public class WeightLotsController {
             @ApiResponse(responseCode = "201", description = "Weight lot created",
                     content = @Content(schema = @Schema(implementation = WeightLotResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Referenced weight product not found")
+            @ApiResponse(responseCode = "404", description = "Referenced weight product not found", content = @Content)
     })
     public ResponseEntity<?> createWeightLot(@Valid @RequestBody CreateWeightLotResource resource) {
         var command = CreateWeightLotCommandFromResourceAssembler.toCommandFromResource(
@@ -94,7 +94,7 @@ public class WeightLotsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Weight lot found",
                     content = @Content(schema = @Schema(implementation = WeightLotResource.class))),
-            @ApiResponse(responseCode = "404", description = "Weight lot not found")
+            @ApiResponse(responseCode = "404", description = "Weight lot not found", content = @Content)
     })
     public ResponseEntity<WeightLotResource> getWeightLotById(@PathVariable Long weightLotId) {
         return weightLotQueryService.handle(new GetWeightLotByIdQuery(AuthenticatedUser.email(), weightLotId))
@@ -113,7 +113,7 @@ public class WeightLotsController {
             @ApiResponse(responseCode = "200", description = "Weight lot updated",
                     content = @Content(schema = @Schema(implementation = WeightLotResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Weight lot not found")
+            @ApiResponse(responseCode = "404", description = "Weight lot not found", content = @Content)
     })
     public ResponseEntity<?> updateWeightLot(@PathVariable Long weightLotId,
                                              @Valid @RequestBody UpdateWeightLotResource resource) {
@@ -132,7 +132,7 @@ public class WeightLotsController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Weight lot deleted"),
-            @ApiResponse(responseCode = "404", description = "Weight lot not found")
+            @ApiResponse(responseCode = "404", description = "Weight lot not found", content = @Content)
     })
     public ResponseEntity<?> deleteWeightLot(@PathVariable Long weightLotId) {
         var result = weightLotCommandService.handle(new DeleteWeightLotCommand(AuthenticatedUser.email(), weightLotId));

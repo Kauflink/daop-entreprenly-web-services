@@ -79,7 +79,7 @@ public class ProfilesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Profile found",
                     content = @Content(schema = @Schema(implementation = ProfileResource.class))),
-            @ApiResponse(responseCode = "404", description = "Profile not found")
+            @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
     })
     public ResponseEntity<ProfileResource> getProfileById(@PathVariable Long profileId) {
         return profileQueryService.handle(new GetProfileByIdQuery(profileId))
@@ -97,7 +97,7 @@ public class ProfilesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Profile found",
                     content = @Content(schema = @Schema(implementation = ProfileResource.class))),
-            @ApiResponse(responseCode = "404", description = "Profile not found")
+            @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
     })
     public ResponseEntity<ProfileResource> getProfileByUserId(@RequestParam Long userId) {
         return profileQueryService.handle(new GetProfileByUserIdQuery(userId))
@@ -116,7 +116,7 @@ public class ProfilesController {
             @ApiResponse(responseCode = "200", description = "Profile updated",
                     content = @Content(schema = @Schema(implementation = ProfileResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Profile not found")
+            @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
     })
     public ResponseEntity<?> updateProfile(@PathVariable Long profileId, @Valid @RequestBody UpdateProfileResource resource) {
         var command = UpdateProfileCommandFromResourceAssembler.toCommandFromResource(profileId, resource);
@@ -135,7 +135,7 @@ public class ProfilesController {
             @ApiResponse(responseCode = "200", description = "Preferences updated",
                     content = @Content(schema = @Schema(implementation = ProfileResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Profile not found")
+            @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
     })
     public ResponseEntity<?> updatePreferences(@PathVariable Long profileId, @Valid @RequestBody PreferencesResource resource) {
         var command = UpdatePreferencesCommandFromResourceAssembler.toCommandFromResource(profileId, resource);
@@ -154,7 +154,7 @@ public class ProfilesController {
             @ApiResponse(responseCode = "200", description = "Notification settings updated",
                     content = @Content(schema = @Schema(implementation = ProfileResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Profile not found")
+            @ApiResponse(responseCode = "404", description = "Profile not found", content = @Content)
     })
     public ResponseEntity<?> updateNotificationSettings(@PathVariable Long profileId, @Valid @RequestBody NotificationSettingsResource resource) {
         var command = UpdateNotificationSettingsCommandFromResourceAssembler.toCommandFromResource(profileId, resource);

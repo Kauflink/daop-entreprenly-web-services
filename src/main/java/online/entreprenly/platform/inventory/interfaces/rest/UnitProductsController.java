@@ -94,7 +94,7 @@ public class UnitProductsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Unit product found",
                     content = @Content(schema = @Schema(implementation = UnitProductResource.class))),
-            @ApiResponse(responseCode = "404", description = "Unit product not found")
+            @ApiResponse(responseCode = "404", description = "Unit product not found", content = @Content)
     })
     public ResponseEntity<UnitProductResource> getUnitProductById(@PathVariable Long unitProductId) {
         return unitProductQueryService.handle(new GetUnitProductByIdQuery(AuthenticatedUser.email(), unitProductId))
@@ -113,7 +113,7 @@ public class UnitProductsController {
             @ApiResponse(responseCode = "200", description = "Unit product updated",
                     content = @Content(schema = @Schema(implementation = UnitProductResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Unit product not found")
+            @ApiResponse(responseCode = "404", description = "Unit product not found", content = @Content)
     })
     public ResponseEntity<?> updateUnitProduct(@PathVariable Long unitProductId,
                                                @Valid @RequestBody UpdateUnitProductResource resource) {
@@ -132,7 +132,7 @@ public class UnitProductsController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Unit product deleted"),
-            @ApiResponse(responseCode = "404", description = "Unit product not found")
+            @ApiResponse(responseCode = "404", description = "Unit product not found", content = @Content)
     })
     public ResponseEntity<?> deleteUnitProduct(@PathVariable Long unitProductId) {
         var result = unitProductCommandService.handle(

@@ -84,7 +84,7 @@ public class UsersController {
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required or invalid"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions"),
-            @ApiResponse(responseCode = "404", description = "User not found")
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
     })
     public ResponseEntity<UserResource> getUserById(
             @PathVariable
