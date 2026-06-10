@@ -74,7 +74,7 @@ public class ChatbotBridgeController {
     }
 
     /**
-     * Called by the frontend every few seconds to get the current QR and connection state.
+     * Called by the frontend every 5 s to get the current QR and connection state.
      * Returns the state for the authenticated seller only.
      */
     @GetMapping("/qr")

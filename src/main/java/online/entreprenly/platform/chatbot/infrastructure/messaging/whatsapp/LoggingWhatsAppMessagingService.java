@@ -27,11 +27,12 @@ public class LoggingWhatsAppMessagingService implements WhatsAppMessagingService
     }
 
     @Override
-    public boolean sendText(String toPhone, String content) {
+    public boolean sendText(String ownerEmail, String toPhone, String content) {
         if (enabled) {
-            log.info("[whatsapp] (enabled, no live adapter configured) would send to {}: {}", toPhone, content);
+            log.info("[whatsapp] (enabled, no live adapter configured) would send to {} (owner={}): {}",
+                    toPhone, ownerEmail, content);
         } else {
-            log.debug("[whatsapp] (stub) outbound to {}: {}", toPhone, content);
+            log.debug("[whatsapp] (stub) outbound to {} (owner={}): {}", toPhone, ownerEmail, content);
         }
         return true;
     }

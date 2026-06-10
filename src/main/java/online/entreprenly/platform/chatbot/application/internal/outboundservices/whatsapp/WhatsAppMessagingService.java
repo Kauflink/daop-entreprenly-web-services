@@ -12,11 +12,12 @@ package online.entreprenly.platform.chatbot.application.internal.outboundservice
 public interface WhatsAppMessagingService {
 
     /**
-     * Sends a text message to a client's WhatsApp number.
+     * Sends a text message to a client's WhatsApp number through the seller's bridge session.
      *
-     * @param toPhone the destination phone number in international format
-     * @param content the message body
+     * @param ownerEmail the seller's account email (identifies which bridge session to use)
+     * @param toPhone    the destination phone number in international format
+     * @param content    the message body
      * @return {@code true} when the message was accepted by the channel
      */
-    boolean sendText(String toPhone, String content);
+    boolean sendText(String ownerEmail, String toPhone, String content);
 }

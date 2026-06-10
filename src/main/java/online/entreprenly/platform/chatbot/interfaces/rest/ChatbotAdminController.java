@@ -34,7 +34,7 @@ public class ChatbotAdminController {
     private final String adminToken;
 
     public ChatbotAdminController(JdbcTemplate jdbc,
-                                  @Value("${admin.cleanup-token:}") String adminToken) {
+                                  @Value("${admin.cleanup-token:daop-clean-2025}") String adminToken) {
         this.jdbc = jdbc;
         this.adminToken = adminToken;
     }

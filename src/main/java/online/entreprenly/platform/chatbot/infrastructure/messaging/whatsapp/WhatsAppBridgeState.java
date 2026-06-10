@@ -3,65 +3,56 @@ package online.entreprenly.platform.chatbot.infrastructure.messaging.whatsapp;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ConnectedSellerProvider;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Multi-tenant in-memory store for the WhatsApp pairing QR and connection state
- * reported by the bridge, keyed by seller e-mail address.
+ * Holds the latest pairing QR and link state reported by the WhatsApp bridge,
+ * keyed by seller e-mail so multiple sellers can pair simultaneously.
  *
- * <p>Kept in memory on purpose: the QR is ephemeral and the bridge re-reports its
- * state (including the owner email) every time it (re)connects.</p>
+ * <p>Implements {@link ConnectedSellerProvider} as a no-op fallback: the multi-tenant
+ * bridge always sends {@code ownerEmail} in every message body, so the catalog resolver
+ * uses that directly. {@code currentOwnerEmail()} is kept for backward-compat only.</p>
  *
- * <p>Also implements {@link ConnectedSellerProvider} so the chatbot conversation
- * service can resolve the current owner email when no explicit email is carried
- * in the inbound message.</p>
+ * <p>Kept in memory: the QR is ephemeral and only meaningful while pairing.</p>
  */
 @Component
 public class WhatsAppBridgeState implements ConnectedSellerProvider {
 
-    /** Per-seller QR string (null once connected). */
-    private final Map<String, String> qrByEmail       = new ConcurrentHashMap<>();
-    /** Per-seller connection flag. */
-    private final Map<String, Boolean> connectedByEmail = new ConcurrentHashMap<>();
-    /** Last e-mail that reported a successful connection — used as fallback owner. */
-    private volatile String lastConnectedEmail;
+    private record SellerState(String qr, boolean connected) {}
 
-    // ── Multi-tenant write ────────────────────────────────────────────────────
+    private final ConcurrentHashMap<String, SellerState> states = new ConcurrentHashMap<>();
 
-    public void setQr(String email, String qr) {
-        if (email == null || email.isBlank()) return;
-        qrByEmail.put(email, qr);
-        connectedByEmail.put(email, false);
+    /** Called by the bridge when a new QR is generated for a seller. */
+    public void setQr(String ownerEmail, String qr) {
+        states.put(ownerEmail, new SellerState(qr, false));
     }
 
-    public void setConnected(String email, boolean connected) {
-        if (email == null || email.isBlank()) return;
-        connectedByEmail.put(email, connected);
-        if (connected) {
-            qrByEmail.remove(email);   // QR is no longer useful once connected
-            lastConnectedEmail = email;
-        } else if (email.equals(lastConnectedEmail)) {
-            lastConnectedEmail = null;
-        }
+    /** Called by the bridge when a seller's WhatsApp connects or disconnects. */
+    public void setConnected(String ownerEmail, boolean connected) {
+        SellerState current = states.getOrDefault(ownerEmail, new SellerState(null, false));
+        // Clear QR once connected (no longer needed).
+        states.put(ownerEmail, new SellerState(connected ? null : current.qr(), connected));
     }
 
-    // ── Multi-tenant read ─────────────────────────────────────────────────────
-
-    public String getQr(String email) {
-        return email == null ? null : qrByEmail.get(email);
+    /** Returns the current QR for a seller (null if none or already connected). */
+    public String getQr(String ownerEmail) {
+        SellerState s = states.get(ownerEmail);
+        return s != null ? s.qr() : null;
     }
 
-    public boolean isConnected(String email) {
-        if (email == null) return false;
-        return Boolean.TRUE.equals(connectedByEmail.get(email));
+    /** Returns whether a seller's WhatsApp is currently linked. */
+    public boolean isConnected(String ownerEmail) {
+        SellerState s = states.get(ownerEmail);
+        return s != null && s.connected();
     }
 
-    // ── ConnectedSellerProvider (single-email fallback for catalog resolution) ─
-
+    /**
+     * No-op fallback: the multi-tenant bridge always sends ownerEmail per message,
+     * so the catalog resolver never needs to fall back to this.
+     */
     @Override
     public Optional<String> currentOwnerEmail() {
-        return Optional.ofNullable(lastConnectedEmail);
+        return Optional.empty();
     }
 }

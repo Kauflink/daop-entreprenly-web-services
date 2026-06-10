@@ -46,7 +46,7 @@ public class BridgeWhatsAppMessagingService implements WhatsAppMessagingService 
     }
 
     @Override
-    public boolean sendText(String toPhone, String content) {
+    public boolean sendText(String ownerEmail, String toPhone, String content) {
         if (sendUrl == null || sendUrl.isBlank()) {
             log.debug("[whatsapp] bridge send-url not configured; skipping outbound to {}", toPhone);
             return false;
@@ -54,7 +54,12 @@ public class BridgeWhatsAppMessagingService implements WhatsAppMessagingService 
         if (toPhone == null || toPhone.isBlank() || content == null || content.isBlank()) {
             return false;
         }
-        var payload = "{\"phone\":%s,\"content\":%s}".formatted(jsonString(toPhone), jsonString(content));
+        if (ownerEmail == null || ownerEmail.isBlank()) {
+            log.warn("[whatsapp] ownerEmail not resolved for outbound to {}; skipping", toPhone);
+            return false;
+        }
+        var payload = "{\"email\":%s,\"phone\":%s,\"content\":%s}".formatted(
+                jsonString(ownerEmail), jsonString(toPhone), jsonString(content));
         try {
             var request = HttpRequest.newBuilder(URI.create(sendUrl))
                     .header("Content-Type", "application/json")

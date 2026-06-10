@@ -128,7 +128,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         }
 
         // Deliver the reply through the WhatsApp channel (no-op stub by default).
-        whatsAppMessagingService.sendText(command.fromPhone(), replyText);
+        whatsAppMessagingService.sendText(command.ownerEmail(), command.fromPhone(), replyText);
 
         return outboundResult;
     }
@@ -164,7 +164,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         var outbound = new CreateChatMessageCommand(conversation.getId(), replyText,
                 MessageSender.BOT, MessageType.TEXT, Instant.now());
         var outboundResult = messageCommandService.handle(outbound);
-        whatsAppMessagingService.sendText(command.fromPhone(), replyText);
+        whatsAppMessagingService.sendText(command.ownerEmail(), command.fromPhone(), replyText);
         return outboundResult;
     }
 

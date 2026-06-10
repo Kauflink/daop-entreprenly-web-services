@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.ChatMessageCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.whatsapp.WhatsAppMessagingService;
 import online.entreprenly.platform.chatbot.application.queryservices.ChatMessageQueryService;
 import online.entreprenly.platform.chatbot.application.queryservices.ConversationQueryService;
@@ -48,15 +49,18 @@ public class ChatMessagesController {
     private final ChatMessageQueryService queryService;
     private final ConversationQueryService conversationQueryService;
     private final WhatsAppMessagingService whatsAppMessagingService;
+    private final SellerEmailResolver sellerEmailResolver;
 
     public ChatMessagesController(ChatMessageCommandService commandService,
                                   ChatMessageQueryService queryService,
                                   ConversationQueryService conversationQueryService,
-                                  WhatsAppMessagingService whatsAppMessagingService) {
+                                  WhatsAppMessagingService whatsAppMessagingService,
+                                  SellerEmailResolver sellerEmailResolver) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.conversationQueryService = conversationQueryService;
         this.whatsAppMessagingService = whatsAppMessagingService;
+        this.sellerEmailResolver = sellerEmailResolver;
     }
 
     @GetMapping
@@ -99,8 +103,12 @@ public class ChatMessagesController {
             return;
         }
         conversationQueryService.handle(new GetConversationByIdQuery(message.getConversationId()))
-                .map(Conversation::getClientPhone)
-                .filter(phone -> phone != null && !phone.isBlank())
-                .ifPresent(phone -> whatsAppMessagingService.sendText(phone, message.getContent()));
+                .ifPresent(conversation -> {
+                    var phone = conversation.getClientPhone();
+                    if (phone == null || phone.isBlank()) return;
+                    var ownerEmail = sellerEmailResolver.resolveEmail(conversation.getSellerId())
+                            .orElse(null);
+                    whatsAppMessagingService.sendText(ownerEmail, phone, message.getContent());
+                });
     }
 }
