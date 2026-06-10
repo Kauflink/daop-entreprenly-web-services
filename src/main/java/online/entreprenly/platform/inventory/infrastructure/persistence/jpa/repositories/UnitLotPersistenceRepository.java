@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface UnitLotPersistenceRepository extends JpaRepository<UnitLotPersistenceEntity, Long> {
     List<UnitLotPersistenceEntity> findAllByOwnerEmail(String ownerEmail);
 
+    List<UnitLotPersistenceEntity> findAllByProductIdAndOwnerEmail(Long productId, String ownerEmail);
+
     Optional<UnitLotPersistenceEntity> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
     boolean existsByIdAndOwnerEmail(Long id, String ownerEmail);

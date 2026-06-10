@@ -16,6 +16,7 @@ public final class CashRegisterPersistenceAssembler {
         var cashRegister = new CashRegister();
         cashRegister.restoreState(
                 entity.getId(),
+                entity.getOwnerEmail(),
                 entity.getDate(),
                 entity.getTotalCash(),
                 entity.getTotalDigital(),
@@ -29,6 +30,7 @@ public final class CashRegisterPersistenceAssembler {
         if (cashRegister.getId() != null) {
             entity.setId(cashRegister.getId());
         }
+        entity.setOwnerEmail(cashRegister.getOwnerEmail());
         entity.setDate(cashRegister.getDate());
         entity.setTotalCash(cashRegister.getTotalCash());
         entity.setTotalDigital(cashRegister.getTotalDigital());

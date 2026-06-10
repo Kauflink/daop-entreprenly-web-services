@@ -3,9 +3,11 @@ package online.entreprenly.platform.sales.domain.model.queries;
 import java.time.LocalDate;
 
 /**
- * Query to get the cash register that belongs to a given business day.
+ * Query to get the cash register that belongs to a given business day for the
+ * authenticated account.
  *
- * @param date the business day
+ * @param ownerEmail the authenticated account that owns the register
+ * @param date       the business day
  */
-public record GetCashRegisterByDateQuery(LocalDate date) {
+public record GetCashRegisterByDateQuery(String ownerEmail, LocalDate date) {
 }

@@ -21,6 +21,10 @@ public record InboundWhatsAppMessageResource(
 
         @NotBlank
         @Schema(description = "Message text", example = "Hola, quiero hacer un pedido")
-        String content
+        String content,
+
+        @Schema(description = "Seller account email reported by the bridge (resolves the catalog)",
+                example = "vendedor@entreprenly.online", nullable = true)
+        String ownerEmail
 ) {
 }

@@ -8,8 +8,10 @@ import online.entreprenly.platform.sales.interfaces.rest.resources.UpdateCashReg
  */
 public class UpdateCashRegisterCommandFromResourceAssembler {
 
-    public static UpdateCashRegisterCommand toCommandFromResource(Long cashRegisterId, UpdateCashRegisterResource resource) {
+    public static UpdateCashRegisterCommand toCommandFromResource(String ownerEmail, Long cashRegisterId,
+                                                                  UpdateCashRegisterResource resource) {
         return new UpdateCashRegisterCommand(
+                ownerEmail,
                 cashRegisterId,
                 resource.totalCash(),
                 resource.totalDigital(),

@@ -61,7 +61,7 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "201", description = "Unit lot created",
                     content = @Content(schema = @Schema(implementation = UnitLotResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Referenced unit product not found")
+            @ApiResponse(responseCode = "404", description = "Referenced unit product not found", content = @Content)
     })
     public ResponseEntity<?> createUnitLot(@Valid @RequestBody CreateUnitLotResource resource) {
         var command = CreateUnitLotCommandFromResourceAssembler.toCommandFromResource(
@@ -94,7 +94,7 @@ public class UnitLotsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Unit lot found",
                     content = @Content(schema = @Schema(implementation = UnitLotResource.class))),
-            @ApiResponse(responseCode = "404", description = "Unit lot not found")
+            @ApiResponse(responseCode = "404", description = "Unit lot not found", content = @Content)
     })
     public ResponseEntity<UnitLotResource> getUnitLotById(@PathVariable Long unitLotId) {
         return unitLotQueryService.handle(new GetUnitLotByIdQuery(AuthenticatedUser.email(), unitLotId))
@@ -113,7 +113,7 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "200", description = "Unit lot updated",
                     content = @Content(schema = @Schema(implementation = UnitLotResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Unit lot not found")
+            @ApiResponse(responseCode = "404", description = "Unit lot not found", content = @Content)
     })
     public ResponseEntity<?> updateUnitLot(@PathVariable Long unitLotId,
                                            @Valid @RequestBody UpdateUnitLotResource resource) {
@@ -132,7 +132,7 @@ public class UnitLotsController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Unit lot deleted"),
-            @ApiResponse(responseCode = "404", description = "Unit lot not found")
+            @ApiResponse(responseCode = "404", description = "Unit lot not found", content = @Content)
     })
     public ResponseEntity<?> deleteUnitLot(@PathVariable Long unitLotId) {
         var result = unitLotCommandService.handle(new DeleteUnitLotCommand(AuthenticatedUser.email(), unitLotId));

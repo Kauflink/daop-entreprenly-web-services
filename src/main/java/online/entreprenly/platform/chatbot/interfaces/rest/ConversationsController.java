@@ -65,7 +65,7 @@ public class ConversationsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Conversation found",
                     content = @Content(schema = @Schema(implementation = ConversationResource.class))),
-            @ApiResponse(responseCode = "404", description = "Conversation not found")
+            @ApiResponse(responseCode = "404", description = "Conversation not found", content = @Content)
     })
     public ResponseEntity<ConversationResource> getConversationById(@PathVariable Long conversationId) {
         return queryService.handle(new GetConversationByIdQuery(conversationId))
@@ -93,7 +93,7 @@ public class ConversationsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Conversation updated",
                     content = @Content(schema = @Schema(implementation = ConversationResource.class))),
-            @ApiResponse(responseCode = "404", description = "Conversation not found")
+            @ApiResponse(responseCode = "404", description = "Conversation not found", content = @Content)
     })
     public ResponseEntity<?> updateConversation(@PathVariable Long conversationId,
                                                 @Valid @RequestBody UpdateConversationResource resource) {

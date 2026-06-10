@@ -1,9 +1,17 @@
 package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.ChatMessageCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.whatsapp.WhatsAppMessagingService;
 import online.entreprenly.platform.chatbot.application.queryservices.ChatMessageQueryService;
+import online.entreprenly.platform.chatbot.application.queryservices.ConversationQueryService;
+import online.entreprenly.platform.chatbot.domain.model.aggregates.ChatMessage;
+import online.entreprenly.platform.chatbot.domain.model.aggregates.Conversation;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetAllChatMessagesQuery;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetChatMessagesByConversationIdQuery;
+import online.entreprenly.platform.chatbot.domain.model.queries.GetConversationByIdQuery;
+import online.entreprenly.platform.chatbot.domain.model.valueobjects.MessageSender;
+import online.entreprenly.platform.chatbot.domain.model.valueobjects.MessageType;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.ChatMessageResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.CreateChatMessageResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.transform.ChatMessageResourceFromEntityAssembler;
@@ -39,11 +47,20 @@ public class ChatMessagesController {
 
     private final ChatMessageCommandService commandService;
     private final ChatMessageQueryService queryService;
+    private final ConversationQueryService conversationQueryService;
+    private final WhatsAppMessagingService whatsAppMessagingService;
+    private final SellerEmailResolver sellerEmailResolver;
 
     public ChatMessagesController(ChatMessageCommandService commandService,
-                                  ChatMessageQueryService queryService) {
+                                  ChatMessageQueryService queryService,
+                                  ConversationQueryService conversationQueryService,
+                                  WhatsAppMessagingService whatsAppMessagingService,
+                                  SellerEmailResolver sellerEmailResolver) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.conversationQueryService = conversationQueryService;
+        this.whatsAppMessagingService = whatsAppMessagingService;
+        this.sellerEmailResolver = sellerEmailResolver;
     }
 
     @GetMapping
@@ -72,7 +89,26 @@ public class ChatMessagesController {
     public ResponseEntity<?> createMessage(@Valid @RequestBody CreateChatMessageResource resource) {
         var command = CreateChatMessageCommandFromResourceAssembler.toCommandFromResource(resource);
         var result = commandService.handle(command);
+        // Deliver app-authored bot replies (payment approved/rejected, manual seller replies)
+        // to the client's WhatsApp. Inbound webhook replies are delivered by the bridge itself,
+        // so they never pass through here and are not sent twice.
+        result.toOptional().ifPresent(this::deliverBotMessageToClient);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, ChatMessageResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
+    }
+
+    /** Pushes a freshly created text bot message to the conversation's client over WhatsApp. */
+    private void deliverBotMessageToClient(ChatMessage message) {
+        if (message.getSender() != MessageSender.BOT || message.getType() != MessageType.TEXT) {
+            return;
+        }
+        conversationQueryService.handle(new GetConversationByIdQuery(message.getConversationId()))
+                .ifPresent(conversation -> {
+                    var phone = conversation.getClientPhone();
+                    if (phone == null || phone.isBlank()) return;
+                    var ownerEmail = sellerEmailResolver.resolveEmail(conversation.getSellerId())
+                            .orElse(null);
+                    whatsAppMessagingService.sendText(ownerEmail, phone, message.getContent());
+                });
     }
 }

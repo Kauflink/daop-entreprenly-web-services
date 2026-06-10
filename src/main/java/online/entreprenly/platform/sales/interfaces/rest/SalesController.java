@@ -57,7 +57,8 @@ public class SalesController {
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     public ResponseEntity<?> createSale(@Valid @RequestBody CreateSaleResource resource) {
-        var command = CreateSaleCommandFromResourceAssembler.toCommandFromResource(resource);
+        var command = CreateSaleCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), resource);
         var result = saleCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, SaleResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -71,7 +72,7 @@ public class SalesController {
     )
     @ApiResponse(responseCode = "200", description = "Sales found")
     public ResponseEntity<List<SaleResource>> getAllSales() {
-        var sales = saleQueryService.handle(new GetAllSalesQuery()).stream()
+        var sales = saleQueryService.handle(new GetAllSalesQuery(AuthenticatedUser.email())).stream()
                 .map(SaleResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(sales);
@@ -86,10 +87,10 @@ public class SalesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sale found",
                     content = @Content(schema = @Schema(implementation = SaleResource.class))),
-            @ApiResponse(responseCode = "404", description = "Sale not found")
+            @ApiResponse(responseCode = "404", description = "Sale not found", content = @Content)
     })
     public ResponseEntity<SaleResource> getSaleById(@PathVariable Long saleId) {
-        return saleQueryService.handle(new GetSaleByIdQuery(saleId))
+        return saleQueryService.handle(new GetSaleByIdQuery(AuthenticatedUser.email(), saleId))
                 .map(SaleResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

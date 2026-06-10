@@ -72,7 +72,7 @@ public class SubscriptionsController {
             @ApiResponse(responseCode = "201", description = "Subscription created",
                     content = @Content(schema = @Schema(implementation = SubscriptionResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Plan not found"),
+            @ApiResponse(responseCode = "404", description = "Plan not found", content = @Content),
             @ApiResponse(responseCode = "409", description = "User already has an active subscription")
     })
     public ResponseEntity<?> createSubscription(@Valid @RequestBody CreateSubscriptionResource resource) {
@@ -91,7 +91,7 @@ public class SubscriptionsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Subscription found",
                     content = @Content(schema = @Schema(implementation = SubscriptionResource.class))),
-            @ApiResponse(responseCode = "404", description = "Subscription not found")
+            @ApiResponse(responseCode = "404", description = "Subscription not found", content = @Content)
     })
     public ResponseEntity<SubscriptionResource> getSubscriptionById(@PathVariable Long subscriptionId) {
         return subscriptionQueryService.handle(new GetSubscriptionByIdQuery(subscriptionId))
@@ -109,7 +109,7 @@ public class SubscriptionsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Active subscription found",
                     content = @Content(schema = @Schema(implementation = SubscriptionResource.class))),
-            @ApiResponse(responseCode = "404", description = "Active subscription not found")
+            @ApiResponse(responseCode = "404", description = "Active subscription not found", content = @Content)
     })
     public ResponseEntity<SubscriptionResource> getActiveSubscriptionByUserId(@RequestParam Long userId) {
         return subscriptionQueryService.handle(new GetActiveSubscriptionByUserIdQuery(userId))
@@ -128,7 +128,7 @@ public class SubscriptionsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Subscription renewal processed",
                     content = @Content(schema = @Schema(implementation = SubscriptionResource.class))),
-            @ApiResponse(responseCode = "404", description = "Subscription or plan not found")
+            @ApiResponse(responseCode = "404", description = "Subscription or plan not found", content = @Content)
     })
     public ResponseEntity<?> renewSubscription(@PathVariable Long subscriptionId,
                                                @Valid @RequestBody RenewSubscriptionResource resource) {
@@ -147,7 +147,7 @@ public class SubscriptionsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Subscription cancelled",
                     content = @Content(schema = @Schema(implementation = SubscriptionResource.class))),
-            @ApiResponse(responseCode = "404", description = "Subscription not found")
+            @ApiResponse(responseCode = "404", description = "Subscription not found", content = @Content)
     })
     public ResponseEntity<?> cancelSubscription(@PathVariable Long subscriptionId) {
         var result = subscriptionCommandService.handle(new CancelSubscriptionCommand(subscriptionId));
@@ -164,7 +164,7 @@ public class SubscriptionsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Fake payment processed",
                     content = @Content(schema = @Schema(implementation = PaymentResource.class))),
-            @ApiResponse(responseCode = "404", description = "Subscription or plan not found")
+            @ApiResponse(responseCode = "404", description = "Subscription or plan not found", content = @Content)
     })
     public ResponseEntity<?> processPayment(@PathVariable Long subscriptionId,
                                             @Valid @RequestBody ProcessSubscriptionPaymentResource resource) {

@@ -62,7 +62,7 @@ public class LotsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lot found",
                     content = @Content(schema = @Schema(implementation = LotResource.class))),
-            @ApiResponse(responseCode = "404", description = "Lot not found")
+            @ApiResponse(responseCode = "404", description = "Lot not found", content = @Content)
     })
     public ResponseEntity<LotResource> getLotById(@PathVariable Long lotId) {
         return lotQueryService.handle(new GetLotByIdQuery(AuthenticatedUser.email(), lotId))

@@ -49,4 +49,10 @@ public class UnitLotRepositoryImpl implements UnitLotRepository {
     public void deleteById(Long id) {
         unitLotPersistenceRepository.deleteById(id);
     }
+
+    @Override
+    public void deleteByProductIdAndOwnerEmail(Long productId, String ownerEmail) {
+        var lots = unitLotPersistenceRepository.findAllByProductIdAndOwnerEmail(productId, ownerEmail);
+        unitLotPersistenceRepository.deleteAll(lots);
+    }
 }

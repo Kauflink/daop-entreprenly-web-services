@@ -65,7 +65,7 @@ public class ChatOrdersController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order found",
                     content = @Content(schema = @Schema(implementation = ChatOrderResource.class))),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+            @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
     public ResponseEntity<ChatOrderResource> getOrderById(@PathVariable Long orderId) {
         return queryService.handle(new GetChatOrderByIdQuery(orderId))
@@ -93,7 +93,7 @@ public class ChatOrdersController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order updated",
                     content = @Content(schema = @Schema(implementation = ChatOrderResource.class))),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+            @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
     public ResponseEntity<?> updateOrder(@PathVariable Long orderId,
                                          @Valid @RequestBody UpdateChatOrderResource resource) {

@@ -24,11 +24,11 @@ public class SaleQueryServiceImpl implements SaleQueryService {
 
     @Override
     public List<Sale> handle(GetAllSalesQuery query) {
-        return saleRepository.findAll();
+        return saleRepository.findAllByOwnerEmail(query.ownerEmail());
     }
 
     @Override
     public Optional<Sale> handle(GetSaleByIdQuery query) {
-        return saleRepository.findById(query.saleId());
+        return saleRepository.findByIdAndOwnerEmail(query.saleId(), query.ownerEmail());
     }
 }

@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ChatOrderPersistenceRepository extends JpaRepository<ChatOrderPersistenceEntity, Long> {
+
+    java.util.List<ChatOrderPersistenceEntity> findByConversationIdOrderByIdDesc(Long conversationId);
 }

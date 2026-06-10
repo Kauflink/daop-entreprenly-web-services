@@ -33,6 +33,9 @@ import java.util.List;
 @NoArgsConstructor
 public class SalePersistenceEntity extends AuditableAbstractPersistenceEntity {
 
+    @Column(name = "owner_email", nullable = false, length = 120)
+    private String ownerEmail;
+
     @Column(name = "seller_id", nullable = false)
     private Long sellerId;
 

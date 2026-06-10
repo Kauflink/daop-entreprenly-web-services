@@ -65,7 +65,8 @@ public class CashRegistersController {
             @ApiResponse(responseCode = "409", description = "A cash register already exists for the day")
     })
     public ResponseEntity<?> createCashRegister(@Valid @RequestBody CreateCashRegisterResource resource) {
-        var command = CreateCashRegisterCommandFromResourceAssembler.toCommandFromResource(resource);
+        var command = CreateCashRegisterCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), resource);
         var result = cashRegisterCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, CashRegisterResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -82,12 +83,12 @@ public class CashRegistersController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<CashRegisterResource> resources;
         if (date != null) {
-            resources = cashRegisterQueryService.handle(new GetCashRegisterByDateQuery(date))
+            resources = cashRegisterQueryService.handle(new GetCashRegisterByDateQuery(AuthenticatedUser.email(), date))
                     .map(CashRegisterResourceFromEntityAssembler::toResourceFromEntity)
                     .map(List::of)
                     .orElseGet(List::of);
         } else {
-            resources = cashRegisterQueryService.handle(new GetAllCashRegistersQuery()).stream()
+            resources = cashRegisterQueryService.handle(new GetAllCashRegistersQuery(AuthenticatedUser.email())).stream()
                     .map(CashRegisterResourceFromEntityAssembler::toResourceFromEntity)
                     .toList();
         }
@@ -104,11 +105,12 @@ public class CashRegistersController {
             @ApiResponse(responseCode = "200", description = "Cash register updated",
                     content = @Content(schema = @Schema(implementation = CashRegisterResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Cash register not found")
+            @ApiResponse(responseCode = "404", description = "Cash register not found", content = @Content)
     })
     public ResponseEntity<?> updateCashRegister(@PathVariable Long cashRegisterId,
                                                 @Valid @RequestBody UpdateCashRegisterResource resource) {
-        var command = UpdateCashRegisterCommandFromResourceAssembler.toCommandFromResource(cashRegisterId, resource);
+        var command = UpdateCashRegisterCommandFromResourceAssembler.toCommandFromResource(
+                AuthenticatedUser.email(), cashRegisterId, resource);
         var result = cashRegisterCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, CashRegisterResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);

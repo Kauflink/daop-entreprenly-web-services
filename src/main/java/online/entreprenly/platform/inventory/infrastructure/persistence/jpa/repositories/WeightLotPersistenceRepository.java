@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface WeightLotPersistenceRepository extends JpaRepository<WeightLotPersistenceEntity, Long> {
     List<WeightLotPersistenceEntity> findAllByOwnerEmail(String ownerEmail);
 
+    List<WeightLotPersistenceEntity> findAllByProductIdAndOwnerEmail(Long productId, String ownerEmail);
+
     Optional<WeightLotPersistenceEntity> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
     boolean existsByIdAndOwnerEmail(Long id, String ownerEmail);

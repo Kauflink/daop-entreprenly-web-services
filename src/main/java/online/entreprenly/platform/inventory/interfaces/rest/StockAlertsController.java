@@ -61,7 +61,7 @@ public class StockAlertsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Stock alert found",
                     content = @Content(schema = @Schema(implementation = StockAlertResource.class))),
-            @ApiResponse(responseCode = "404", description = "Stock alert not found")
+            @ApiResponse(responseCode = "404", description = "Stock alert not found", content = @Content)
     })
     public ResponseEntity<StockAlertResource> getStockAlertById(@PathVariable Long stockAlertId) {
         return stockAlertQueryService.handle(new GetStockAlertByIdQuery(AuthenticatedUser.email(), stockAlertId))

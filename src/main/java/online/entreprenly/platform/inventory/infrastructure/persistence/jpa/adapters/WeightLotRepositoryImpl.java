@@ -49,4 +49,10 @@ public class WeightLotRepositoryImpl implements WeightLotRepository {
     public void deleteById(Long id) {
         weightLotPersistenceRepository.deleteById(id);
     }
+
+    @Override
+    public void deleteByProductIdAndOwnerEmail(Long productId, String ownerEmail) {
+        var lots = weightLotPersistenceRepository.findAllByProductIdAndOwnerEmail(productId, ownerEmail);
+        weightLotPersistenceRepository.deleteAll(lots);
+    }
 }

@@ -29,6 +29,7 @@ public final class ChatOrderResourceFromEntityAssembler {
                 order.getStatus(),
                 order.isHasReceipt(),
                 order.getRejectionCount(),
-                order.getCreatedAt());
+                order.getCreatedAt(),
+                order.getReceiptImage());
     }
 }

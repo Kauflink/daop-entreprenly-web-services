@@ -10,14 +10,16 @@ import java.time.LocalDate;
  * Cash register aggregate root.
  *
  * <p>Aggregates the takings of a single business day, split between cash and digital
- * payments, together with the number of sales registered that day. {@code totalDay}
- * is derived from both totals.</p>
+ * payments, together with the number of sales registered that day. It belongs to the
+ * account ({@code ownerEmail}) that opened it, so each account keeps its own daily
+ * register. {@code totalDay} is derived from both totals.</p>
  */
 @Getter
 public class CashRegister extends AbstractDomainAggregateRoot<CashRegister> {
 
     @Setter
     private Long id;
+    private String ownerEmail;
     private LocalDate date;
     private double totalCash;
     private double totalDigital;
@@ -26,7 +28,8 @@ public class CashRegister extends AbstractDomainAggregateRoot<CashRegister> {
     public CashRegister() {
     }
 
-    public CashRegister(LocalDate date, double totalCash, double totalDigital, int saleCount) {
+    public CashRegister(String ownerEmail, LocalDate date, double totalCash, double totalDigital, int saleCount) {
+        this.ownerEmail = ownerEmail;
         this.date = date;
         this.totalCash = totalCash;
         this.totalDigital = totalDigital;
@@ -61,8 +64,10 @@ public class CashRegister extends AbstractDomainAggregateRoot<CashRegister> {
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a cash register that already carries identity and full state.
      */
-    public void restoreState(Long id, LocalDate date, double totalCash, double totalDigital, int saleCount) {
+    public void restoreState(Long id, String ownerEmail, LocalDate date, double totalCash, double totalDigital,
+                             int saleCount) {
         this.id = id;
+        this.ownerEmail = ownerEmail;
         this.date = date;
         this.totalCash = totalCash;
         this.totalDigital = totalDigital;

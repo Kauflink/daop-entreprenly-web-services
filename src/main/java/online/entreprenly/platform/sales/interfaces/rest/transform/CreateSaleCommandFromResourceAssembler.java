@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class CreateSaleCommandFromResourceAssembler {
 
-    public static CreateSaleCommand toCommandFromResource(CreateSaleResource resource) {
+    public static CreateSaleCommand toCommandFromResource(String ownerEmail, CreateSaleResource resource) {
         List<SaleItem> items = resource.items() == null ? List.of() : resource.items().stream()
                 .map(item -> SaleItem.of(
                         item.productId(),
@@ -25,6 +25,7 @@ public class CreateSaleCommandFromResourceAssembler {
                 .toList();
         PaymentReceipt paymentReceipt = toPaymentReceipt(resource.paymentReceipt());
         return new CreateSaleCommand(
+                ownerEmail,
                 resource.sellerId(),
                 items,
                 resource.paymentMethod(),
