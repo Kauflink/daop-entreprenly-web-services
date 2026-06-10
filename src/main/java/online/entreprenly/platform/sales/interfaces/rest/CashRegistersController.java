@@ -105,7 +105,7 @@ public class CashRegistersController {
             @ApiResponse(responseCode = "200", description = "Cash register updated",
                     content = @Content(schema = @Schema(implementation = CashRegisterResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Cash register not found")
+            @ApiResponse(responseCode = "404", description = "Cash register not found", content = @Content)
     })
     public ResponseEntity<?> updateCashRegister(@PathVariable Long cashRegisterId,
                                                 @Valid @RequestBody UpdateCashRegisterResource resource) {

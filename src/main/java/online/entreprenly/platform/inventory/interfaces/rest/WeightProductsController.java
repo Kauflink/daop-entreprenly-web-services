@@ -95,7 +95,7 @@ public class WeightProductsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Weight product found",
                     content = @Content(schema = @Schema(implementation = WeightProductResource.class))),
-            @ApiResponse(responseCode = "404", description = "Weight product not found")
+            @ApiResponse(responseCode = "404", description = "Weight product not found", content = @Content)
     })
     public ResponseEntity<WeightProductResource> getWeightProductById(@PathVariable Long weightProductId) {
         return weightProductQueryService.handle(new GetWeightProductByIdQuery(AuthenticatedUser.email(), weightProductId))
@@ -114,7 +114,7 @@ public class WeightProductsController {
             @ApiResponse(responseCode = "200", description = "Weight product updated",
                     content = @Content(schema = @Schema(implementation = WeightProductResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "404", description = "Weight product not found")
+            @ApiResponse(responseCode = "404", description = "Weight product not found", content = @Content)
     })
     public ResponseEntity<?> updateWeightProduct(@PathVariable Long weightProductId,
                                                  @Valid @RequestBody UpdateWeightProductResource resource) {
@@ -133,7 +133,7 @@ public class WeightProductsController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Weight product deleted"),
-            @ApiResponse(responseCode = "404", description = "Weight product not found")
+            @ApiResponse(responseCode = "404", description = "Weight product not found", content = @Content)
     })
     public ResponseEntity<?> deleteWeightProduct(@PathVariable Long weightProductId) {
         var result = weightProductCommandService.handle(

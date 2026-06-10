@@ -88,7 +88,7 @@ public class SubscriptionPlansController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Plan found",
                     content = @Content(schema = @Schema(implementation = SubscriptionPlanResource.class))),
-            @ApiResponse(responseCode = "404", description = "Plan not found")
+            @ApiResponse(responseCode = "404", description = "Plan not found", content = @Content)
     })
     public ResponseEntity<SubscriptionPlanResource> getSubscriptionPlanById(@PathVariable Long planId) {
         return subscriptionPlanQueryService.handle(new GetSubscriptionPlanByIdQuery(planId))

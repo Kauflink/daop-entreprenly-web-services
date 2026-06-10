@@ -65,7 +65,7 @@ public class WhatsappSessionsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Session found",
                     content = @Content(schema = @Schema(implementation = WhatsappSessionResource.class))),
-            @ApiResponse(responseCode = "404", description = "Session not found")
+            @ApiResponse(responseCode = "404", description = "Session not found", content = @Content)
     })
     public ResponseEntity<WhatsappSessionResource> getSessionById(@PathVariable Long sessionId) {
         return queryService.handle(new GetWhatsappSessionByIdQuery(sessionId))
@@ -93,7 +93,7 @@ public class WhatsappSessionsController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Session updated",
                     content = @Content(schema = @Schema(implementation = WhatsappSessionResource.class))),
-            @ApiResponse(responseCode = "404", description = "Session not found")
+            @ApiResponse(responseCode = "404", description = "Session not found", content = @Content)
     })
     public ResponseEntity<?> updateSession(@PathVariable Long sessionId,
                                            @Valid @RequestBody UpdateWhatsappSessionResource resource) {
