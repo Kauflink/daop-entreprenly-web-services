@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +25,21 @@ import java.util.stream.Collectors;
 public class RuleBasedProductReplyComposer implements ProductReplyComposer {
 
     private static final Pattern NUMBER = Pattern.compile("(?<![\\w])(\\d+(?:[.,]\\d+)?)(?![\\w])");
+
+    /** Spanish number words the client may use instead of digits ("quisiera tres"). */
+    private static final Map<String, Double> NUMBER_WORDS = Map.ofEntries(
+            Map.entry("un", 1.0), Map.entry("una", 1.0), Map.entry("uno", 1.0),
+            Map.entry("dos", 2.0), Map.entry("tres", 3.0), Map.entry("cuatro", 4.0),
+            Map.entry("cinco", 5.0), Map.entry("seis", 6.0), Map.entry("siete", 7.0),
+            Map.entry("ocho", 8.0), Map.entry("nueve", 9.0), Map.entry("diez", 10.0),
+            Map.entry("once", 11.0), Map.entry("doce", 12.0), Map.entry("media", 0.5),
+            Map.entry("medio", 0.5));
+
+    /** Verbs/expressions that signal the client wants to order a quantity. */
+    private static final String[] ORDER_INTENT = {
+            "quiero", "quisiera", "deseo", "dame", "necesito", "comprar", "pedir", "pedido",
+            "llevar", "llevo", "ponme", "mandame", "enviame", "envieme", "vender", "me das",
+            "kilos", "kilo", "kg", "unidad", "unidades"};
 
     @Override
     public Optional<String> compose(String incomingContent, List<CatalogProduct> catalog) {
@@ -50,15 +66,32 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
 
     @Override
     public Optional<OrderItem> detectOrder(String incomingContent, List<CatalogProduct> catalog) {
+        return detectOrder(incomingContent, catalog, null);
+    }
+
+    @Override
+    public Optional<OrderItem> detectOrder(String incomingContent, List<CatalogProduct> catalog,
+                                           CatalogProduct contextProduct) {
         if (incomingContent == null || incomingContent.isBlank() || catalog == null || catalog.isEmpty()) {
             return Optional.empty();
         }
         var text = normalize(incomingContent);
+
+        // Prefer a product named in this very message; otherwise fall back to the product
+        // the bot was last talking about (e.g. it just asked "¿cuántos deseas?").
         var product = bestMatch(text, catalog);
+        boolean usingContext = false;
+        if (product == null) {
+            product = contextProduct;
+            usingContext = true;
+        }
         if (product == null) {
             return Optional.empty();
         }
-        var quantity = orderQuantity(text, product);
+
+        // With context we already know the product, so a bare quantity reply ("tres", "3")
+        // is enough; without context we still require an explicit ordering intent.
+        var quantity = usingContext ? anyQuantity(text, product) : orderQuantity(text, product);
         if (quantity.isEmpty()) {
             return Optional.empty();
         }
@@ -67,6 +100,14 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
             return Optional.empty();
         }
         return Optional.of(new OrderItem(product.name(), (int) Math.round(qty), product.price()));
+    }
+
+    @Override
+    public Optional<CatalogProduct> matchProduct(String incomingContent, List<CatalogProduct> catalog) {
+        if (incomingContent == null || incomingContent.isBlank() || catalog == null || catalog.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(bestMatch(normalize(incomingContent), catalog));
     }
 
     /** True when the message looks like a product or availability question. */
@@ -144,10 +185,18 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
 
     /** Extracts an ordered quantity when the message expresses an ordering intent. */
     private Optional<Double> orderQuantity(String text, CatalogProduct product) {
-        if (!mentionsAny(text, "quiero", "dame", "necesito", "comprar", "pedir", "pedido",
-                "llevar", "kilos", "kilo", "kg", "unidad", "unidades")) {
+        if (!mentionsAny(text, ORDER_INTENT)) {
             return Optional.empty();
         }
+        return anyQuantity(text, product);
+    }
+
+    /**
+     * Extracts a quantity from the message regardless of intent keywords, accepting both
+     * digits ("3", "2.5") and Spanish number words ("tres"). Used when the product is
+     * already known from the conversation context, so a bare number is a valid reply.
+     */
+    private Optional<Double> anyQuantity(String text, CatalogProduct product) {
         // Remove the product name tokens so we don't read a number that is part of the name.
         var cleaned = text;
         for (var token : normalize(product.name()).split("\\s+")) {
@@ -158,6 +207,13 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         Matcher matcher = NUMBER.matcher(cleaned);
         if (matcher.find()) {
             return Optional.of(Double.parseDouble(matcher.group(1).replace(',', '.')));
+        }
+        // No digits: try a Spanish number word ("quisiera tres").
+        for (var word : cleaned.split("[^a-zñ]+")) {
+            var value = NUMBER_WORDS.get(word);
+            if (value != null) {
+                return Optional.of(value);
+            }
         }
         return Optional.empty();
     }

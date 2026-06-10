@@ -30,4 +30,28 @@ public interface ProductReplyComposer {
      * @return the requested order line, or empty when the message is not a confirmable order
      */
     Optional<OrderItem> detectOrder(String incomingContent, List<CatalogProduct> catalog);
+
+    /**
+     * Detects a purchase intent that continues a previous turn, binding a bare quantity
+     * (e.g. "quisiera tres" or just "3") to the product the bot was last talking about.
+     *
+     * <p>When the message already names a product it behaves like
+     * {@link #detectOrder(String, List)}; otherwise the {@code contextProduct} is used.</p>
+     *
+     * @param incomingContent the client's message text
+     * @param catalog         the seller's catalog snapshot
+     * @param contextProduct  the product discussed in the previous turn (nullable)
+     * @return the requested order line, or empty when no confirmable quantity is present
+     */
+    Optional<OrderItem> detectOrder(String incomingContent, List<CatalogProduct> catalog, CatalogProduct contextProduct);
+
+    /**
+     * Returns the catalog product the message is most likely about, so the caller can
+     * remember it as conversation context for the next turn.
+     *
+     * @param incomingContent the client's message text
+     * @param catalog         the seller's catalog snapshot
+     * @return the best-matching product, or empty when none is mentioned
+     */
+    Optional<CatalogProduct> matchProduct(String incomingContent, List<CatalogProduct> catalog);
 }
