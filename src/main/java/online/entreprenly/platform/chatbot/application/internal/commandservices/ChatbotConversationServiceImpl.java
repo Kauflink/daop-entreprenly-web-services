@@ -36,7 +36,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default {@link ChatbotConversationService} implementation.
@@ -58,6 +60,13 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
     private final ConnectedSellerProvider connectedSellerProvider;
     private final ChatOrderCommandService chatOrderCommandService;
     private final ChatOrderRepository chatOrderRepository;
+
+    /**
+     * Lightweight per-conversation memory of the product last discussed, so a follow-up
+     * such as "quisiera tres" binds to it. In-memory by design: it is a conversational
+     * hint, not authoritative state, and is safe to lose on restart.
+     */
+    private final Map<Long, CatalogProduct> lastProductByConversation = new ConcurrentHashMap<>();
 
     public ChatbotConversationServiceImpl(ConversationRepository conversationRepository,
                                           ConversationCommandService conversationCommandService,
@@ -189,19 +198,44 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
      */
     private String composeReply(String content, Conversation conversation, String ownerEmailFromBridge) {
         var catalog = resolveCatalog(conversation, ownerEmailFromBridge);
+        var conversationId = conversation.getId();
 
+        // 1) An explicit order in this very message, e.g. "quiero 3 coca cola".
         var orderLine = productReplyComposer.detectOrder(content, catalog);
         if (orderLine.isPresent()) {
+            lastProductByConversation.remove(conversationId);
             return registerDraftOrder(conversation, orderLine.get());
         }
 
-        var pending = findPendingOrder(conversation.getId());
+        // 2) The delivery address for a draft order that is awaiting it.
+        var pending = findPendingOrder(conversationId);
         if (pending.isPresent() && looksLikeAddress(content)) {
+            lastProductByConversation.remove(conversationId);
             return confirmDelivery(conversation, pending.get(), content.trim());
         }
 
-        return productReplyComposer.compose(content, catalog)
-                .orElseGet(() -> responder.reply(content, conversation.getClientName()));
+        // 3) A follow-up quantity ("quisiera tres", "3") that continues the previous turn,
+        //    bound to the product the bot was last talking about.
+        var context = lastProductByConversation.get(conversationId);
+        if (context != null) {
+            var contextual = productReplyComposer.detectOrder(content, catalog, context);
+            if (contextual.isPresent()) {
+                lastProductByConversation.remove(conversationId);
+                return registerDraftOrder(conversation, contextual.get());
+            }
+        }
+
+        // 4) A product question (price/stock). Remember the product so the next message
+        //    can be interpreted as a quantity for it.
+        var productReply = productReplyComposer.compose(content, catalog);
+        if (productReply.isPresent()) {
+            productReplyComposer.matchProduct(content, catalog)
+                    .ifPresent(product -> lastProductByConversation.put(conversationId, product));
+            return productReply.get();
+        }
+
+        // 5) Generic conversational fallback.
+        return responder.reply(content, conversation.getClientName());
     }
 
     /**

@@ -109,6 +109,8 @@ public class WebSecurityConfiguration {
                                 // browser EventSource stream (EventSource cannot send Authorization headers).
                                 "/api/v1/chatbot/whatsapp/**",
                                 "/api/v1/chatbot/stream/**",
+                                // Temporary admin endpoint: JWT-free but guarded by X-Admin-Token header.
+                                "/api/v1/admin/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
