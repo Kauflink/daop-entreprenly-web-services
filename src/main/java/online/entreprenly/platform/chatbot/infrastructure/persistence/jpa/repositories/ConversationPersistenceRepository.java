@@ -4,6 +4,7 @@ import online.entreprenly.platform.chatbot.infrastructure.persistence.jpa.entiti
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -12,5 +13,7 @@ import java.util.Optional;
 @Repository
 public interface ConversationPersistenceRepository extends JpaRepository<ConversationPersistenceEntity, Long> {
 
-    Optional<ConversationPersistenceEntity> findFirstByClientPhoneOrderByIdDesc(String clientPhone);
+    List<ConversationPersistenceEntity> findAllBySellerIdOrderByIdDesc(Long sellerId);
+
+    Optional<ConversationPersistenceEntity> findFirstByClientPhoneAndSellerIdOrderByIdDesc(String clientPhone, Long sellerId);
 }

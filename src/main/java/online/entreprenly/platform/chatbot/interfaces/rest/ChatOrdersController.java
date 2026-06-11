@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.ChatOrderCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.queryservices.ChatOrderQueryService;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetAllChatOrdersQuery;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetChatOrderByIdQuery;
@@ -22,6 +23,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,19 +44,24 @@ public class ChatOrdersController {
 
     private final ChatOrderCommandService commandService;
     private final ChatOrderQueryService queryService;
+    private final SellerEmailResolver sellerEmailResolver;
 
     public ChatOrdersController(ChatOrderCommandService commandService,
-                                ChatOrderQueryService queryService) {
+                                ChatOrderQueryService queryService,
+                                SellerEmailResolver sellerEmailResolver) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.sellerEmailResolver = sellerEmailResolver;
     }
 
     @GetMapping
-    @Operation(summary = "List chat orders", description = "Retrieves every order captured through conversations.",
+    @Operation(summary = "List chat orders", description = "Retrieves orders for the authenticated seller.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Orders found")
-    public ResponseEntity<List<ChatOrderResource>> getAllOrders() {
-        var orders = queryService.handle(new GetAllChatOrdersQuery()).stream()
+    public ResponseEntity<List<ChatOrderResource>> getAllOrders(Authentication authentication) {
+        var sellerId = sellerEmailResolver.resolveSellerId(
+                authentication != null ? authentication.getName() : "").orElse(0L);
+        var orders = queryService.handle(new GetAllChatOrdersQuery(sellerId)).stream()
                 .map(ChatOrderResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(orders);

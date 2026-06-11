@@ -22,5 +22,14 @@ public interface ChatMessageRepository {
      */
     List<ChatMessage> findByConversationId(Long conversationId);
 
+    /**
+     * Returns all messages whose conversation is in the given set of ids.
+     * Used to scope messages to a single seller.
+     *
+     * @param conversationIds the seller's conversation identifiers
+     * @return the matching messages
+     */
+    List<ChatMessage> findByConversationIdIn(List<Long> conversationIds);
+
     ChatMessage save(ChatMessage message);
 }

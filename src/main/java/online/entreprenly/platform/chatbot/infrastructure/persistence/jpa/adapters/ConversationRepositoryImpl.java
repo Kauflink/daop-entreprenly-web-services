@@ -35,8 +35,15 @@ public class ConversationRepositoryImpl implements ConversationRepository {
     }
 
     @Override
-    public Optional<Conversation> findByClientPhone(String clientPhone) {
-        return persistenceRepository.findFirstByClientPhoneOrderByIdDesc(clientPhone)
+    public List<Conversation> findAllBySellerId(Long sellerId) {
+        return persistenceRepository.findAllBySellerIdOrderByIdDesc(sellerId).stream()
+                .map(ConversationPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public Optional<Conversation> findByClientPhoneAndSellerId(String clientPhone, Long sellerId) {
+        return persistenceRepository.findFirstByClientPhoneAndSellerIdOrderByIdDesc(clientPhone, sellerId)
                 .map(ConversationPersistenceAssembler::toDomainFromPersistence);
     }
 

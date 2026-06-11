@@ -28,6 +28,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,18 +66,24 @@ public class ChatMessagesController {
 
     @GetMapping
     @Operation(summary = "List chat messages",
-            description = "Retrieves every message, or only those of a conversation when conversationId is provided.",
+            description = "Retrieves messages for the authenticated seller, optionally filtered by conversation.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Messages found")
     public ResponseEntity<List<ChatMessageResource>> getMessages(
-            @RequestParam(name = "conversationId", required = false) Long conversationId) {
+            @RequestParam(name = "conversationId", required = false) Long conversationId,
+            Authentication authentication) {
         var messages = (conversationId == null
-                ? queryService.handle(new GetAllChatMessagesQuery())
+                ? queryService.handle(new GetAllChatMessagesQuery(resolveSellerId(authentication)))
                 : queryService.handle(new GetChatMessagesByConversationIdQuery(conversationId)))
                 .stream()
                 .map(ChatMessageResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(messages);
+    }
+
+    private Long resolveSellerId(Authentication authentication) {
+        if (authentication == null) return 0L;
+        return sellerEmailResolver.resolveSellerId(authentication.getName()).orElse(0L);
     }
 
     @PostMapping

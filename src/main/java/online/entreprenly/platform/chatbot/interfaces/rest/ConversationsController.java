@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.ConversationCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.queryservices.ConversationQueryService;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetAllConversationsQuery;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetConversationByIdQuery;
@@ -11,6 +12,7 @@ import online.entreprenly.platform.chatbot.interfaces.rest.transform.Conversatio
 import online.entreprenly.platform.chatbot.interfaces.rest.transform.CreateConversationCommandFromResourceAssembler;
 import online.entreprenly.platform.chatbot.interfaces.rest.transform.UpdateConversationCommandFromResourceAssembler;
 import online.entreprenly.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import org.springframework.security.core.Authentication;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -42,19 +44,23 @@ public class ConversationsController {
 
     private final ConversationCommandService commandService;
     private final ConversationQueryService queryService;
+    private final SellerEmailResolver sellerEmailResolver;
 
     public ConversationsController(ConversationCommandService commandService,
-                                   ConversationQueryService queryService) {
+                                   ConversationQueryService queryService,
+                                   SellerEmailResolver sellerEmailResolver) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.sellerEmailResolver = sellerEmailResolver;
     }
 
     @GetMapping
-    @Operation(summary = "List conversations", description = "Retrieves every conversation.",
+    @Operation(summary = "List conversations", description = "Retrieves conversations for the authenticated seller.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Conversations found")
-    public ResponseEntity<List<ConversationResource>> getAllConversations() {
-        var conversations = queryService.handle(new GetAllConversationsQuery()).stream()
+    public ResponseEntity<List<ConversationResource>> getAllConversations(Authentication authentication) {
+        var sellerId = resolveSellerId(authentication);
+        var conversations = queryService.handle(new GetAllConversationsQuery(sellerId)).stream()
                 .map(ConversationResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(conversations);
@@ -86,6 +92,11 @@ public class ConversationsController {
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, ConversationResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
+    }
+
+    private Long resolveSellerId(Authentication authentication) {
+        if (authentication == null) return 0L;
+        return sellerEmailResolver.resolveSellerId(authentication.getName()).orElse(0L);
     }
 
     @PutMapping("/{conversationId}")

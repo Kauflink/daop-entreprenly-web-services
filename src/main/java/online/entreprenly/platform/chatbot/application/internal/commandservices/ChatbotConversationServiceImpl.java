@@ -27,7 +27,6 @@ import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderItem;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus;
 import online.entreprenly.platform.chatbot.domain.repositories.ChatOrderRepository;
 import online.entreprenly.platform.chatbot.domain.repositories.ConversationRepository;
-import online.entreprenly.platform.chatbot.domain.repositories.WhatsappSessionRepository;
 import online.entreprenly.platform.chatbot.domain.services.ChatbotResponder;
 import online.entreprenly.platform.chatbot.domain.services.ProductReplyComposer;
 import online.entreprenly.platform.shared.application.result.ApplicationError;
@@ -51,7 +50,6 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
     private final ConversationRepository conversationRepository;
     private final ConversationCommandService conversationCommandService;
     private final ChatMessageCommandService messageCommandService;
-    private final WhatsappSessionRepository sessionRepository;
     private final ChatbotResponder responder;
     private final WhatsAppMessagingService whatsAppMessagingService;
     private final ProductCatalogService productCatalogService;
@@ -71,7 +69,6 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
     public ChatbotConversationServiceImpl(ConversationRepository conversationRepository,
                                           ConversationCommandService conversationCommandService,
                                           ChatMessageCommandService messageCommandService,
-                                          WhatsappSessionRepository sessionRepository,
                                           ChatbotResponder responder,
                                           WhatsAppMessagingService whatsAppMessagingService,
                                           ProductCatalogService productCatalogService,
@@ -83,7 +80,6 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         this.conversationRepository = conversationRepository;
         this.conversationCommandService = conversationCommandService;
         this.messageCommandService = messageCommandService;
-        this.sessionRepository = sessionRepository;
         this.responder = responder;
         this.whatsAppMessagingService = whatsAppMessagingService;
         this.productCatalogService = productCatalogService;
@@ -137,7 +133,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         if (command.fromPhone() == null || command.fromPhone().isBlank()) {
             return Result.failure(ApplicationError.validationError("fromPhone", "An origin phone is required"));
         }
-        var conversationOpt = conversationRepository.findByClientPhone(command.fromPhone());
+        var sellerId = resolveSellerId(command.ownerEmail());
+        var conversationOpt = conversationRepository.findByClientPhoneAndSellerId(command.fromPhone(), sellerId);
         if (conversationOpt.isEmpty()) {
             return Result.success(new ChatMessage(null, "Primero realiza tu pedido para validar tu pago.",
                     MessageSender.BOT, MessageType.TEXT, Instant.now()));
@@ -168,7 +165,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
     }
 
     private Result<Conversation, ApplicationError> resolveConversation(HandleInboundMessageCommand command) {
-        var existing = conversationRepository.findByClientPhone(command.fromPhone());
+        var sellerId = resolveSellerId(command.ownerEmail());
+        var existing = conversationRepository.findByClientPhoneAndSellerId(command.fromPhone(), sellerId);
         if (existing.isPresent()) {
             return Result.success(existing.get());
         }
@@ -176,14 +174,14 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
                 ? command.fromPhone()
                 : command.clientName();
         return conversationCommandService.handle(
-                new CreateConversationCommand(resolveSellerId(), command.fromPhone(), clientName));
+                new CreateConversationCommand(sellerId, command.fromPhone(), clientName));
     }
 
-    private Long resolveSellerId() {
-        return sessionRepository.findAll().stream()
-                .findFirst()
-                .map(session -> session.getSellerId())
-                .orElse(DEFAULT_SELLER_ID);
+    private Long resolveSellerId(String ownerEmail) {
+        if (ownerEmail != null && !ownerEmail.isBlank()) {
+            return sellerEmailResolver.resolveSellerId(ownerEmail).orElse(DEFAULT_SELLER_ID);
+        }
+        return DEFAULT_SELLER_ID;
     }
 
     /**
