@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.application.internal.commandservices;
 
 import online.entreprenly.platform.chatbot.application.commandservices.ChatOrderCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.InventoryStockService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.events.ChatbotEventPublisher;
@@ -32,17 +33,20 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
     private final ConversationQueryService conversationQueryService;
     private final SellerEmailResolver sellerEmailResolver;
     private final InventoryStockService inventoryStockService;
+    private final ChatSaleService chatSaleService;
 
     public ChatOrderCommandServiceImpl(ChatOrderRepository orderRepository,
                                        ChatbotEventPublisher eventPublisher,
                                        ConversationQueryService conversationQueryService,
                                        SellerEmailResolver sellerEmailResolver,
-                                       InventoryStockService inventoryStockService) {
+                                       InventoryStockService inventoryStockService,
+                                       ChatSaleService chatSaleService) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
         this.conversationQueryService = conversationQueryService;
         this.sellerEmailResolver = sellerEmailResolver;
         this.inventoryStockService = inventoryStockService;
+        this.chatSaleService = chatSaleService;
     }
 
     @Override
@@ -76,6 +80,7 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                     // double-counts.
                     if (!wasConfirmed && saved.getStatus() == OrderStatus.CONFIRMED) {
                         decrementStock(saved);
+                        registerSale(saved);
                     }
                     return Result.<ChatOrder, ApplicationError>success(saved);
                 })
@@ -88,6 +93,16 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
         conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
                 .flatMap(conversation -> sellerEmailResolver.resolveEmail(conversation.getSellerId()))
                 .ifPresent(ownerEmail -> inventoryStockService.decrementForOrder(ownerEmail, order.getItems()));
+    }
+
+    /** Registers a confirmed chat order as a completed sale in the Sales BC. */
+    private void registerSale(ChatOrder order) {
+        conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
+                .ifPresent(conversation -> {
+                    var sellerId = conversation.getSellerId();
+                    sellerEmailResolver.resolveEmail(sellerId)
+                            .ifPresent(ownerEmail -> chatSaleService.createSaleForOrder(ownerEmail, sellerId, order));
+                });
     }
 
     @Override

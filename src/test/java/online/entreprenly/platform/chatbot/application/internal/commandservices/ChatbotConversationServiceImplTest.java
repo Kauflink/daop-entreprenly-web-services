@@ -43,6 +43,8 @@ class ChatbotConversationServiceImplTest {
     private final ProductCatalogService emptyCatalog = ownerEmail -> List.of();
     private final SellerEmailResolver noEmail = new StubSellerEmailResolver(sellerId -> Optional.empty());
     private final InventoryStockService noStock = (ownerEmail, items) -> { };
+    private final online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService noSale =
+            (ownerEmail, sellerId, order) -> { };
 
     @BeforeEach
     void setUp() {
@@ -55,7 +57,7 @@ class ChatbotConversationServiceImplTest {
         messageCommandService = new ChatMessageCommandServiceImpl(messages, conversations, publisher);
         orders = new InMemoryChatOrderRepository();
         chatOrderCommandService = new ChatOrderCommandServiceImpl(orders, publisher,
-                new EmptyConversationQueryService(), noEmail, noStock);
+                new EmptyConversationQueryService(), noEmail, noStock, noSale);
     }
 
     private ChatbotConversationServiceImpl service(ProductCatalogService catalog, SellerEmailResolver resolver) {
