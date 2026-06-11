@@ -29,6 +29,12 @@ public class InMemoryConversationRepository implements ConversationRepository {
         return Optional.ofNullable(store.get(id));
     }
 
+    public Optional<Conversation> findByClientPhone(String clientPhone) {
+        return store.values().stream()
+                .filter(c -> clientPhone.equals(c.getClientPhone()))
+                .max(Comparator.comparing(Conversation::getId));
+    }
+
     @Override
     public List<Conversation> findAllBySellerId(Long sellerId) {
         return store.values().stream()

@@ -60,7 +60,7 @@ class ChatbotConversationServiceImplTest {
 
     private ChatbotConversationServiceImpl service(ProductCatalogService catalog, SellerEmailResolver resolver) {
         return new ChatbotConversationServiceImpl(conversations, conversationCommandService, messageCommandService,
-                sessions, new RuleBasedChatbotResponder(), whatsApp, catalog, resolver,
+                new RuleBasedChatbotResponder(), whatsApp, catalog, resolver,
                 new RuleBasedProductReplyComposer(), Optional::empty, chatOrderCommandService, orders);
     }
 
