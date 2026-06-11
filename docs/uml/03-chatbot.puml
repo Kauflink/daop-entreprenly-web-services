@@ -1,0 +1,121 @@
+@startuml chatbot
+' Bounded Context: Chatbot (WhatsApp)
+title Chatbot - Diagrama de clases del dominio
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty members
+
+class Conversation <<aggregate root>> {
+  - id : Long
+  - sellerId : Long
+  - clientPhone : String
+  - clientName : String
+  - lastMessage : String
+  - lastMessageTime : String
+  - status : ConversationStatus
+  - createdAt : Instant
+  - closedAt : Instant
+  --
+  + registerLastMessage(content, time)
+  + changeStatus(status : ConversationStatus)
+}
+
+class ChatMessage <<aggregate root>> {
+  - id : Long
+  - conversationId : Long
+  - content : String
+  - sender : MessageSender
+  - type : MessageType
+  - sentAt : Instant
+}
+
+class ChatOrder <<aggregate root>> {
+  - id : Long
+  - conversationId : Long
+  - orderNumber : String
+  - items : List<OrderItem>
+  - total : double
+  - deliveryAddress : String
+  - paymentMethod : String
+  - status : OrderStatus
+  - hasReceipt : boolean
+  - rejectionCount : int
+  - createdAt : Instant
+  - receiptImage : String
+  --
+  + confirm()
+  + attachReceipt(image)
+  + rejectReceipt()
+  + confirmDelivery(address)
+}
+
+class WhatsappSession <<aggregate root>> {
+  - id : Long
+  - sellerId : Long
+  - phone : String
+  - businessName : String
+  - status : SessionStatus
+  - connectedAt : Instant
+  - qrCode : String
+}
+
+class OrderItem <<value object>> {
+  + productName : String
+  + quantity : int
+  + unitPrice : double
+  --
+  + subtotal() : double
+}
+
+class CatalogProduct <<value object>> {
+  + name : String
+  + price : double
+  + soldByWeight : boolean
+  + availableStock : double
+}
+
+enum ConversationStatus <<enumeration>> {
+  ACTIVE
+  WAITING_PAYMENT
+  COMPLETED
+  CLOSED
+}
+enum MessageSender <<enumeration>> {
+  CLIENT
+  BOT
+  SYSTEM
+}
+enum MessageType <<enumeration>> {
+  TEXT
+  IMAGE
+}
+enum OrderStatus <<enumeration>> {
+  PENDING
+  WAITING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  BLOCKED
+}
+enum SessionStatus <<enumeration>> {
+  CONNECTED
+  DISCONNECTED
+  EXPIRED
+}
+
+Conversation "1" --> "0..*" ChatMessage : conversationId
+Conversation "1" --> "0..*" ChatOrder   : conversationId
+ChatOrder "1" *-- "1..*" OrderItem : items
+Conversation --> ConversationStatus
+ChatMessage --> MessageSender
+ChatMessage --> MessageType
+ChatOrder --> OrderStatus
+WhatsappSession --> SessionStatus
+
+note top of CatalogProduct
+  Snapshot del catalogo del vendedor
+  proyectado desde Inventory via ACL
+  (ProductCatalogService).
+end note
+
+@enduml
