@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface WhatsappSessionPersistenceRepository extends JpaRepository<WhatsappSessionPersistenceEntity, Long> {
+
+    java.util.List<WhatsappSessionPersistenceEntity> findBySellerIdOrderByIdDesc(Long sellerId);
 }

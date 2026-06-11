@@ -24,6 +24,13 @@ public class InMemoryWhatsappSessionRepository implements WhatsappSessionReposit
     }
 
     @Override
+    public List<WhatsappSession> findBySellerId(Long sellerId) {
+        return store.values().stream()
+                .filter(s -> sellerId.equals(s.getSellerId()))
+                .toList();
+    }
+
+    @Override
     public Optional<WhatsappSession> findById(Long id) {
         return Optional.ofNullable(store.get(id));
     }

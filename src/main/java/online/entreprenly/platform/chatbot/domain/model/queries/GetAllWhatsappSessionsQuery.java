@@ -1,7 +1,7 @@
 package online.entreprenly.platform.chatbot.domain.model.queries;
 
 /**
- * Query to retrieve every registered WhatsApp session.
+ * Query to retrieve WhatsApp sessions owned by a specific seller.
  */
-public record GetAllWhatsappSessionsQuery() {
+public record GetAllWhatsappSessionsQuery(Long sellerId) {
 }
