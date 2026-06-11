@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.WhatsappSessionCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.domain.model.commands.ReportBridgeConnectionCommand;
 import online.entreprenly.platform.chatbot.infrastructure.messaging.whatsapp.WhatsAppBridgeState;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.BridgeQrResource;
@@ -39,13 +40,16 @@ public class ChatbotBridgeController {
 
     private final WhatsAppBridgeState bridgeState;
     private final WhatsappSessionCommandService sessionCommandService;
+    private final SellerEmailResolver sellerEmailResolver;
     private final String bridgeToken;
 
     public ChatbotBridgeController(WhatsAppBridgeState bridgeState,
                                    WhatsappSessionCommandService sessionCommandService,
+                                   SellerEmailResolver sellerEmailResolver,
                                    @Value("${chatbot.whatsapp.bridge-token:entreprenly-bridge-secret}") String bridgeToken) {
         this.bridgeState = bridgeState;
         this.sessionCommandService = sessionCommandService;
+        this.sellerEmailResolver = sellerEmailResolver;
         this.bridgeToken = bridgeToken;
     }
 
@@ -68,8 +72,14 @@ public class ChatbotBridgeController {
             @Valid @RequestBody BridgeStatusResource resource) {
         if (isUnauthorized(token)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         bridgeState.setConnected(resource.ownerEmail(), resource.connected());
+        // The bridge only knows the seller's email, so it sends a placeholder sellerId.
+        // Resolve the real account id from the email so the session — and every
+        // conversation derived from it — carries a sellerId the IAM context can map
+        // back (needed to deliver outbound messages and deduct stock).
+        var sellerId = sellerEmailResolver.resolveSellerId(resource.ownerEmail())
+                .orElse(resource.sellerId());
         sessionCommandService.handle(new ReportBridgeConnectionCommand(
-                resource.connected(), resource.phone(), resource.businessName(), resource.sellerId()));
+                resource.connected(), resource.phone(), resource.businessName(), sellerId));
         return ResponseEntity.noContent().build();
     }
 

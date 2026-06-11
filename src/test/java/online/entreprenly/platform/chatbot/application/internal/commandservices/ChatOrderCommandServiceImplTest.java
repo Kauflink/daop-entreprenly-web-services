@@ -9,6 +9,7 @@ import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus
 import online.entreprenly.platform.chatbot.support.EmptyConversationQueryService;
 import online.entreprenly.platform.chatbot.support.InMemoryChatOrderRepository;
 import online.entreprenly.platform.chatbot.support.RecordingEventPublisher;
+import online.entreprenly.platform.chatbot.support.StubSellerEmailResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class ChatOrderCommandServiceImplTest {
     private ChatOrderCommandServiceImpl service;
 
     /** No conversation/seller resolved, so stock deduction stays a no-op. */
-    private final SellerEmailResolver noEmail = sellerId -> Optional.empty();
+    private final SellerEmailResolver noEmail = new StubSellerEmailResolver(sellerId -> Optional.empty());
     private final InventoryStockService noStock = (ownerEmail, items) -> { };
 
     @BeforeEach

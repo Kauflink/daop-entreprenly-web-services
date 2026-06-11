@@ -3,6 +3,7 @@ package online.entreprenly.platform.chatbot.infrastructure.acl;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.iam.application.queryservices.UserQueryService;
 import online.entreprenly.platform.iam.domain.model.aggregates.User;
+import online.entreprenly.platform.iam.domain.model.queries.GetUserByEmailQuery;
 import online.entreprenly.platform.iam.domain.model.queries.GetUserByIdQuery;
 import org.springframework.stereotype.Service;
 
@@ -27,5 +28,13 @@ public class IamSellerEmailResolver implements SellerEmailResolver {
             return Optional.empty();
         }
         return userQueryService.handle(new GetUserByIdQuery(sellerId)).map(User::getEmail);
+    }
+
+    @Override
+    public Optional<Long> resolveSellerId(String email) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        return userQueryService.handle(new GetUserByEmailQuery(email)).map(User::getId);
     }
 }
