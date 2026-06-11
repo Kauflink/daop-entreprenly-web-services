@@ -30,9 +30,17 @@ public class InMemoryConversationRepository implements ConversationRepository {
     }
 
     @Override
-    public Optional<Conversation> findByClientPhone(String clientPhone) {
+    public List<Conversation> findAllBySellerId(Long sellerId) {
         return store.values().stream()
-                .filter(c -> clientPhone.equals(c.getClientPhone()))
+                .filter(c -> sellerId.equals(c.getSellerId()))
+                .sorted(Comparator.comparing(Conversation::getId).reversed())
+                .toList();
+    }
+
+    @Override
+    public Optional<Conversation> findByClientPhoneAndSellerId(String clientPhone, Long sellerId) {
+        return store.values().stream()
+                .filter(c -> clientPhone.equals(c.getClientPhone()) && sellerId.equals(c.getSellerId()))
                 .max(Comparator.comparing(Conversation::getId));
     }
 
