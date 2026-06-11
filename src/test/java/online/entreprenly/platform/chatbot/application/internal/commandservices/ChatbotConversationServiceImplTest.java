@@ -65,7 +65,7 @@ class ChatbotConversationServiceImplTest {
     }
 
     @Test
-    @DisplayName("creates a conversation, stores client and bot messages, sends the reply and returns it")
+    @DisplayName("creates a conversation, stores client and bot messages, and returns the reply for the bridge to deliver")
     void handlesInboundMessageEndToEnd() {
         var service = service(emptyCatalog, noEmail);
         var command = new HandleInboundMessageCommand("+51 987 654 321", "Andrea", "Hola, quiero hacer un pedido", null);
@@ -83,8 +83,9 @@ class ChatbotConversationServiceImplTest {
         assertThat(stored.get(0).getSender()).isEqualTo(MessageSender.CLIENT);
         assertThat(stored.get(1).getSender()).isEqualTo(MessageSender.BOT);
 
-        assertThat(whatsApp.sent).hasSize(1);
-        assertThat(whatsApp.sent.get(0).toPhone()).isEqualTo("+51 987 654 321");
+        // The bridge delivers the returned reply itself, so the backend must NOT also
+        // push it over WhatsApp (doing both delivered every reply to the client twice).
+        assertThat(whatsApp.sent).isEmpty();
     }
 
     @Test

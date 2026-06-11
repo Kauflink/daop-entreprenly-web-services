@@ -127,9 +127,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
             return outboundResult;
         }
 
-        // Deliver the reply through the WhatsApp channel (no-op stub by default).
-        whatsAppMessagingService.sendText(command.ownerEmail(), command.fromPhone(), replyText);
-
+        // The bridge delivers this reply itself (it sends the webhook's returned content),
+        // so we must NOT also push it over /send here or the client receives it twice.
         return outboundResult;
     }
 
@@ -164,7 +163,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         var outbound = new CreateChatMessageCommand(conversation.getId(), replyText,
                 MessageSender.BOT, MessageType.TEXT, Instant.now());
         var outboundResult = messageCommandService.handle(outbound);
-        whatsAppMessagingService.sendText(command.ownerEmail(), command.fromPhone(), replyText);
+        // The bridge delivers this reply itself (see handle(HandleInboundMessageCommand)).
         return outboundResult;
     }
 
