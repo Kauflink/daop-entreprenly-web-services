@@ -38,6 +38,15 @@ public class InMemoryChatMessageRepository implements ChatMessageRepository {
     }
 
     @Override
+    public List<ChatMessage> findByConversationIdIn(List<Long> conversationIds) {
+        if (conversationIds.isEmpty()) return List.of();
+        return store.values().stream()
+                .filter(m -> conversationIds.contains(m.getConversationId()))
+                .sorted(Comparator.comparing(ChatMessage::getSentAt))
+                .toList();
+    }
+
+    @Override
     public ChatMessage save(ChatMessage message) {
         if (message.getId() == null) {
             message.setId(sequence.incrementAndGet());
