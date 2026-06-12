@@ -142,8 +142,9 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         var conversation = conversationOpt.get();
 
         // Record the inbound receipt as an image message in the conversation.
+        // content must be the actual image data so the frontend <img src="..."> renders it.
         messageCommandService.handle(new CreateChatMessageCommand(conversation.getId(),
-                "📷 Comprobante de pago", MessageSender.CLIENT, MessageType.IMAGE, Instant.now()));
+                command.image(), MessageSender.CLIENT, MessageType.IMAGE, Instant.now()));
 
         var order = chatOrderRepository.findByConversationId(conversation.getId()).stream()
                 .filter(o -> o.getStatus() == OrderStatus.WAITING_PAYMENT)
