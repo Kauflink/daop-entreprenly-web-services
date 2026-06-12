@@ -47,8 +47,10 @@ public class SalesBcChatSaleService implements ChatSaleService {
         if (ownerEmail == null || ownerEmail.isBlank() || sellerId == null || order == null) return;
         if (order.getItems() == null || order.getItems().isEmpty()) return;
 
+        // productId=0 is a chatbot-order sentinel: sale_items.product_id is NOT NULL
+        // but chatbot orders don't have a catalog product id, only a name.
         var saleItems = order.getItems().stream()
-                .map(item -> SaleItem.of(null, item.productName(), item.quantity(), null, item.unitPrice()))
+                .map(item -> SaleItem.of(0L, item.productName(), item.quantity(), null, item.unitPrice()))
                 .toList();
 
         var paymentReceipt = new PaymentReceipt(PaymentMethod.YAPE, null, order.getTotal(), Instant.now());
