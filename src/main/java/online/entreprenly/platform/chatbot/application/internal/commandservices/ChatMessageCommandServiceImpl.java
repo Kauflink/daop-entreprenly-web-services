@@ -5,6 +5,7 @@ import online.entreprenly.platform.chatbot.application.internal.outboundservices
 import online.entreprenly.platform.chatbot.application.internal.support.MessageTimeFormatter;
 import online.entreprenly.platform.chatbot.domain.model.aggregates.ChatMessage;
 import online.entreprenly.platform.chatbot.domain.model.commands.CreateChatMessageCommand;
+import online.entreprenly.platform.chatbot.domain.model.valueobjects.MessageType;
 import online.entreprenly.platform.chatbot.domain.repositories.ChatMessageRepository;
 import online.entreprenly.platform.chatbot.domain.repositories.ConversationRepository;
 import online.entreprenly.platform.shared.application.result.ApplicationError;
@@ -45,7 +46,9 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         var saved = messageRepository.save(message);
 
         conversationRepository.findById(saved.getConversationId()).ifPresent(conversation -> {
-            conversation.registerLastMessage(saved.getContent(), MessageTimeFormatter.toLabel(saved.getSentAt()));
+            // Never store raw image data (base64) as the conversation preview — use a label instead.
+            var preview = saved.getType() == MessageType.IMAGE ? "📷 Comprobante" : saved.getContent();
+            conversation.registerLastMessage(preview, MessageTimeFormatter.toLabel(saved.getSentAt()));
             var updatedConversation = conversationRepository.save(conversation);
             eventPublisher.publishConversationChanged(updatedConversation);
         });
