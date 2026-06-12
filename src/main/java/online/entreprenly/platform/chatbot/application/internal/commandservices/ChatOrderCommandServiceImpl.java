@@ -16,6 +16,8 @@ import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus
 import online.entreprenly.platform.chatbot.domain.repositories.ChatOrderRepository;
 import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -27,6 +29,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatOrderCommandServiceImpl.class);
 
     private final ChatOrderRepository orderRepository;
     private final ChatbotEventPublisher eventPublisher;
@@ -79,8 +83,16 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                     // confirmed, so re-confirming an already-confirmed order never
                     // double-counts.
                     if (!wasConfirmed && saved.getStatus() == OrderStatus.CONFIRMED) {
-                        decrementStock(saved);
-                        registerSale(saved);
+                        try {
+                            decrementStock(saved);
+                        } catch (Exception e) {
+                            log.error("[chatbot] stock decrement failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
+                        }
+                        try {
+                            registerSale(saved);
+                        } catch (Exception e) {
+                            log.error("[chatbot] sale registration failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
+                        }
                     }
                     return Result.<ChatOrder, ApplicationError>success(saved);
                 })
