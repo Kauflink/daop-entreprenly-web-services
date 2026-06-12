@@ -1,6 +1,6 @@
 package online.entreprenly.platform.profile.application.internal.eventhandlers;
 
-import online.entreprenly.platform.iam.domain.model.events.UserSignedUpEvent;
+import online.entreprenly.platform.iam.interfaces.events.UserSignedUpIntegrationEvent;
 import online.entreprenly.platform.profile.application.commandservices.ProfileCommandService;
 import online.entreprenly.platform.profile.domain.model.commands.CreateProfileCommand;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +8,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Listens for {@link UserSignedUpEvent} from the IAM context and provisions a
+ * Listens for {@link UserSignedUpIntegrationEvent} from the IAM context and provisions a
  * default profile for the newly registered user.
  */
 @Component
@@ -28,10 +28,10 @@ public class UserSignedUpEventHandler {
      * Creates a default profile when a user signs up. The first name is derived from the
      * email's local part; the user can complete the profile later.
      *
-     * @param event the user-signed-up event published by the IAM context
+     * @param event the user-signed-up integration event published by the IAM context
      */
     @EventListener
-    public void on(UserSignedUpEvent event) {
+    public void on(UserSignedUpIntegrationEvent event) {
         var firstName = isBlank(event.firstName()) ? deriveFirstName(event.email()) : event.firstName();
         var lastName = isBlank(event.lastName()) ? "" : event.lastName();
         var command = new CreateProfileCommand(event.userId(), firstName, lastName, DEFAULT_ROLE, DEFAULT_PLAN,
