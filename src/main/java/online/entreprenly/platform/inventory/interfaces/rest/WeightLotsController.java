@@ -23,6 +23,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,9 +65,10 @@ public class WeightLotsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Referenced weight product not found", content = @Content)
     })
-    public ResponseEntity<?> createWeightLot(@Valid @RequestBody CreateWeightLotResource resource) {
+    public ResponseEntity<?> createWeightLot(@AuthenticationPrincipal UserDetails userDetails,
+                                             @Valid @RequestBody CreateWeightLotResource resource) {
         var command = CreateWeightLotCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), resource);
+                userDetails.getUsername(), resource);
         var result = weightLotCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, WeightLotResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -78,8 +81,9 @@ public class WeightLotsController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Weight lots found")
-    public ResponseEntity<List<WeightLotResource>> getAllWeightLots() {
-        var resources = weightLotQueryService.handle(new GetAllWeightLotsQuery(AuthenticatedUser.email())).stream()
+    public ResponseEntity<List<WeightLotResource>> getAllWeightLots(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var resources = weightLotQueryService.handle(new GetAllWeightLotsQuery(userDetails.getUsername())).stream()
                 .map(WeightLotResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -96,8 +100,9 @@ public class WeightLotsController {
                     content = @Content(schema = @Schema(implementation = WeightLotResource.class))),
             @ApiResponse(responseCode = "404", description = "Weight lot not found", content = @Content)
     })
-    public ResponseEntity<WeightLotResource> getWeightLotById(@PathVariable Long weightLotId) {
-        return weightLotQueryService.handle(new GetWeightLotByIdQuery(AuthenticatedUser.email(), weightLotId))
+    public ResponseEntity<WeightLotResource> getWeightLotById(@AuthenticationPrincipal UserDetails userDetails,
+                                                              @PathVariable Long weightLotId) {
+        return weightLotQueryService.handle(new GetWeightLotByIdQuery(userDetails.getUsername(), weightLotId))
                 .map(WeightLotResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -115,10 +120,11 @@ public class WeightLotsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Weight lot not found", content = @Content)
     })
-    public ResponseEntity<?> updateWeightLot(@PathVariable Long weightLotId,
+    public ResponseEntity<?> updateWeightLot(@AuthenticationPrincipal UserDetails userDetails,
+                                             @PathVariable Long weightLotId,
                                              @Valid @RequestBody UpdateWeightLotResource resource) {
         var command = UpdateWeightLotCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), weightLotId, resource);
+                userDetails.getUsername(), weightLotId, resource);
         var result = weightLotCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, WeightLotResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
@@ -134,8 +140,9 @@ public class WeightLotsController {
             @ApiResponse(responseCode = "204", description = "Weight lot deleted"),
             @ApiResponse(responseCode = "404", description = "Weight lot not found", content = @Content)
     })
-    public ResponseEntity<?> deleteWeightLot(@PathVariable Long weightLotId) {
-        var result = weightLotCommandService.handle(new DeleteWeightLotCommand(AuthenticatedUser.email(), weightLotId));
+    public ResponseEntity<?> deleteWeightLot(@AuthenticationPrincipal UserDetails userDetails,
+                                             @PathVariable Long weightLotId) {
+        var result = weightLotCommandService.handle(new DeleteWeightLotCommand(userDetails.getUsername(), weightLotId));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, id -> null, HttpStatus.NO_CONTENT);
     }

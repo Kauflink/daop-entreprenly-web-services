@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,8 +47,9 @@ public class StockAlertsController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Stock alerts computed")
-    public ResponseEntity<List<StockAlertResource>> getAllStockAlerts() {
-        var resources = stockAlertQueryService.handle(new GetAllStockAlertsQuery(AuthenticatedUser.email())).stream()
+    public ResponseEntity<List<StockAlertResource>> getAllStockAlerts(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var resources = stockAlertQueryService.handle(new GetAllStockAlertsQuery(userDetails.getUsername())).stream()
                 .map(StockAlertResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -63,8 +66,9 @@ public class StockAlertsController {
                     content = @Content(schema = @Schema(implementation = StockAlertResource.class))),
             @ApiResponse(responseCode = "404", description = "Stock alert not found", content = @Content)
     })
-    public ResponseEntity<StockAlertResource> getStockAlertById(@PathVariable Long stockAlertId) {
-        return stockAlertQueryService.handle(new GetStockAlertByIdQuery(AuthenticatedUser.email(), stockAlertId))
+    public ResponseEntity<StockAlertResource> getStockAlertById(@AuthenticationPrincipal UserDetails userDetails,
+                                                                @PathVariable Long stockAlertId) {
+        return stockAlertQueryService.handle(new GetStockAlertByIdQuery(userDetails.getUsername(), stockAlertId))
                 .map(StockAlertResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

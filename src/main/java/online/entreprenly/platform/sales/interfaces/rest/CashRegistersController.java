@@ -23,6 +23,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,9 +66,10 @@ public class CashRegistersController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "409", description = "A cash register already exists for the day")
     })
-    public ResponseEntity<?> createCashRegister(@Valid @RequestBody CreateCashRegisterResource resource) {
+    public ResponseEntity<?> createCashRegister(@AuthenticationPrincipal UserDetails userDetails,
+                                                @Valid @RequestBody CreateCashRegisterResource resource) {
         var command = CreateCashRegisterCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), resource);
+                userDetails.getUsername(), resource);
         var result = cashRegisterCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, CashRegisterResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -80,15 +83,16 @@ public class CashRegistersController {
     )
     @ApiResponse(responseCode = "200", description = "Cash registers found")
     public ResponseEntity<List<CashRegisterResource>> getCashRegisters(
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<CashRegisterResource> resources;
         if (date != null) {
-            resources = cashRegisterQueryService.handle(new GetCashRegisterByDateQuery(AuthenticatedUser.email(), date))
+            resources = cashRegisterQueryService.handle(new GetCashRegisterByDateQuery(userDetails.getUsername(), date))
                     .map(CashRegisterResourceFromEntityAssembler::toResourceFromEntity)
                     .map(List::of)
                     .orElseGet(List::of);
         } else {
-            resources = cashRegisterQueryService.handle(new GetAllCashRegistersQuery(AuthenticatedUser.email())).stream()
+            resources = cashRegisterQueryService.handle(new GetAllCashRegistersQuery(userDetails.getUsername())).stream()
                     .map(CashRegisterResourceFromEntityAssembler::toResourceFromEntity)
                     .toList();
         }
@@ -107,10 +111,11 @@ public class CashRegistersController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Cash register not found", content = @Content)
     })
-    public ResponseEntity<?> updateCashRegister(@PathVariable Long cashRegisterId,
+    public ResponseEntity<?> updateCashRegister(@AuthenticationPrincipal UserDetails userDetails,
+                                                @PathVariable Long cashRegisterId,
                                                 @Valid @RequestBody UpdateCashRegisterResource resource) {
         var command = UpdateCashRegisterCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), cashRegisterId, resource);
+                userDetails.getUsername(), cashRegisterId, resource);
         var result = cashRegisterCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, CashRegisterResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
