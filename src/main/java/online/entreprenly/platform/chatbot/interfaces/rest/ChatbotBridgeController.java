@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
  * QR and connection state, and consumed by the frontend to render that QR and unlock
  * the dashboard once the channel is connected.
  *
- * <p>Bridge → backend calls are guarded by {@code X-Bridge-Token}.
- * Frontend → backend calls are guarded by the regular JWT.</p>
+ * <p>Bridge â†’ backend calls are guarded by {@code X-Bridge-Token}.
+ * Frontend â†’ backend calls are guarded by the regular JWT.</p>
  *
  * <p>Multi-tenant: each seller's QR and connected state are stored separately,
  * keyed by the seller's e-mail address.</p>
@@ -39,13 +39,16 @@ public class ChatbotBridgeController {
 
     private final WhatsAppBridgeState bridgeState;
     private final WhatsappSessionCommandService sessionCommandService;
+    private final ChatbotSubscriptionGuard subscriptionGuard;
     private final String bridgeToken;
 
     public ChatbotBridgeController(WhatsAppBridgeState bridgeState,
                                    WhatsappSessionCommandService sessionCommandService,
+                                   ChatbotSubscriptionGuard subscriptionGuard,
                                    @Value("${chatbot.whatsapp.bridge-token:entreprenly-bridge-secret}") String bridgeToken) {
         this.bridgeState = bridgeState;
         this.sessionCommandService = sessionCommandService;
+        this.subscriptionGuard = subscriptionGuard;
         this.bridgeToken = bridgeToken;
     }
 
@@ -55,7 +58,7 @@ public class ChatbotBridgeController {
     public ResponseEntity<Void> pushQr(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @RequestBody BridgeQrResource resource) {
-        if (isUnauthorized(token)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         bridgeState.setQr(resource.ownerEmail(), resource.qr());
         return ResponseEntity.noContent().build();
     }
@@ -66,7 +69,7 @@ public class ChatbotBridgeController {
     public ResponseEntity<Void> pushStatus(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @Valid @RequestBody BridgeStatusResource resource) {
-        if (isUnauthorized(token)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         bridgeState.setConnected(resource.ownerEmail(), resource.connected());
         sessionCommandService.handle(new ReportBridgeConnectionCommand(
                 resource.connected(), resource.phone(), resource.businessName(), resource.sellerId()));
@@ -80,7 +83,8 @@ public class ChatbotBridgeController {
     @GetMapping("/qr")
     @Operation(summary = "Get the current pairing QR and link state (for the frontend)")
     public ResponseEntity<BridgeQrStateResource> getQrState(Authentication authentication) {
-        String email = (authentication != null) ? authentication.getName() : null;
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        String email = authentication.getName();
         return ResponseEntity.ok(new BridgeQrStateResource(
                 bridgeState.getQr(email),
                 bridgeState.isConnected(email)));

@@ -22,6 +22,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,18 +43,22 @@ public class WhatsappSessionsController {
 
     private final WhatsappSessionCommandService commandService;
     private final WhatsappSessionQueryService queryService;
+    private final ChatbotSubscriptionGuard subscriptionGuard;
 
     public WhatsappSessionsController(WhatsappSessionCommandService commandService,
-                                      WhatsappSessionQueryService queryService) {
+                                      WhatsappSessionQueryService queryService,
+                                      ChatbotSubscriptionGuard subscriptionGuard) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.subscriptionGuard = subscriptionGuard;
     }
 
     @GetMapping
     @Operation(summary = "List WhatsApp sessions", description = "Retrieves every registered WhatsApp session.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Sessions found")
-    public ResponseEntity<List<WhatsappSessionResource>> getAllSessions() {
+    public ResponseEntity<List<WhatsappSessionResource>> getAllSessions(Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var sessions = queryService.handle(new GetAllWhatsappSessionsQuery()).stream()
                 .map(WhatsappSessionResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
@@ -67,7 +72,9 @@ public class WhatsappSessionsController {
                     content = @Content(schema = @Schema(implementation = WhatsappSessionResource.class))),
             @ApiResponse(responseCode = "404", description = "Session not found", content = @Content)
     })
-    public ResponseEntity<WhatsappSessionResource> getSessionById(@PathVariable Long sessionId) {
+    public ResponseEntity<WhatsappSessionResource> getSessionById(@PathVariable Long sessionId,
+                                                                    Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return queryService.handle(new GetWhatsappSessionByIdQuery(sessionId))
                 .map(WhatsappSessionResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
@@ -81,7 +88,9 @@ public class WhatsappSessionsController {
                     content = @Content(schema = @Schema(implementation = WhatsappSessionResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    public ResponseEntity<?> createSession(@Valid @RequestBody CreateWhatsappSessionResource resource) {
+    public ResponseEntity<?> createSession(@Valid @RequestBody CreateWhatsappSessionResource resource,
+                                           Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var command = CreateWhatsappSessionCommandFromResourceAssembler.toCommandFromResource(resource);
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -96,7 +105,9 @@ public class WhatsappSessionsController {
             @ApiResponse(responseCode = "404", description = "Session not found", content = @Content)
     })
     public ResponseEntity<?> updateSession(@PathVariable Long sessionId,
-                                           @Valid @RequestBody UpdateWhatsappSessionResource resource) {
+                                           @Valid @RequestBody UpdateWhatsappSessionResource resource,
+                                           Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var command = UpdateWhatsappSessionCommandFromResourceAssembler.toCommandFromResource(sessionId, resource);
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
