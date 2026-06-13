@@ -45,6 +45,14 @@ public class ChatOrdersController {
     private final ChatOrderCommandService commandService;
     private final ChatOrderQueryService queryService;
     private final SellerEmailResolver sellerEmailResolver;
+    private final ChatbotSubscriptionGuard subscriptionGuard;
+
+    public ChatOrdersController(ChatOrderCommandService commandService,
+                                ChatOrderQueryService queryService,
+                                ChatbotSubscriptionGuard subscriptionGuard) {
+        this.commandService = commandService;
+        this.queryService = queryService;
+        this.subscriptionGuard = subscriptionGuard;
 
     public ChatOrdersController(ChatOrderCommandService commandService,
                                 ChatOrderQueryService queryService,
@@ -59,6 +67,7 @@ public class ChatOrdersController {
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Orders found")
     public ResponseEntity<List<ChatOrderResource>> getAllOrders(Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var sellerId = sellerEmailResolver.resolveSellerId(
                 authentication != null ? authentication.getName() : "").orElse(0L);
         var orders = queryService.handle(new GetAllChatOrdersQuery(sellerId)).stream()
@@ -74,7 +83,9 @@ public class ChatOrdersController {
                     content = @Content(schema = @Schema(implementation = ChatOrderResource.class))),
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
-    public ResponseEntity<ChatOrderResource> getOrderById(@PathVariable Long orderId) {
+    public ResponseEntity<ChatOrderResource> getOrderById(@PathVariable Long orderId,
+                                                           Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return queryService.handle(new GetChatOrderByIdQuery(orderId))
                 .map(ChatOrderResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
@@ -88,7 +99,9 @@ public class ChatOrdersController {
                     content = @Content(schema = @Schema(implementation = ChatOrderResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    public ResponseEntity<?> createOrder(@Valid @RequestBody CreateChatOrderResource resource) {
+    public ResponseEntity<?> createOrder(@Valid @RequestBody CreateChatOrderResource resource,
+                                         Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var command = CreateChatOrderCommandFromResourceAssembler.toCommandFromResource(resource);
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -103,7 +116,9 @@ public class ChatOrdersController {
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
     public ResponseEntity<?> updateOrder(@PathVariable Long orderId,
-                                         @Valid @RequestBody UpdateChatOrderResource resource) {
+                                         @Valid @RequestBody UpdateChatOrderResource resource,
+                                         Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var command = UpdateChatOrderCommandFromResourceAssembler.toCommandFromResource(orderId, resource);
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
