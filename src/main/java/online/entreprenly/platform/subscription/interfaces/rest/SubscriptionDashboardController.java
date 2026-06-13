@@ -1,8 +1,10 @@
 package online.entreprenly.platform.subscription.interfaces.rest;
 
+import online.entreprenly.platform.iam.interfaces.acl.IamContextFacade;
 import online.entreprenly.platform.subscription.application.internal.eventhandlers.SubscriptionCatalogReadyEventHandler;
 import online.entreprenly.platform.subscription.domain.model.aggregates.Subscription;
 import online.entreprenly.platform.subscription.domain.model.aggregates.SubscriptionPlan;
+import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.SubscriptionStatus;
 import online.entreprenly.platform.subscription.domain.repositories.SubscriptionPlanRepository;
 import online.entreprenly.platform.subscription.domain.repositories.SubscriptionRepository;
@@ -12,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,13 +41,31 @@ public class SubscriptionDashboardController {
     private final SubscriptionCatalogReadyEventHandler catalogReadyEventHandler;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final IamContextFacade iamContextFacade;
 
     public SubscriptionDashboardController(SubscriptionCatalogReadyEventHandler catalogReadyEventHandler,
                                            SubscriptionPlanRepository subscriptionPlanRepository,
-                                           SubscriptionRepository subscriptionRepository) {
+                                           SubscriptionRepository subscriptionRepository,
+                                           IamContextFacade iamContextFacade) {
         this.catalogReadyEventHandler = catalogReadyEventHandler;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.iamContextFacade = iamContextFacade;
+    }
+
+    /**
+     * Resolves the real user identifier from the authenticated principal (email), falling back to
+     * the path identifier when no authentication is present (e.g. Swagger probes). The Angular
+     * client sends a fixed path id, so the JWT is the source of truth for per-user persistence.
+     */
+    private Long resolveUserId(Authentication authentication, Long pathUserId) {
+        if (authentication != null && authentication.getName() != null && !authentication.getName().isBlank()) {
+            var resolved = iamContextFacade.fetchUserIdByEmail(authentication.getName());
+            if (resolved != null && resolved != 0L) {
+                return resolved;
+            }
+        }
+        return pathUserId;
     }
 
     @GetMapping("/subscription-dashboard/{userId}")
@@ -53,9 +74,10 @@ public class SubscriptionDashboardController {
             description = "Returns the subscription dashboard shape currently consumed by Angular.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<SubscriptionDashboardResource> getDashboard(@PathVariable Long userId) {
+    public ResponseEntity<SubscriptionDashboardResource> getDashboard(@PathVariable Long userId,
+                                                                      Authentication authentication) {
         catalogReadyEventHandler.ensureDefaultPlans();
-        return ResponseEntity.ok(toDashboard(userId, false));
+        return ResponseEntity.ok(toDashboard(resolveUserId(authentication, userId), false));
     }
 
     @PutMapping("/subscription-dashboard/{userId}")
@@ -65,8 +87,74 @@ public class SubscriptionDashboardController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<SubscriptionDashboardResource> saveDashboard(@PathVariable Long userId,
-                                                                       @RequestBody SubscriptionDashboardResource resource) {
-        return ResponseEntity.ok(resource);
+                                                                       @RequestBody SubscriptionDashboardResource resource,
+                                                                       Authentication authentication) {
+        var resolvedUserId = resolveUserId(authentication, userId);
+        applyPlanChange(resolvedUserId, resource);
+        return ResponseEntity.ok(toDashboard(resolvedUserId, false));
+    }
+
+    /**
+     * Persists the plan change implied by the dashboard the Angular client saves. Payment data is
+     * intentionally not validated (simulated purchase): activating Plan Control immediately
+     * activates a subscription with the requested billing period.
+     */
+    private void applyPlanChange(Long userId, SubscriptionDashboardResource resource) {
+        if (resource == null || resource.currentPlan() == null) {
+            return;
+        }
+        catalogReadyEventHandler.ensureDefaultPlans();
+        var freePlan = subscriptionPlanRepository.findByCode(SubscriptionCatalogReadyEventHandler.FREE_PLAN_CODE)
+                .orElseThrow();
+        var controlPlan = subscriptionPlanRepository.findByCode(SubscriptionCatalogReadyEventHandler.CONTROL_PLAN_CODE)
+                .orElseThrow();
+        var targetCode = resource.currentPlan().id();
+        var targetStatus = resource.currentPlan().status();
+        var billingPeriod = "annual".equalsIgnoreCase(resource.defaultBillingCycle())
+                ? BillingPeriod.YEARLY
+                : BillingPeriod.MONTHLY;
+        var activeSubscription = subscriptionRepository.findFirstByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .filter(subscription -> subscription.isActiveAt(Instant.now()));
+
+        if (SubscriptionCatalogReadyEventHandler.CONTROL_PLAN_CODE.equals(targetCode)) {
+            var currentControl = activeSubscription
+                    .filter(subscription -> controlPlan.getId().equals(subscription.getPlanId()));
+            if (currentControl.isPresent()) {
+                var subscription = currentControl.get();
+                if ("scheduled-cancellation".equals(targetStatus)) {
+                    subscription.scheduleCancellation();
+                } else {
+                    subscription.resumeActive();
+                }
+                subscriptionRepository.save(subscription);
+                return;
+            }
+            activeSubscription.ifPresent(subscription -> {
+                subscription.cancel();
+                subscriptionRepository.save(subscription);
+            });
+            var subscription = new Subscription(userId, controlPlan);
+            subscription.activate(billingPeriod);
+            subscriptionRepository.save(subscription);
+            return;
+        }
+
+        if (SubscriptionCatalogReadyEventHandler.FREE_PLAN_CODE.equals(targetCode)) {
+            var onFree = activeSubscription
+                    .filter(subscription -> freePlan.getId().equals(subscription.getPlanId()))
+                    .isPresent();
+            activeSubscription
+                    .filter(subscription -> !freePlan.getId().equals(subscription.getPlanId()))
+                    .ifPresent(subscription -> {
+                        subscription.cancel();
+                        subscriptionRepository.save(subscription);
+                    });
+            if (!onFree) {
+                var subscription = new Subscription(userId, freePlan);
+                subscription.activateWithoutExpiration();
+                subscriptionRepository.save(subscription);
+            }
+        }
     }
 
     @GetMapping("/subscription-payment-confirmation/{userId}")
@@ -75,9 +163,10 @@ public class SubscriptionDashboardController {
             description = "Compatibility endpoint used by Angular before activating Plan Control.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<SubscriptionDashboardResource> getPaymentConfirmation(@PathVariable Long userId) {
+    public ResponseEntity<SubscriptionDashboardResource> getPaymentConfirmation(@PathVariable Long userId,
+                                                                                Authentication authentication) {
         catalogReadyEventHandler.ensureDefaultPlans();
-        return ResponseEntity.ok(toDashboard(userId, true));
+        return ResponseEntity.ok(toDashboard(resolveUserId(authentication, userId), true));
     }
 
     private SubscriptionDashboardResource toDashboard(Long userId, boolean forceControlPlan) {
@@ -140,17 +229,20 @@ public class SubscriptionDashboardController {
             boolean recommended) {
         var endDate = subscription.map(Subscription::getCurrentPeriodEnd).map(DATE_FORMATTER::format).orElse(null);
         var startDate = subscription.map(Subscription::getStartedAt).map(DATE_FORMATTER::format).orElse(null);
-        var shortDescription = endDate == null
-                ? "Opera sin restricciones con automatizaciones, alertas y trazabilidad completa."
-                : "Tu plan sigue activo hasta el %s. Se renovara automaticamente.".formatted(endDate);
+        var scheduledCancellation = subscription.map(Subscription::isCancellationScheduled).orElse(false);
+        var shortDescription = describeControlPlan(endDate, scheduledCancellation);
+        var status = scheduledCancellation ? "scheduled-cancellation" : "active";
+        var statusLabel = recommended
+                ? "Recomendado"
+                : scheduledCancellation ? "Cancelacion programada" : "Plan Control activo";
         return new SubscriptionDashboardResource.DashboardPlanResource(
                 plan.getCode(),
                 plan.getName(),
                 shortDescription,
                 plan.getPrice().amount().doubleValue(),
                 plan.getAnnualPrice().amount().doubleValue(),
-                "active",
-                recommended ? "Recomendado" : "Plan Control activo",
+                status,
+                statusLabel,
                 recommended ? "Recomendado" : "Plan actual",
                 recommended,
                 startDate,
@@ -159,6 +251,16 @@ public class SubscriptionDashboardController {
                         new SubscriptionDashboardResource.DashboardPlanFeatureResource("Productos y lotes ilimitados", true),
                         new SubscriptionDashboardResource.DashboardPlanFeatureResource("Ventas, pedidos, caja y trazabilidad en un solo flujo.", true),
                         new SubscriptionDashboardResource.DashboardPlanFeatureResource("Chatbot de WhatsApp y alertas operativas incluidas.", true)));
+    }
+
+    private String describeControlPlan(String endDate, boolean scheduledCancellation) {
+        if (endDate == null) {
+            return "Opera sin restricciones con automatizaciones, alertas y trazabilidad completa.";
+        }
+        if (scheduledCancellation) {
+            return "Tu plan sigue activo hasta el %s. No se renovara.".formatted(endDate);
+        }
+        return "Tu plan sigue activo hasta el %s. Se renovara automaticamente.".formatted(endDate);
     }
 
     private List<SubscriptionDashboardResource.DashboardLimitResource> limitsForPlan(

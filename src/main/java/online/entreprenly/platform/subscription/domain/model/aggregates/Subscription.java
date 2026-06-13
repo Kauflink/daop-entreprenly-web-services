@@ -73,6 +73,28 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
         this.cancelledAt = Instant.now();
     }
 
+    /**
+     * Marks the subscription for cancellation at the end of the current period while keeping it
+     * active so the user retains access until {@code currentPeriodEnd}.
+     */
+    public void scheduleCancellation() {
+        this.status = SubscriptionStatus.ACTIVE;
+        this.cancelledAt = Instant.now();
+    }
+
+    /**
+     * Reverts a scheduled cancellation, keeping the subscription active without resetting the
+     * current billing period.
+     */
+    public void resumeActive() {
+        this.status = SubscriptionStatus.ACTIVE;
+        this.cancelledAt = null;
+    }
+
+    public boolean isCancellationScheduled() {
+        return status == SubscriptionStatus.ACTIVE && cancelledAt != null;
+    }
+
     public boolean isActiveAt(Instant instant) {
         return status == SubscriptionStatus.ACTIVE
                 && (currentPeriodEnd == null || currentPeriodEnd.isAfter(instant));
