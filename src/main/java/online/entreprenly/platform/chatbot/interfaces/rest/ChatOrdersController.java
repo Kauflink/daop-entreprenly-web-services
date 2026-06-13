@@ -49,17 +49,12 @@ public class ChatOrdersController {
 
     public ChatOrdersController(ChatOrderCommandService commandService,
                                 ChatOrderQueryService queryService,
+                                SellerEmailResolver sellerEmailResolver,
                                 ChatbotSubscriptionGuard subscriptionGuard) {
         this.commandService = commandService;
         this.queryService = queryService;
-        this.subscriptionGuard = subscriptionGuard;
-
-    public ChatOrdersController(ChatOrderCommandService commandService,
-                                ChatOrderQueryService queryService,
-                                SellerEmailResolver sellerEmailResolver) {
-        this.commandService = commandService;
-        this.queryService = queryService;
         this.sellerEmailResolver = sellerEmailResolver;
+        this.subscriptionGuard = subscriptionGuard;
     }
 
     @GetMapping
@@ -84,7 +79,7 @@ public class ChatOrdersController {
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
     public ResponseEntity<ChatOrderResource> getOrderById(@PathVariable Long orderId,
-                                                           Authentication authentication) {
+                                                          Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return queryService.handle(new GetChatOrderByIdQuery(orderId))
                 .map(ChatOrderResourceFromEntityAssembler::toResourceFromEntity)

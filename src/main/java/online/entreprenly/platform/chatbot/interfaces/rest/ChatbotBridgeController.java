@@ -31,15 +31,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 /**
- * Endpoints used by the WhatsApp bridge (whatsapp-web.js) to relay the real pairing
- * QR and connection state, and consumed by the frontend to render that QR and unlock
- * the dashboard once the channel is connected.
- *
- * <p>Bridge â†’ backend calls are guarded by {@code X-Bridge-Token}.
- * Frontend â†’ backend calls are guarded by the regular JWT.</p>
- *
- * <p>Multi-tenant: each seller's QR and connected state are stored separately,
- * keyed by the seller's e-mail address.</p>
+ * Endpoints used by the WhatsApp bridge to relay pairing QR and connection state.
  */
 @RestController
 @RequestMapping(value = "/api/v1/chatbot/whatsapp/bridge", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -59,15 +51,12 @@ public class ChatbotBridgeController {
     public ChatbotBridgeController(WhatsAppBridgeState bridgeState,
                                    WhatsappSessionCommandService sessionCommandService,
                                    ChatbotSubscriptionGuard subscriptionGuard,
-                                   @Value("${chatbot.whatsapp.bridge-token:entreprenly-bridge-secret}") String bridgeToken) {
-        this.bridgeState = bridgeState;
-        this.sessionCommandService = sessionCommandService;
-        this.subscriptionGuard = subscriptionGuard;
                                    SellerEmailResolver sellerEmailResolver,
                                    @Value("${chatbot.whatsapp.bridge-token:entreprenly-bridge-secret}") String bridgeToken,
                                    @Value("${chatbot.whatsapp.bridge-base-url:}") String bridgeBaseUrl) {
         this.bridgeState = bridgeState;
         this.sessionCommandService = sessionCommandService;
+        this.subscriptionGuard = subscriptionGuard;
         this.sellerEmailResolver = sellerEmailResolver;
         this.bridgeToken = bridgeToken;
         this.bridgeBaseUrl = bridgeBaseUrl;
@@ -79,7 +68,9 @@ public class ChatbotBridgeController {
     public ResponseEntity<Void> pushQr(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @RequestBody BridgeQrResource resource) {
-        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         bridgeState.setQr(resource.ownerEmail(), resource.qr());
         return ResponseEntity.noContent().build();
     }
@@ -90,12 +81,10 @@ public class ChatbotBridgeController {
     public ResponseEntity<Void> pushStatus(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @Valid @RequestBody BridgeStatusResource resource) {
-        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         bridgeState.setConnected(resource.ownerEmail(), resource.connected());
-        // The bridge only knows the seller's email, so it sends a placeholder sellerId.
-        // Resolve the real account id from the email so the session — and every
-        // conversation derived from it — carries a sellerId the IAM context can map
-        // back (needed to deliver outbound messages and deduct stock).
         var sellerId = sellerEmailResolver.resolveSellerId(resource.ownerEmail())
                 .orElse(resource.sellerId());
         sessionCommandService.handle(new ReportBridgeConnectionCommand(
@@ -104,37 +93,40 @@ public class ChatbotBridgeController {
     }
 
     /**
-     * Called by the frontend every 5 s to get the current QR and connection state.
-     * Returns the state for the authenticated seller only.
-     * If no session is active yet, triggers the bridge to start one (fire-and-forget).
+     * Called by the frontend to get the current QR and connection state.
+     * If no session is active yet, triggers the bridge to start one.
      */
     @GetMapping("/qr")
     @Operation(summary = "Get the current pairing QR and link state (for the frontend)")
     public ResponseEntity<BridgeQrStateResource> getQrState(Authentication authentication) {
-        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        String email = (authentication != null) ? authentication.getName() : null;
+        if (!subscriptionGuard.canAccess(authentication)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        String email = authentication.getName();
         boolean connected = bridgeState.isConnected(email);
         String qr = bridgeState.getQr(email);
-        if (!connected && qr == null && email != null) {
+        if (!connected && qr == null) {
             triggerBridgeSession(email);
         }
         return ResponseEntity.ok(new BridgeQrStateResource(qr, connected));
     }
 
-    /** Fire-and-forget call to the bridge to start a WhatsApp session for a seller. */
     private void triggerBridgeSession(String email) {
         if (bridgeBaseUrl == null || bridgeBaseUrl.isBlank()) return;
         try {
             var sellerId = sellerEmailResolver.resolveSellerId(email).orElse(1L);
-            var url = URI.create(bridgeBaseUrl + "/qr?email=" +
-                    java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8) +
-                    "&sellerId=" + sellerId);
+            var url = URI.create(bridgeBaseUrl + "/qr?email="
+                    + java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8)
+                    + "&sellerId=" + sellerId);
             var request = HttpRequest.newBuilder(url)
                     .GET()
                     .timeout(Duration.ofSeconds(5))
                     .build();
             http.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-                    .exceptionally(ex -> { log.debug("[bridge] session trigger failed for {}: {}", email, ex.getMessage()); return null; });
+                    .exceptionally(ex -> {
+                        log.debug("[bridge] session trigger failed for {}: {}", email, ex.getMessage());
+                        return null;
+                    });
         } catch (Exception ex) {
             log.debug("[bridge] could not trigger session for {}: {}", email, ex.getMessage());
         }

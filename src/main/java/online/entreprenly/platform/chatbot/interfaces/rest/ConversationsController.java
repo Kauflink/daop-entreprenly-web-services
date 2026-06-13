@@ -12,7 +12,6 @@ import online.entreprenly.platform.chatbot.interfaces.rest.transform.Conversatio
 import online.entreprenly.platform.chatbot.interfaces.rest.transform.CreateConversationCommandFromResourceAssembler;
 import online.entreprenly.platform.chatbot.interfaces.rest.transform.UpdateConversationCommandFromResourceAssembler;
 import online.entreprenly.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
-import org.springframework.security.core.Authentication;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,22 +44,17 @@ public class ConversationsController {
 
     private final ConversationCommandService commandService;
     private final ConversationQueryService queryService;
+    private final SellerEmailResolver sellerEmailResolver;
     private final ChatbotSubscriptionGuard subscriptionGuard;
 
     public ConversationsController(ConversationCommandService commandService,
                                    ConversationQueryService queryService,
+                                   SellerEmailResolver sellerEmailResolver,
                                    ChatbotSubscriptionGuard subscriptionGuard) {
         this.commandService = commandService;
         this.queryService = queryService;
-        this.subscriptionGuard = subscriptionGuard;
-    private final SellerEmailResolver sellerEmailResolver;
-
-    public ConversationsController(ConversationCommandService commandService,
-                                   ConversationQueryService queryService,
-                                   SellerEmailResolver sellerEmailResolver) {
-        this.commandService = commandService;
-        this.queryService = queryService;
         this.sellerEmailResolver = sellerEmailResolver;
+        this.subscriptionGuard = subscriptionGuard;
     }
 
     @GetMapping
@@ -84,7 +78,7 @@ public class ConversationsController {
             @ApiResponse(responseCode = "404", description = "Conversation not found", content = @Content)
     })
     public ResponseEntity<ConversationResource> getConversationById(@PathVariable Long conversationId,
-                                                                      Authentication authentication) {
+                                                                    Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return queryService.handle(new GetConversationByIdQuery(conversationId))
                 .map(ConversationResourceFromEntityAssembler::toResourceFromEntity)
@@ -108,11 +102,6 @@ public class ConversationsController {
                 result, ConversationResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
     }
 
-    private Long resolveSellerId(Authentication authentication) {
-        if (authentication == null) return 0L;
-        return sellerEmailResolver.resolveSellerId(authentication.getName()).orElse(0L);
-    }
-
     @PutMapping("/{conversationId}")
     @Operation(summary = "Update a conversation", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
@@ -128,5 +117,10 @@ public class ConversationsController {
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, ConversationResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
+    }
+
+    private Long resolveSellerId(Authentication authentication) {
+        if (authentication == null) return 0L;
+        return sellerEmailResolver.resolveSellerId(authentication.getName()).orElse(0L);
     }
 }
