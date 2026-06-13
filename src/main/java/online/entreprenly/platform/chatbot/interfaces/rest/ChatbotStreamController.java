@@ -3,7 +3,10 @@ package online.entreprenly.platform.chatbot.interfaces.rest;
 import online.entreprenly.platform.chatbot.infrastructure.realtime.sse.ChatbotSseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,15 +25,19 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class ChatbotStreamController {
 
     private final ChatbotSseService sseService;
+    private final ChatbotSubscriptionGuard subscriptionGuard;
 
-    public ChatbotStreamController(ChatbotSseService sseService) {
+    public ChatbotStreamController(ChatbotSseService sseService,
+                                   ChatbotSubscriptionGuard subscriptionGuard) {
         this.sseService = sseService;
+        this.subscriptionGuard = subscriptionGuard;
     }
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "Subscribe to chatbot events",
             description = "Opens a Server-Sent Events stream that pushes message, conversation and order changes.")
-    public SseEmitter stream() {
-        return sseService.subscribe();
+    public ResponseEntity<SseEmitter> stream(Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        return ResponseEntity.ok(sseService.subscribe());
     }
 }

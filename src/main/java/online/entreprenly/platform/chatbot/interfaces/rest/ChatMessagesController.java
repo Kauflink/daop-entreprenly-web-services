@@ -6,7 +6,6 @@ import online.entreprenly.platform.chatbot.application.internal.outboundservices
 import online.entreprenly.platform.chatbot.application.queryservices.ChatMessageQueryService;
 import online.entreprenly.platform.chatbot.application.queryservices.ConversationQueryService;
 import online.entreprenly.platform.chatbot.domain.model.aggregates.ChatMessage;
-import online.entreprenly.platform.chatbot.domain.model.aggregates.Conversation;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetAllChatMessagesQuery;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetChatMessagesByConversationIdQuery;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetConversationByIdQuery;
@@ -51,17 +50,20 @@ public class ChatMessagesController {
     private final ConversationQueryService conversationQueryService;
     private final WhatsAppMessagingService whatsAppMessagingService;
     private final SellerEmailResolver sellerEmailResolver;
+    private final ChatbotSubscriptionGuard subscriptionGuard;
 
     public ChatMessagesController(ChatMessageCommandService commandService,
                                   ChatMessageQueryService queryService,
                                   ConversationQueryService conversationQueryService,
                                   WhatsAppMessagingService whatsAppMessagingService,
-                                  SellerEmailResolver sellerEmailResolver) {
+                                  SellerEmailResolver sellerEmailResolver,
+                                  ChatbotSubscriptionGuard subscriptionGuard) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.conversationQueryService = conversationQueryService;
         this.whatsAppMessagingService = whatsAppMessagingService;
         this.sellerEmailResolver = sellerEmailResolver;
+        this.subscriptionGuard = subscriptionGuard;
     }
 
     @GetMapping
@@ -72,6 +74,7 @@ public class ChatMessagesController {
     public ResponseEntity<List<ChatMessageResource>> getMessages(
             @RequestParam(name = "conversationId", required = false) Long conversationId,
             Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var messages = (conversationId == null
                 ? queryService.handle(new GetAllChatMessagesQuery(resolveSellerId(authentication)))
                 : queryService.handle(new GetChatMessagesByConversationIdQuery(conversationId)))
@@ -93,18 +96,16 @@ public class ChatMessagesController {
                     content = @Content(schema = @Schema(implementation = ChatMessageResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    public ResponseEntity<?> createMessage(@Valid @RequestBody CreateChatMessageResource resource) {
+    public ResponseEntity<?> createMessage(@Valid @RequestBody CreateChatMessageResource resource,
+                                           Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var command = CreateChatMessageCommandFromResourceAssembler.toCommandFromResource(resource);
         var result = commandService.handle(command);
-        // Deliver app-authored bot replies (payment approved/rejected, manual seller replies)
-        // to the client's WhatsApp. Inbound webhook replies are delivered by the bridge itself,
-        // so they never pass through here and are not sent twice.
         result.toOptional().ifPresent(this::deliverBotMessageToClient);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, ChatMessageResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
     }
 
-    /** Pushes a freshly created text bot message to the conversation's client over WhatsApp. */
     private void deliverBotMessageToClient(ChatMessage message) {
         if (message.getSender() != MessageSender.BOT || message.getType() != MessageType.TEXT) {
             return;

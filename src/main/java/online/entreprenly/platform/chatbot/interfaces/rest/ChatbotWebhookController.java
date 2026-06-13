@@ -36,13 +36,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatbotWebhookController {
 
     private final ChatbotConversationService conversationService;
+    private final ChatbotSubscriptionGuard subscriptionGuard;
     private final String verifyToken;
 
     public ChatbotWebhookController(
             ChatbotConversationService conversationService,
+            ChatbotSubscriptionGuard subscriptionGuard,
             @org.springframework.beans.factory.annotation.Value("${chatbot.whatsapp.verify-token:entreprenly-verify}")
             String verifyToken) {
         this.conversationService = conversationService;
+        this.subscriptionGuard = subscriptionGuard;
         this.verifyToken = verifyToken;
     }
 
@@ -65,6 +68,7 @@ public class ChatbotWebhookController {
             description = "Persists the client message and returns the chatbot's automatic reply.")
     @ApiResponse(responseCode = "201", description = "Message processed and reply generated")
     public ResponseEntity<?> receive(@Valid @RequestBody InboundWhatsAppMessageResource resource) {
+        if (!subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var command = new HandleInboundMessageCommand(
                 resource.fromPhone(), resource.clientName(), resource.content(), resource.ownerEmail());
         var result = conversationService.handle(command);
@@ -77,6 +81,7 @@ public class ChatbotWebhookController {
             description = "Attaches the receipt image to the order awaiting payment for the seller to review.")
     @ApiResponse(responseCode = "201", description = "Receipt attached")
     public ResponseEntity<?> receiveReceipt(@Valid @RequestBody InboundReceiptResource resource) {
+        if (!subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         var command = new HandleInboundReceiptCommand(
                 resource.fromPhone(), resource.ownerEmail(), resource.image());
         var result = conversationService.handle(command);

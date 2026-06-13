@@ -35,8 +35,8 @@ import java.time.Duration;
  * QR and connection state, and consumed by the frontend to render that QR and unlock
  * the dashboard once the channel is connected.
  *
- * <p>Bridge → backend calls are guarded by {@code X-Bridge-Token}.
- * Frontend → backend calls are guarded by the regular JWT.</p>
+ * <p>Bridge â†’ backend calls are guarded by {@code X-Bridge-Token}.
+ * Frontend â†’ backend calls are guarded by the regular JWT.</p>
  *
  * <p>Multi-tenant: each seller's QR and connected state are stored separately,
  * keyed by the seller's e-mail address.</p>
@@ -50,6 +50,7 @@ public class ChatbotBridgeController {
 
     private final WhatsAppBridgeState bridgeState;
     private final WhatsappSessionCommandService sessionCommandService;
+    private final ChatbotSubscriptionGuard subscriptionGuard;
     private final SellerEmailResolver sellerEmailResolver;
     private final String bridgeToken;
     private final String bridgeBaseUrl;
@@ -57,6 +58,11 @@ public class ChatbotBridgeController {
 
     public ChatbotBridgeController(WhatsAppBridgeState bridgeState,
                                    WhatsappSessionCommandService sessionCommandService,
+                                   ChatbotSubscriptionGuard subscriptionGuard,
+                                   @Value("${chatbot.whatsapp.bridge-token:entreprenly-bridge-secret}") String bridgeToken) {
+        this.bridgeState = bridgeState;
+        this.sessionCommandService = sessionCommandService;
+        this.subscriptionGuard = subscriptionGuard;
                                    SellerEmailResolver sellerEmailResolver,
                                    @Value("${chatbot.whatsapp.bridge-token:entreprenly-bridge-secret}") String bridgeToken,
                                    @Value("${chatbot.whatsapp.bridge-base-url:}") String bridgeBaseUrl) {
@@ -73,7 +79,7 @@ public class ChatbotBridgeController {
     public ResponseEntity<Void> pushQr(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @RequestBody BridgeQrResource resource) {
-        if (isUnauthorized(token)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         bridgeState.setQr(resource.ownerEmail(), resource.qr());
         return ResponseEntity.noContent().build();
     }
@@ -84,7 +90,7 @@ public class ChatbotBridgeController {
     public ResponseEntity<Void> pushStatus(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @Valid @RequestBody BridgeStatusResource resource) {
-        if (isUnauthorized(token)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (isUnauthorized(token) || !subscriptionGuard.canAccessOwner(resource.ownerEmail())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         bridgeState.setConnected(resource.ownerEmail(), resource.connected());
         // The bridge only knows the seller's email, so it sends a placeholder sellerId.
         // Resolve the real account id from the email so the session — and every
@@ -105,6 +111,7 @@ public class ChatbotBridgeController {
     @GetMapping("/qr")
     @Operation(summary = "Get the current pairing QR and link state (for the frontend)")
     public ResponseEntity<BridgeQrStateResource> getQrState(Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         String email = (authentication != null) ? authentication.getName() : null;
         boolean connected = bridgeState.isConnected(email);
         String qr = bridgeState.getQr(email);
