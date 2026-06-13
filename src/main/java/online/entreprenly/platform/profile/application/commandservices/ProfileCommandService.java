@@ -5,6 +5,7 @@ import online.entreprenly.platform.profile.domain.model.commands.CreateProfileCo
 import online.entreprenly.platform.profile.domain.model.commands.UpdateNotificationSettingsCommand;
 import online.entreprenly.platform.profile.domain.model.commands.UpdatePreferencesCommand;
 import online.entreprenly.platform.profile.domain.model.commands.UpdateProfileCommand;
+import online.entreprenly.platform.profile.domain.model.commands.UpdateProfilePlanCommand;
 import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 
@@ -43,4 +44,12 @@ public interface ProfileCommandService {
      * @return updated profile, or an application error
      */
     Result<Profile, ApplicationError> handle(UpdateNotificationSettingsCommand command);
+
+    /**
+     * Updates the display plan of the profile that belongs to a user.
+     *
+     * @param command update-profile-plan command
+     * @return updated profile, or an application error
+     */
+    Result<Profile, ApplicationError> handle(UpdateProfilePlanCommand command);
 }
