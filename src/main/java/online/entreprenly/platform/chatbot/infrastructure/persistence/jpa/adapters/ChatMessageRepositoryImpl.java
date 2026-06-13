@@ -42,6 +42,16 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     }
 
     @Override
+    public List<ChatMessage> findByConversationIdIn(List<Long> conversationIds) {
+        if (conversationIds == null || conversationIds.isEmpty()) {
+            return List.of();
+        }
+        return persistenceRepository.findByConversationIdInOrderBySentAtAsc(conversationIds).stream()
+                .map(ChatMessagePersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
     public ChatMessage save(ChatMessage message) {
         var saved = persistenceRepository.save(
                 ChatMessagePersistenceAssembler.toPersistenceFromDomain(message));

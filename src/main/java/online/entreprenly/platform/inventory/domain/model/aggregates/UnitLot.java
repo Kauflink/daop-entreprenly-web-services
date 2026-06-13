@@ -69,6 +69,19 @@ public class UnitLot extends AbstractDomainAggregateRoot<UnitLot> {
     }
 
     /**
+     * Removes up to {@code amount} units from this lot, never going below zero.
+     *
+     * @param amount the number of units requested for removal
+     * @return the units actually removed (capped at the available quantity)
+     */
+    public int consume(int amount) {
+        if (amount <= 0) return 0;
+        int removed = Math.min(amount, this.quantity);
+        this.quantity -= removed;
+        return removed;
+    }
+
+    /**
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a unit lot that already carries identity and full state.
      */

@@ -24,7 +24,7 @@ public class ConversationQueryServiceImpl implements ConversationQueryService {
 
     @Override
     public List<Conversation> handle(GetAllConversationsQuery query) {
-        return conversationRepository.findAll();
+        return conversationRepository.findAllBySellerId(query.sellerId());
     }
 
     @Override

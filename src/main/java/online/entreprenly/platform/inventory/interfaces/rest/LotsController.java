@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,8 +48,8 @@ public class LotsController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Lots found")
-    public ResponseEntity<List<LotResource>> getAllLots() {
-        var resources = lotQueryService.handle(new GetAllLotsQuery(AuthenticatedUser.email())).stream()
+    public ResponseEntity<List<LotResource>> getAllLots(@AuthenticationPrincipal UserDetails userDetails) {
+        var resources = lotQueryService.handle(new GetAllLotsQuery(userDetails.getUsername())).stream()
                 .map(LotResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -64,8 +66,9 @@ public class LotsController {
                     content = @Content(schema = @Schema(implementation = LotResource.class))),
             @ApiResponse(responseCode = "404", description = "Lot not found", content = @Content)
     })
-    public ResponseEntity<LotResource> getLotById(@PathVariable Long lotId) {
-        return lotQueryService.handle(new GetLotByIdQuery(AuthenticatedUser.email(), lotId))
+    public ResponseEntity<LotResource> getLotById(@AuthenticationPrincipal UserDetails userDetails,
+                                                  @PathVariable Long lotId) {
+        return lotQueryService.handle(new GetLotByIdQuery(userDetails.getUsername(), lotId))
                 .map(LotResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

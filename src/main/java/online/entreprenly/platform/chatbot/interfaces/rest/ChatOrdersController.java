@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.ChatOrderCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.queryservices.ChatOrderQueryService;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetAllChatOrdersQuery;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetChatOrderByIdQuery;
@@ -43,6 +44,7 @@ public class ChatOrdersController {
 
     private final ChatOrderCommandService commandService;
     private final ChatOrderQueryService queryService;
+    private final SellerEmailResolver sellerEmailResolver;
     private final ChatbotSubscriptionGuard subscriptionGuard;
 
     public ChatOrdersController(ChatOrderCommandService commandService,
@@ -51,15 +53,24 @@ public class ChatOrdersController {
         this.commandService = commandService;
         this.queryService = queryService;
         this.subscriptionGuard = subscriptionGuard;
+
+    public ChatOrdersController(ChatOrderCommandService commandService,
+                                ChatOrderQueryService queryService,
+                                SellerEmailResolver sellerEmailResolver) {
+        this.commandService = commandService;
+        this.queryService = queryService;
+        this.sellerEmailResolver = sellerEmailResolver;
     }
 
     @GetMapping
-    @Operation(summary = "List chat orders", description = "Retrieves every order captured through conversations.",
+    @Operation(summary = "List chat orders", description = "Retrieves orders for the authenticated seller.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Orders found")
     public ResponseEntity<List<ChatOrderResource>> getAllOrders(Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        var orders = queryService.handle(new GetAllChatOrdersQuery()).stream()
+        var sellerId = sellerEmailResolver.resolveSellerId(
+                authentication != null ? authentication.getName() : "").orElse(0L);
+        var orders = queryService.handle(new GetAllChatOrdersQuery(sellerId)).stream()
                 .map(ChatOrderResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(orders);

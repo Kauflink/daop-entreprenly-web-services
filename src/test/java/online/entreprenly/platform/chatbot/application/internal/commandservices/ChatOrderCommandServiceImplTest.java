@@ -1,16 +1,21 @@
 package online.entreprenly.platform.chatbot.application.internal.commandservices;
 
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.InventoryStockService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.domain.model.commands.CreateChatOrderCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.UpdateChatOrderCommand;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderItem;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus;
+import online.entreprenly.platform.chatbot.support.EmptyConversationQueryService;
 import online.entreprenly.platform.chatbot.support.InMemoryChatOrderRepository;
 import online.entreprenly.platform.chatbot.support.RecordingEventPublisher;
+import online.entreprenly.platform.chatbot.support.StubSellerEmailResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,11 +25,18 @@ class ChatOrderCommandServiceImplTest {
     private RecordingEventPublisher publisher;
     private ChatOrderCommandServiceImpl service;
 
+    /** No conversation/seller resolved, so stock deduction stays a no-op. */
+    private final SellerEmailResolver noEmail = new StubSellerEmailResolver(sellerId -> Optional.empty());
+    private final InventoryStockService noStock = (ownerEmail, items) -> { };
+    private final online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService noSale =
+            (ownerEmail, sellerId, order) -> { };
+
     @BeforeEach
     void setUp() {
         orders = new InMemoryChatOrderRepository();
         publisher = new RecordingEventPublisher();
-        service = new ChatOrderCommandServiceImpl(orders, publisher);
+        service = new ChatOrderCommandServiceImpl(orders, publisher,
+                new EmptyConversationQueryService(), noEmail, noStock, noSale);
     }
 
     private Long createSampleOrder() {

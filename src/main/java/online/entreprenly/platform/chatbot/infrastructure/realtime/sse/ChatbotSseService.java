@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -56,7 +58,21 @@ public class ChatbotSseService implements ChatbotEventPublisher {
 
     @Override
     public void publishOrderChanged(ChatOrder order) {
-        broadcast("order", order);
+        // Publish without receiptImage to keep SSE payloads small.
+        // The frontend reloads the full order (with image) from the HTTP endpoint on demand.
+        Map<String, Object> slim = new LinkedHashMap<>();
+        slim.put("id",              order.getId());
+        slim.put("conversationId",  order.getConversationId());
+        slim.put("orderNumber",     order.getOrderNumber());
+        slim.put("items",           order.getItems());
+        slim.put("total",           order.getTotal());
+        slim.put("deliveryAddress", order.getDeliveryAddress());
+        slim.put("paymentMethod",   order.getPaymentMethod());
+        slim.put("status",          order.getStatus());
+        slim.put("hasReceipt",      order.isHasReceipt());
+        slim.put("rejectionCount",  order.getRejectionCount());
+        slim.put("createdAt",       order.getCreatedAt());
+        broadcast("order", slim);
     }
 
     private void broadcast(String eventName, Object payload) {

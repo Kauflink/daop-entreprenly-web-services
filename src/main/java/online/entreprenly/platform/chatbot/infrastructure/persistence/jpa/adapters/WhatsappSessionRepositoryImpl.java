@@ -29,6 +29,13 @@ public class WhatsappSessionRepositoryImpl implements WhatsappSessionRepository 
     }
 
     @Override
+    public List<WhatsappSession> findBySellerId(Long sellerId) {
+        return persistenceRepository.findBySellerIdOrderByIdDesc(sellerId).stream()
+                .map(WhatsappSessionPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
     public Optional<WhatsappSession> findById(Long id) {
         return persistenceRepository.findById(id)
                 .map(WhatsappSessionPersistenceAssembler::toDomainFromPersistence);

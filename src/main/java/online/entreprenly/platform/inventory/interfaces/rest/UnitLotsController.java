@@ -23,6 +23,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,9 +65,10 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Referenced unit product not found", content = @Content)
     })
-    public ResponseEntity<?> createUnitLot(@Valid @RequestBody CreateUnitLotResource resource) {
+    public ResponseEntity<?> createUnitLot(@AuthenticationPrincipal UserDetails userDetails,
+                                           @Valid @RequestBody CreateUnitLotResource resource) {
         var command = CreateUnitLotCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), resource);
+                userDetails.getUsername(), resource);
         var result = unitLotCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitLotResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -78,8 +81,9 @@ public class UnitLotsController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Unit lots found")
-    public ResponseEntity<List<UnitLotResource>> getAllUnitLots() {
-        var resources = unitLotQueryService.handle(new GetAllUnitLotsQuery(AuthenticatedUser.email())).stream()
+    public ResponseEntity<List<UnitLotResource>> getAllUnitLots(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var resources = unitLotQueryService.handle(new GetAllUnitLotsQuery(userDetails.getUsername())).stream()
                 .map(UnitLotResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -96,8 +100,9 @@ public class UnitLotsController {
                     content = @Content(schema = @Schema(implementation = UnitLotResource.class))),
             @ApiResponse(responseCode = "404", description = "Unit lot not found", content = @Content)
     })
-    public ResponseEntity<UnitLotResource> getUnitLotById(@PathVariable Long unitLotId) {
-        return unitLotQueryService.handle(new GetUnitLotByIdQuery(AuthenticatedUser.email(), unitLotId))
+    public ResponseEntity<UnitLotResource> getUnitLotById(@AuthenticationPrincipal UserDetails userDetails,
+                                                          @PathVariable Long unitLotId) {
+        return unitLotQueryService.handle(new GetUnitLotByIdQuery(userDetails.getUsername(), unitLotId))
                 .map(UnitLotResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -115,10 +120,11 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Unit lot not found", content = @Content)
     })
-    public ResponseEntity<?> updateUnitLot(@PathVariable Long unitLotId,
+    public ResponseEntity<?> updateUnitLot(@AuthenticationPrincipal UserDetails userDetails,
+                                           @PathVariable Long unitLotId,
                                            @Valid @RequestBody UpdateUnitLotResource resource) {
         var command = UpdateUnitLotCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), unitLotId, resource);
+                userDetails.getUsername(), unitLotId, resource);
         var result = unitLotCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitLotResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
@@ -134,8 +140,9 @@ public class UnitLotsController {
             @ApiResponse(responseCode = "204", description = "Unit lot deleted"),
             @ApiResponse(responseCode = "404", description = "Unit lot not found", content = @Content)
     })
-    public ResponseEntity<?> deleteUnitLot(@PathVariable Long unitLotId) {
-        var result = unitLotCommandService.handle(new DeleteUnitLotCommand(AuthenticatedUser.email(), unitLotId));
+    public ResponseEntity<?> deleteUnitLot(@AuthenticationPrincipal UserDetails userDetails,
+                                           @PathVariable Long unitLotId) {
+        var result = unitLotCommandService.handle(new DeleteUnitLotCommand(userDetails.getUsername(), unitLotId));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, id -> null, HttpStatus.NO_CONTENT);
     }

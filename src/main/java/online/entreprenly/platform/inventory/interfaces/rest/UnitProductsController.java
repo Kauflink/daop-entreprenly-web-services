@@ -23,6 +23,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,9 +65,10 @@ public class UnitProductsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "409", description = "A unit product already exists with the QR code")
     })
-    public ResponseEntity<?> createUnitProduct(@Valid @RequestBody CreateUnitProductResource resource) {
+    public ResponseEntity<?> createUnitProduct(@AuthenticationPrincipal UserDetails userDetails,
+                                               @Valid @RequestBody CreateUnitProductResource resource) {
         var command = CreateUnitProductCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), resource);
+                userDetails.getUsername(), resource);
         var result = unitProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -78,8 +81,9 @@ public class UnitProductsController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Unit products found")
-    public ResponseEntity<List<UnitProductResource>> getAllUnitProducts() {
-        var resources = unitProductQueryService.handle(new GetAllUnitProductsQuery(AuthenticatedUser.email())).stream()
+    public ResponseEntity<List<UnitProductResource>> getAllUnitProducts(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var resources = unitProductQueryService.handle(new GetAllUnitProductsQuery(userDetails.getUsername())).stream()
                 .map(UnitProductResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
@@ -96,8 +100,9 @@ public class UnitProductsController {
                     content = @Content(schema = @Schema(implementation = UnitProductResource.class))),
             @ApiResponse(responseCode = "404", description = "Unit product not found", content = @Content)
     })
-    public ResponseEntity<UnitProductResource> getUnitProductById(@PathVariable Long unitProductId) {
-        return unitProductQueryService.handle(new GetUnitProductByIdQuery(AuthenticatedUser.email(), unitProductId))
+    public ResponseEntity<UnitProductResource> getUnitProductById(@AuthenticationPrincipal UserDetails userDetails,
+                                                                  @PathVariable Long unitProductId) {
+        return unitProductQueryService.handle(new GetUnitProductByIdQuery(userDetails.getUsername(), unitProductId))
                 .map(UnitProductResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -115,10 +120,11 @@ public class UnitProductsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Unit product not found", content = @Content)
     })
-    public ResponseEntity<?> updateUnitProduct(@PathVariable Long unitProductId,
+    public ResponseEntity<?> updateUnitProduct(@AuthenticationPrincipal UserDetails userDetails,
+                                               @PathVariable Long unitProductId,
                                                @Valid @RequestBody UpdateUnitProductResource resource) {
         var command = UpdateUnitProductCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), unitProductId, resource);
+                userDetails.getUsername(), unitProductId, resource);
         var result = unitProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, UnitProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
@@ -134,9 +140,10 @@ public class UnitProductsController {
             @ApiResponse(responseCode = "204", description = "Unit product deleted"),
             @ApiResponse(responseCode = "404", description = "Unit product not found", content = @Content)
     })
-    public ResponseEntity<?> deleteUnitProduct(@PathVariable Long unitProductId) {
+    public ResponseEntity<?> deleteUnitProduct(@AuthenticationPrincipal UserDetails userDetails,
+                                               @PathVariable Long unitProductId) {
         var result = unitProductCommandService.handle(
-                new DeleteUnitProductCommand(AuthenticatedUser.email(), unitProductId));
+                new DeleteUnitProductCommand(userDetails.getUsername(), unitProductId));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, id -> null, HttpStatus.NO_CONTENT);
     }

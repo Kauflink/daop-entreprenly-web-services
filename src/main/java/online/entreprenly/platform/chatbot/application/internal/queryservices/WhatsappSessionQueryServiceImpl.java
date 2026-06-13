@@ -24,7 +24,7 @@ public class WhatsappSessionQueryServiceImpl implements WhatsappSessionQueryServ
 
     @Override
     public List<WhatsappSession> handle(GetAllWhatsappSessionsQuery query) {
-        return sessionRepository.findAll();
+        return sessionRepository.findBySellerId(query.sellerId());
     }
 
     @Override

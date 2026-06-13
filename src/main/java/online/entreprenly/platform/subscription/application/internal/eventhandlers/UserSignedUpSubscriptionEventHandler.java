@@ -1,6 +1,6 @@
 package online.entreprenly.platform.subscription.application.internal.eventhandlers;
 
-import online.entreprenly.platform.iam.domain.model.events.UserSignedUpEvent;
+import online.entreprenly.platform.iam.interfaces.events.UserSignedUpIntegrationEvent;
 import online.entreprenly.platform.subscription.domain.model.aggregates.Subscription;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.SubscriptionStatus;
 import online.entreprenly.platform.subscription.domain.repositories.SubscriptionPlanRepository;
@@ -31,7 +31,7 @@ public class UserSignedUpSubscriptionEventHandler {
     }
 
     @EventListener
-    public void on(UserSignedUpEvent event) {
+    public void on(UserSignedUpIntegrationEvent event) {
         catalogReadyEventHandler.ensureDefaultPlans();
         var existingActive = subscriptionRepository.findFirstByUserIdAndStatus(event.userId(), SubscriptionStatus.ACTIVE)
                 .filter(subscription -> subscription.isActiveAt(Instant.now()));

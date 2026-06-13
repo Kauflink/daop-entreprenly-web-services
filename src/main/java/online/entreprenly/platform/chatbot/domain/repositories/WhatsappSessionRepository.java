@@ -12,6 +12,8 @@ public interface WhatsappSessionRepository {
 
     List<WhatsappSession> findAll();
 
+    List<WhatsappSession> findBySellerId(Long sellerId);
+
     Optional<WhatsappSession> findById(Long id);
 
     WhatsappSession save(WhatsappSession session);

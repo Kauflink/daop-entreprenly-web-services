@@ -1,24 +1,23 @@
 package online.entreprenly.platform.chatbot.infrastructure.acl;
 
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
-import online.entreprenly.platform.iam.application.queryservices.UserQueryService;
-import online.entreprenly.platform.iam.domain.model.aggregates.User;
-import online.entreprenly.platform.iam.domain.model.queries.GetUserByIdQuery;
+import online.entreprenly.platform.iam.interfaces.acl.IamContextFacade;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 /**
- * Anti-corruption layer adapter that resolves a seller's account email from the IAM
- * bounded context, so the chatbot can use it to look up the seller's catalog.
+ * Anti-corruption layer adapter that resolves a seller's account email and identifier from
+ * the IAM bounded context through its ACL facade, so the chatbot can use them to look up the
+ * seller's catalog.
  */
 @Service
 public class IamSellerEmailResolver implements SellerEmailResolver {
 
-    private final UserQueryService userQueryService;
+    private final IamContextFacade iamContextFacade;
 
-    public IamSellerEmailResolver(UserQueryService userQueryService) {
-        this.userQueryService = userQueryService;
+    public IamSellerEmailResolver(IamContextFacade iamContextFacade) {
+        this.iamContextFacade = iamContextFacade;
     }
 
     @Override
@@ -26,6 +25,16 @@ public class IamSellerEmailResolver implements SellerEmailResolver {
         if (sellerId == null) {
             return Optional.empty();
         }
-        return userQueryService.handle(new GetUserByIdQuery(sellerId)).map(User::getEmail);
+        var email = iamContextFacade.fetchEmailByUserId(sellerId);
+        return email.isBlank() ? Optional.empty() : Optional.of(email);
+    }
+
+    @Override
+    public Optional<Long> resolveSellerId(String email) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        var sellerId = iamContextFacade.fetchUserIdByEmail(email);
+        return sellerId == 0L ? Optional.empty() : Optional.of(sellerId);
     }
 }

@@ -20,6 +20,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,9 +58,10 @@ public class SalesController {
                     content = @Content(schema = @Schema(implementation = SaleResource.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    public ResponseEntity<?> createSale(@Valid @RequestBody CreateSaleResource resource) {
+    public ResponseEntity<?> createSale(@AuthenticationPrincipal UserDetails userDetails,
+                                        @Valid @RequestBody CreateSaleResource resource) {
         var command = CreateSaleCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), resource);
+                userDetails.getUsername(), resource);
         var result = saleCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, SaleResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -71,8 +74,8 @@ public class SalesController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Sales found")
-    public ResponseEntity<List<SaleResource>> getAllSales() {
-        var sales = saleQueryService.handle(new GetAllSalesQuery(AuthenticatedUser.email())).stream()
+    public ResponseEntity<List<SaleResource>> getAllSales(@AuthenticationPrincipal UserDetails userDetails) {
+        var sales = saleQueryService.handle(new GetAllSalesQuery(userDetails.getUsername())).stream()
                 .map(SaleResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(sales);
@@ -89,8 +92,9 @@ public class SalesController {
                     content = @Content(schema = @Schema(implementation = SaleResource.class))),
             @ApiResponse(responseCode = "404", description = "Sale not found", content = @Content)
     })
-    public ResponseEntity<SaleResource> getSaleById(@PathVariable Long saleId) {
-        return saleQueryService.handle(new GetSaleByIdQuery(AuthenticatedUser.email(), saleId))
+    public ResponseEntity<SaleResource> getSaleById(@AuthenticationPrincipal UserDetails userDetails,
+                                                    @PathVariable Long saleId) {
+        return saleQueryService.handle(new GetSaleByIdQuery(userDetails.getUsername(), saleId))
                 .map(SaleResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

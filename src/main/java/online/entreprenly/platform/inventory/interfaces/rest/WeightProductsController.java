@@ -23,6 +23,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,9 +65,10 @@ public class WeightProductsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "409", description = "A weight product already exists with the QR code")
     })
-    public ResponseEntity<?> createWeightProduct(@Valid @RequestBody CreateWeightProductResource resource) {
+    public ResponseEntity<?> createWeightProduct(@AuthenticationPrincipal UserDetails userDetails,
+                                                 @Valid @RequestBody CreateWeightProductResource resource) {
         var command = CreateWeightProductCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), resource);
+                userDetails.getUsername(), resource);
         var result = weightProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, WeightProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
@@ -78,8 +81,9 @@ public class WeightProductsController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Weight products found")
-    public ResponseEntity<List<WeightProductResource>> getAllWeightProducts() {
-        var resources = weightProductQueryService.handle(new GetAllWeightProductsQuery(AuthenticatedUser.email()))
+    public ResponseEntity<List<WeightProductResource>> getAllWeightProducts(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var resources = weightProductQueryService.handle(new GetAllWeightProductsQuery(userDetails.getUsername()))
                 .stream()
                 .map(WeightProductResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
@@ -97,8 +101,9 @@ public class WeightProductsController {
                     content = @Content(schema = @Schema(implementation = WeightProductResource.class))),
             @ApiResponse(responseCode = "404", description = "Weight product not found", content = @Content)
     })
-    public ResponseEntity<WeightProductResource> getWeightProductById(@PathVariable Long weightProductId) {
-        return weightProductQueryService.handle(new GetWeightProductByIdQuery(AuthenticatedUser.email(), weightProductId))
+    public ResponseEntity<WeightProductResource> getWeightProductById(@AuthenticationPrincipal UserDetails userDetails,
+                                                                      @PathVariable Long weightProductId) {
+        return weightProductQueryService.handle(new GetWeightProductByIdQuery(userDetails.getUsername(), weightProductId))
                 .map(WeightProductResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -116,10 +121,11 @@ public class WeightProductsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Weight product not found", content = @Content)
     })
-    public ResponseEntity<?> updateWeightProduct(@PathVariable Long weightProductId,
+    public ResponseEntity<?> updateWeightProduct(@AuthenticationPrincipal UserDetails userDetails,
+                                                 @PathVariable Long weightProductId,
                                                  @Valid @RequestBody UpdateWeightProductResource resource) {
         var command = UpdateWeightProductCommandFromResourceAssembler.toCommandFromResource(
-                AuthenticatedUser.email(), weightProductId, resource);
+                userDetails.getUsername(), weightProductId, resource);
         var result = weightProductCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, WeightProductResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.OK);
@@ -135,9 +141,10 @@ public class WeightProductsController {
             @ApiResponse(responseCode = "204", description = "Weight product deleted"),
             @ApiResponse(responseCode = "404", description = "Weight product not found", content = @Content)
     })
-    public ResponseEntity<?> deleteWeightProduct(@PathVariable Long weightProductId) {
+    public ResponseEntity<?> deleteWeightProduct(@AuthenticationPrincipal UserDetails userDetails,
+                                                 @PathVariable Long weightProductId) {
         var result = weightProductCommandService.handle(
-                new DeleteWeightProductCommand(AuthenticatedUser.email(), weightProductId));
+                new DeleteWeightProductCommand(userDetails.getUsername(), weightProductId));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result, id -> null, HttpStatus.NO_CONTENT);
     }

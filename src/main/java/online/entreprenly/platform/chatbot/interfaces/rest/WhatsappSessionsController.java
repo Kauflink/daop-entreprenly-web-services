@@ -1,6 +1,7 @@
 package online.entreprenly.platform.chatbot.interfaces.rest;
 
 import online.entreprenly.platform.chatbot.application.commandservices.WhatsappSessionCommandService;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.queryservices.WhatsappSessionQueryService;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetAllWhatsappSessionsQuery;
 import online.entreprenly.platform.chatbot.domain.model.queries.GetWhatsappSessionByIdQuery;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -51,15 +53,25 @@ public class WhatsappSessionsController {
         this.commandService = commandService;
         this.queryService = queryService;
         this.subscriptionGuard = subscriptionGuard;
+    private final SellerEmailResolver sellerEmailResolver;
+
+    public WhatsappSessionsController(WhatsappSessionCommandService commandService,
+                                      WhatsappSessionQueryService queryService,
+                                      SellerEmailResolver sellerEmailResolver) {
+        this.commandService = commandService;
+        this.queryService = queryService;
+        this.sellerEmailResolver = sellerEmailResolver;
     }
 
     @GetMapping
-    @Operation(summary = "List WhatsApp sessions", description = "Retrieves every registered WhatsApp session.",
+    @Operation(summary = "List WhatsApp sessions", description = "Retrieves WhatsApp sessions for the authenticated seller.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Sessions found")
     public ResponseEntity<List<WhatsappSessionResource>> getAllSessions(Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        var sessions = queryService.handle(new GetAllWhatsappSessionsQuery()).stream()
+        var sellerId = sellerEmailResolver.resolveSellerId(
+                authentication != null ? authentication.getName() : "").orElse(0L);
+        var sessions = queryService.handle(new GetAllWhatsappSessionsQuery(sellerId)).stream()
                 .map(WhatsappSessionResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(sessions);

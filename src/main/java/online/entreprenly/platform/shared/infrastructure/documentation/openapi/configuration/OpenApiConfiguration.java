@@ -59,7 +59,7 @@ public class OpenApiConfiguration {
                         .url("http://localhost:8092")
                         .description("Local Development Environment"),
                 new Server()
-                        .url("https://db.entreprenly.online")
+                        .url("https://daop-api.entreprenly.online")
                         .description("Production Environment")
         ));
 

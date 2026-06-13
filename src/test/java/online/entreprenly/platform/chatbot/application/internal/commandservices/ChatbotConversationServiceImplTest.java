@@ -10,6 +10,9 @@ import online.entreprenly.platform.chatbot.domain.model.valueobjects.MessageSend
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus;
 import online.entreprenly.platform.chatbot.domain.services.RuleBasedChatbotResponder;
 import online.entreprenly.platform.chatbot.domain.services.RuleBasedProductReplyComposer;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.InventoryStockService;
+import online.entreprenly.platform.chatbot.support.EmptyConversationQueryService;
+import online.entreprenly.platform.chatbot.support.StubSellerEmailResolver;
 import online.entreprenly.platform.chatbot.support.InMemoryChatMessageRepository;
 import online.entreprenly.platform.chatbot.support.InMemoryChatOrderRepository;
 import online.entreprenly.platform.chatbot.support.InMemoryConversationRepository;
@@ -38,7 +41,10 @@ class ChatbotConversationServiceImplTest {
 
     /** Empty catalog by default, so the generic responder is used. */
     private final ProductCatalogService emptyCatalog = ownerEmail -> List.of();
-    private final SellerEmailResolver noEmail = sellerId -> Optional.empty();
+    private final SellerEmailResolver noEmail = new StubSellerEmailResolver(sellerId -> Optional.empty());
+    private final InventoryStockService noStock = (ownerEmail, items) -> { };
+    private final online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService noSale =
+            (ownerEmail, sellerId, order) -> { };
 
     @BeforeEach
     void setUp() {
@@ -50,17 +56,18 @@ class ChatbotConversationServiceImplTest {
         conversationCommandService = new ConversationCommandServiceImpl(conversations, publisher);
         messageCommandService = new ChatMessageCommandServiceImpl(messages, conversations, publisher);
         orders = new InMemoryChatOrderRepository();
-        chatOrderCommandService = new ChatOrderCommandServiceImpl(orders, publisher);
+        chatOrderCommandService = new ChatOrderCommandServiceImpl(orders, publisher,
+                new EmptyConversationQueryService(), noEmail, noStock, noSale);
     }
 
     private ChatbotConversationServiceImpl service(ProductCatalogService catalog, SellerEmailResolver resolver) {
         return new ChatbotConversationServiceImpl(conversations, conversationCommandService, messageCommandService,
-                sessions, new RuleBasedChatbotResponder(), whatsApp, catalog, resolver,
+                new RuleBasedChatbotResponder(), whatsApp, catalog, resolver,
                 new RuleBasedProductReplyComposer(), Optional::empty, chatOrderCommandService, orders);
     }
 
     @Test
-    @DisplayName("creates a conversation, stores client and bot messages, sends the reply and returns it")
+    @DisplayName("creates a conversation, stores client and bot messages, and returns the reply for the bridge to deliver")
     void handlesInboundMessageEndToEnd() {
         var service = service(emptyCatalog, noEmail);
         var command = new HandleInboundMessageCommand("+51 987 654 321", "Andrea", "Hola, quiero hacer un pedido", null);
@@ -78,8 +85,9 @@ class ChatbotConversationServiceImplTest {
         assertThat(stored.get(0).getSender()).isEqualTo(MessageSender.CLIENT);
         assertThat(stored.get(1).getSender()).isEqualTo(MessageSender.BOT);
 
-        assertThat(whatsApp.sent).hasSize(1);
-        assertThat(whatsApp.sent.get(0).toPhone()).isEqualTo("+51 987 654 321");
+        // The bridge delivers the returned reply itself, so the backend must NOT also
+        // push it over WhatsApp (doing both delivered every reply to the client twice).
+        assertThat(whatsApp.sent).isEmpty();
     }
 
     @Test
@@ -98,7 +106,8 @@ class ChatbotConversationServiceImplTest {
     @DisplayName("answers with real product data when the seller has a catalog")
     void respondsWithRealProductData() {
         sessions.save(new WhatsappSession(1L, "+51 999 888 777", "Bodega", null));
-        SellerEmailResolver resolver = sellerId -> sellerId == 1L ? Optional.of("seller@test.com") : Optional.empty();
+        SellerEmailResolver resolver = new StubSellerEmailResolver(
+                sellerId -> sellerId == 1L ? Optional.of("seller@test.com") : Optional.empty());
         ProductCatalogService catalog = ownerEmail -> "seller@test.com".equals(ownerEmail)
                 ? List.of(new CatalogProduct("Manzana", 4.50, true, 20.0))
                 : List.of();
@@ -115,7 +124,8 @@ class ChatbotConversationServiceImplTest {
     @DisplayName("registers a draft order and confirms it with the delivery address")
     void createsOrderAndConfirmsDelivery() {
         sessions.save(new WhatsappSession(1L, "+51 999 888 777", "Bodega", null));
-        SellerEmailResolver resolver = sellerId -> sellerId == 1L ? Optional.of("seller@test.com") : Optional.empty();
+        SellerEmailResolver resolver = new StubSellerEmailResolver(
+                sellerId -> sellerId == 1L ? Optional.of("seller@test.com") : Optional.empty());
         ProductCatalogService catalog = ownerEmail -> "seller@test.com".equals(ownerEmail)
                 ? List.of(new CatalogProduct("Coca Cola", 3.00, false, 10.0))
                 : List.of();
@@ -142,7 +152,7 @@ class ChatbotConversationServiceImplTest {
         ProductCatalogService catalog = ownerEmail -> "seller@test.com".equals(ownerEmail)
                 ? List.of(new CatalogProduct("Coca Cola", 3.00, false, 10.0))
                 : List.of();
-        var service = service(catalog, sellerId -> Optional.empty());
+        var service = service(catalog, new StubSellerEmailResolver(sellerId -> Optional.empty()));
         service.handle(new HandleInboundMessageCommand("+51 933 000 111", "Cliente", "quiero 2 coca cola", "seller@test.com"));
         service.handle(new HandleInboundMessageCommand("+51 933 000 111", "Cliente", "Av Lima 100", "seller@test.com"));
 

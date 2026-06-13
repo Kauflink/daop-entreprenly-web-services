@@ -16,4 +16,14 @@ public interface SellerEmailResolver {
      * @return the seller's email, if found
      */
     Optional<String> resolveEmail(Long sellerId);
+
+    /**
+     * Resolves the seller identifier that owns an account email. The reverse of
+     * {@link #resolveEmail(Long)}, used to stamp WhatsApp sessions with the real
+     * seller id when the bridge only knows the owner's email.
+     *
+     * @param email the seller's account email
+     * @return the seller's identifier, if a matching account exists
+     */
+    Optional<Long> resolveSellerId(String email);
 }

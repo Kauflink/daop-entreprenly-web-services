@@ -15,13 +15,22 @@ public interface ConversationRepository {
     Optional<Conversation> findById(Long id);
 
     /**
-     * Finds the most recent conversation held with a given client phone number,
-     * used to route inbound WhatsApp messages to an existing dialogue.
+     * Returns all conversations owned by the given seller.
+     *
+     * @param sellerId the seller identifier
+     * @return the seller's conversations
+     */
+    List<Conversation> findAllBySellerId(Long sellerId);
+
+    /**
+     * Finds the most recent conversation held with a given client phone number
+     * that belongs to a specific seller, used to route inbound WhatsApp messages.
      *
      * @param clientPhone the client's WhatsApp phone number
+     * @param sellerId    the seller that owns the session receiving the message
      * @return the matching conversation, if any
      */
-    Optional<Conversation> findByClientPhone(String clientPhone);
+    Optional<Conversation> findByClientPhoneAndSellerId(String clientPhone, Long sellerId);
 
     Conversation save(Conversation conversation);
 }

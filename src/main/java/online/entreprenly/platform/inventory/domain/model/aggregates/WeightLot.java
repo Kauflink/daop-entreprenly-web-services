@@ -64,6 +64,19 @@ public class WeightLot extends AbstractDomainAggregateRoot<WeightLot> {
     }
 
     /**
+     * Removes up to {@code amountKg} kilograms from this lot, never going below zero.
+     *
+     * @param amountKg the kilograms requested for removal
+     * @return the kilograms actually removed (capped at the available quantity)
+     */
+    public double consume(double amountKg) {
+        if (amountKg <= 0) return 0;
+        double removed = Math.min(amountKg, this.quantityKg);
+        this.quantityKg = Math.round((this.quantityKg - removed) * 1000.0) / 1000.0;
+        return removed;
+    }
+
+    /**
      * Restores an aggregate from persistence. Used by assemblers when reconstructing
      * a weight lot that already carries identity and full state.
      */

@@ -37,6 +37,14 @@ public class InMemoryChatOrderRepository implements ChatOrderRepository {
     }
 
     @Override
+    public List<ChatOrder> findByConversationIdIn(List<Long> conversationIds) {
+        if (conversationIds.isEmpty()) return List.of();
+        return store.values().stream()
+                .filter(o -> conversationIds.contains(o.getConversationId()))
+                .toList();
+    }
+
+    @Override
     public long count() {
         return store.size();
     }

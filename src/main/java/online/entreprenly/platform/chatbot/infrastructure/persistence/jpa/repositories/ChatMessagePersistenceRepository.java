@@ -13,4 +13,6 @@ import java.util.List;
 public interface ChatMessagePersistenceRepository extends JpaRepository<ChatMessagePersistenceEntity, Long> {
 
     List<ChatMessagePersistenceEntity> findByConversationIdOrderBySentAtAsc(Long conversationId);
+
+    List<ChatMessagePersistenceEntity> findByConversationIdInOrderBySentAtAsc(List<Long> conversationIds);
 }
