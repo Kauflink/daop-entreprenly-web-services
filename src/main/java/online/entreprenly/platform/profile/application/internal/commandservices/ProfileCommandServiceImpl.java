@@ -6,6 +6,7 @@ import online.entreprenly.platform.profile.domain.model.commands.CreateProfileCo
 import online.entreprenly.platform.profile.domain.model.commands.UpdateNotificationSettingsCommand;
 import online.entreprenly.platform.profile.domain.model.commands.UpdatePreferencesCommand;
 import online.entreprenly.platform.profile.domain.model.commands.UpdateProfileCommand;
+import online.entreprenly.platform.profile.domain.model.commands.UpdateProfilePlanCommand;
 import online.entreprenly.platform.profile.domain.model.valueobjects.NotificationSettings;
 import online.entreprenly.platform.profile.domain.model.valueobjects.Preferences;
 import online.entreprenly.platform.profile.domain.repositories.ProfileRepository;
@@ -65,5 +66,15 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
                     return Result.success(profileRepository.save(profile));
                 })
                 .orElseGet(() -> Result.failure(ApplicationError.notFound("Profile", String.valueOf(command.profileId()))));
+    }
+
+    @Override
+    public Result<Profile, ApplicationError> handle(UpdateProfilePlanCommand command) {
+        return profileRepository.findByUserId(command.userId())
+                .<Result<Profile, ApplicationError>>map(profile -> {
+                    profile.changePlan(command.plan());
+                    return Result.success(profileRepository.save(profile));
+                })
+                .orElseGet(() -> Result.failure(ApplicationError.notFound("Profile", "userId=" + command.userId())));
     }
 }

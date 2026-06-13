@@ -8,10 +8,12 @@ import online.entreprenly.platform.subscription.domain.model.valueobjects.Billin
 import online.entreprenly.platform.subscription.domain.model.valueobjects.SubscriptionStatus;
 import online.entreprenly.platform.subscription.domain.repositories.SubscriptionPlanRepository;
 import online.entreprenly.platform.subscription.domain.repositories.SubscriptionRepository;
+import online.entreprenly.platform.subscription.interfaces.events.SubscriptionPlanChangedIntegrationEvent;
 import online.entreprenly.platform.subscription.interfaces.rest.resources.SubscriptionDashboardResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -46,15 +48,18 @@ public class SubscriptionDashboardController {
     private final IamContextFacade iamContextFacade;
     private final Map<Long, SubscriptionDashboardResource.DashboardBillingSetupResource> billingSetupByUserId =
             new ConcurrentHashMap<>();
+    private final ApplicationEventPublisher eventPublisher;
 
     public SubscriptionDashboardController(SubscriptionCatalogReadyEventHandler catalogReadyEventHandler,
                                            SubscriptionPlanRepository subscriptionPlanRepository,
                                            SubscriptionRepository subscriptionRepository,
-                                           IamContextFacade iamContextFacade) {
+                                           IamContextFacade iamContextFacade,
+                                           ApplicationEventPublisher eventPublisher) {
         this.catalogReadyEventHandler = catalogReadyEventHandler;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.iamContextFacade = iamContextFacade;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -134,6 +139,7 @@ public class SubscriptionDashboardController {
                     subscription.resumeActive();
                 }
                 subscriptionRepository.save(subscription);
+                publishPlanChanged(userId, controlPlan);
                 return;
             }
             activeSubscription.ifPresent(subscription -> {
@@ -143,6 +149,7 @@ public class SubscriptionDashboardController {
             var subscription = new Subscription(userId, controlPlan);
             subscription.activate(billingPeriod);
             subscriptionRepository.save(subscription);
+            publishPlanChanged(userId, controlPlan);
             return;
         }
 
@@ -161,7 +168,16 @@ public class SubscriptionDashboardController {
                 subscription.activateWithoutExpiration();
                 subscriptionRepository.save(subscription);
             }
+            publishPlanChanged(userId, freePlan);
         }
+    }
+
+    /**
+     * Publishes the Subscription context's integration event so other bounded contexts (e.g.
+     * Profile) can react to a plan change without coupling to the subscription domain.
+     */
+    private void publishPlanChanged(Long userId, SubscriptionPlan plan) {
+        eventPublisher.publishEvent(new SubscriptionPlanChangedIntegrationEvent(userId, plan.getName()));
     }
 
     @GetMapping("/subscription-payment-confirmation/{userId}")
