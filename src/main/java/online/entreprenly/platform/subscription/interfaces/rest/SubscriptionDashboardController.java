@@ -26,7 +26,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Compatibility controller for the current Angular subscription dashboard.
@@ -42,6 +44,8 @@ public class SubscriptionDashboardController {
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final IamContextFacade iamContextFacade;
+    private final Map<Long, SubscriptionDashboardResource.DashboardBillingSetupResource> billingSetupByUserId =
+            new ConcurrentHashMap<>();
 
     public SubscriptionDashboardController(SubscriptionCatalogReadyEventHandler catalogReadyEventHandler,
                                            SubscriptionPlanRepository subscriptionPlanRepository,
@@ -90,6 +94,9 @@ public class SubscriptionDashboardController {
                                                                        @RequestBody SubscriptionDashboardResource resource,
                                                                        Authentication authentication) {
         var resolvedUserId = resolveUserId(authentication, userId);
+        if (resource != null && resource.billingSetup() != null) {
+            billingSetupByUserId.put(resolvedUserId, resource.billingSetup());
+        }
         applyPlanChange(resolvedUserId, resource);
         return ResponseEntity.ok(toDashboard(resolvedUserId, false));
     }
@@ -187,7 +194,7 @@ public class SubscriptionDashboardController {
                 currentPlan,
                 toControlPlan(controlPlan, Optional.empty(), true),
                 limitsForPlan(currentPlan),
-                emptyBillingSetup(),
+                billingSetupByUserId.getOrDefault(userId, emptyBillingSetup()),
                 defaultActivity(currentPlan));
     }
 
