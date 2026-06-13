@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -45,22 +44,17 @@ public class WhatsappSessionsController {
 
     private final WhatsappSessionCommandService commandService;
     private final WhatsappSessionQueryService queryService;
+    private final SellerEmailResolver sellerEmailResolver;
     private final ChatbotSubscriptionGuard subscriptionGuard;
 
     public WhatsappSessionsController(WhatsappSessionCommandService commandService,
                                       WhatsappSessionQueryService queryService,
+                                      SellerEmailResolver sellerEmailResolver,
                                       ChatbotSubscriptionGuard subscriptionGuard) {
         this.commandService = commandService;
         this.queryService = queryService;
-        this.subscriptionGuard = subscriptionGuard;
-    private final SellerEmailResolver sellerEmailResolver;
-
-    public WhatsappSessionsController(WhatsappSessionCommandService commandService,
-                                      WhatsappSessionQueryService queryService,
-                                      SellerEmailResolver sellerEmailResolver) {
-        this.commandService = commandService;
-        this.queryService = queryService;
         this.sellerEmailResolver = sellerEmailResolver;
+        this.subscriptionGuard = subscriptionGuard;
     }
 
     @GetMapping
@@ -85,7 +79,7 @@ public class WhatsappSessionsController {
             @ApiResponse(responseCode = "404", description = "Session not found", content = @Content)
     })
     public ResponseEntity<WhatsappSessionResource> getSessionById(@PathVariable Long sessionId,
-                                                                    Authentication authentication) {
+                                                                  Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return queryService.handle(new GetWhatsappSessionByIdQuery(sessionId))
                 .map(WhatsappSessionResourceFromEntityAssembler::toResourceFromEntity)
