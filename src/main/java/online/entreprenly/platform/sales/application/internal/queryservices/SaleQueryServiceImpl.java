@@ -4,6 +4,7 @@ import online.entreprenly.platform.sales.application.queryservices.SaleQueryServ
 import online.entreprenly.platform.sales.domain.model.aggregates.Sale;
 import online.entreprenly.platform.sales.domain.model.queries.GetAllSalesQuery;
 import online.entreprenly.platform.sales.domain.model.queries.GetSaleByIdQuery;
+import online.entreprenly.platform.sales.domain.model.queries.GetSalesByDateQuery;
 import online.entreprenly.platform.sales.domain.repositories.SaleRepository;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,11 @@ public class SaleQueryServiceImpl implements SaleQueryService {
     @Override
     public List<Sale> handle(GetAllSalesQuery query) {
         return saleRepository.findAllByOwnerEmail(query.ownerEmail());
+    }
+
+    @Override
+    public List<Sale> handle(GetSalesByDateQuery query) {
+        return saleRepository.findAllByOwnerEmailAndDate(query.ownerEmail(), query.date());
     }
 
     @Override
