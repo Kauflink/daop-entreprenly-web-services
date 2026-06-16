@@ -41,6 +41,15 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
             "llevar", "llevo", "ponme", "mandame", "enviame", "envieme", "vender", "me das",
             "kilos", "kilo", "kg", "unidad", "unidades"};
 
+    /** Words to strip when extracting the product name from an unrecognised order. */
+    private static final List<String> EXTRACTION_STOP_WORDS = List.of(
+            "quiero", "quisiera", "deseo", "dame", "necesito", "comprar", "pedir", "pedido",
+            "llevar", "llevo", "ponme", "mandame", "enviame", "envieme", "vender", "das",
+            "kilos", "kilo", "unidad", "unidades",
+            "un", "una", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho",
+            "nueve", "diez", "once", "doce", "media", "medio",
+            "de", "del", "la", "el", "los", "las", "por", "favor", "porfavor", "me", "kg");
+
     @Override
     public Optional<String> compose(String incomingContent, List<CatalogProduct> catalog) {
         if (incomingContent == null || incomingContent.isBlank()) {
@@ -57,9 +66,13 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
                 "que tienes", "que hay", "menu", "lista", "ofrecen")) {
             return Optional.of(replyWithCatalogue(safeCatalog));
         }
-        // The client asked about a product/availability, but nothing specific matched.
+        // Client is trying to order something that is not in the catalog.
+        if (mentionsAny(text, ORDER_INTENT)) {
+            return Optional.of(replyWhenProductNotFound(safeCatalog, extractRequestedProduct(text)));
+        }
+        // The client asked about product availability but nothing matched.
         if (isProductIntent(text)) {
-            return Optional.of(replyWhenProductNotFound(safeCatalog));
+            return Optional.of(replyWhenProductNotFound(safeCatalog, null));
         }
         return Optional.empty();
     }
@@ -117,16 +130,43 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
                 "disponibilidad", "mercaderia", "consigo", "venta");
     }
 
-    /** Reply when no product matched: suggest the available catalogue, or say there is none. */
-    private String replyWhenProductNotFound(List<CatalogProduct> catalog) {
+    /**
+     * Reply when no catalog product matched. If the client named a specific product
+     * ({@code requestedProduct} non-null), mentions it explicitly so the answer feels
+     * personal ("No contamos con atún, pero sí tenemos: …").
+     */
+    private String replyWhenProductNotFound(List<CatalogProduct> catalog, String requestedProduct) {
         var inStock = catalog.stream().filter(CatalogProduct::isInStock).toList();
         if (inStock.isEmpty()) {
+            if (requestedProduct != null && !requestedProduct.isBlank()) {
+                return "Lo sentimos, no contamos con %s ni con otros productos disponibles en este momento. ¿Puedo ayudarte con algo más?"
+                        .formatted(requestedProduct);
+            }
             return "Por ahora no contamos con productos disponibles. ¡Pronto tendremos novedades!";
         }
         var items = inStock.stream()
                 .map(p -> "%s (%s %s)".formatted(p.name(), price(p.price()), p.soldByWeight() ? "por kg" : "c/u"))
                 .collect(Collectors.joining(", "));
+        if (requestedProduct != null && !requestedProduct.isBlank()) {
+            return "No contamos con %s, pero sí tenemos: %s. ¿Te interesa alguno?".formatted(requestedProduct, items);
+        }
         return "No tenemos ese producto por ahora, pero sí contamos con: %s. ¿Te interesa alguno?".formatted(items);
+    }
+
+    /**
+     * Strips known stop words (order verbs, articles, numbers) from a normalised message
+     * and returns what remains as a rough product name. Used to personalise the
+     * "not found" reply.
+     */
+    private String extractRequestedProduct(String text) {
+        var sb = new StringBuilder();
+        for (var word : text.split("[^a-zñ]+")) {
+            if (word.length() >= 3 && !EXTRACTION_STOP_WORDS.contains(word)) {
+                if (!sb.isEmpty()) sb.append(" ");
+                sb.append(word);
+            }
+        }
+        return sb.isEmpty() ? null : sb.toString();
     }
 
     private String replyForProduct(String text, CatalogProduct product) {
