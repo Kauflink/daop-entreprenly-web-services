@@ -1,6 +1,8 @@
 package online.entreprenly.platform.iam.application.commandservices;
 
 import online.entreprenly.platform.iam.domain.model.aggregates.User;
+import online.entreprenly.platform.iam.domain.model.commands.ChangeEmailCommand;
+import online.entreprenly.platform.iam.domain.model.commands.ChangePasswordCommand;
 import online.entreprenly.platform.iam.domain.model.commands.SignInCommand;
 import online.entreprenly.platform.iam.domain.model.commands.SignUpCommand;
 import online.entreprenly.platform.shared.application.result.ApplicationError;
@@ -27,6 +29,21 @@ public interface UserCommandService {
      */
     Result<User, ApplicationError> handle(SignUpCommand command);
 
+    /**
+     * Handles a password change for an authenticated user.
+     *
+     * @param command change-password command
+     * @return the updated user aggregate, or an application error
+     */
+    Result<User, ApplicationError> handle(ChangePasswordCommand command);
+
+    /**
+     * Handles an email change for an authenticated user.
+     *
+     * @param command change-email command
+     * @return the updated user aggregate, or an application error
+     */
+    Result<User, ApplicationError> handle(ChangeEmailCommand command);
 
 }
 
