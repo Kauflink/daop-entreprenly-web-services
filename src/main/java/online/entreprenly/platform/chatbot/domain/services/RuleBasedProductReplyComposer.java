@@ -220,18 +220,19 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
 
     private String stock(CatalogProduct product) {
         return product.soldByWeight()
-                ? "%.1f kg".formatted(product.availableStock())
-                : "%d unidades".formatted((long) product.availableStock());
+                ? String.format(Locale.US, "%.1f kg", product.availableStock())
+                : String.format(Locale.US, "%d unidades", (long) product.availableStock());
     }
 
     private String quantityLabel(double quantity, String unitLabel) {
         return unitLabel.equals("kg")
-                ? "%.1f kg".formatted(quantity)
-                : "%d unidades".formatted((long) quantity);
+                ? String.format(Locale.US, "%.1f kg", quantity)
+                : String.format(Locale.US, "%d unidades", (long) quantity);
     }
 
+    // Locale.US so the decimal separator is always a dot, regardless of the host locale.
     private static String price(double value) {
-        return "S/%.2f".formatted(value);
+        return String.format(Locale.US, "S/%.2f", value);
     }
 
     private static boolean mentionsAny(String text, String... keywords) {

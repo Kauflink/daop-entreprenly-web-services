@@ -7,6 +7,8 @@ import online.entreprenly.platform.chatbot.infrastructure.messaging.whatsapp.Wha
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.BridgeQrResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.BridgeQrStateResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.BridgeStatusResource;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -47,6 +49,7 @@ public class ChatbotBridgeController {
     private final String bridgeToken;
     private final String bridgeBaseUrl;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ChatbotBridgeController(WhatsAppBridgeState bridgeState,
                                    WhatsappSessionCommandService sessionCommandService,
@@ -122,13 +125,36 @@ public class ChatbotBridgeController {
                     .GET()
                     .timeout(Duration.ofSeconds(5))
                     .build();
-            http.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+            http.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenAccept(response -> syncStateFromBridge(email, response))
                     .exceptionally(ex -> {
                         log.debug("[bridge] session trigger failed for {}: {}", email, ex.getMessage());
                         return null;
                     });
         } catch (Exception ex) {
             log.debug("[bridge] could not trigger session for {}: {}", email, ex.getMessage());
+        }
+    }
+
+    /**
+     * Reconciles the in-memory bridge state from the bridge's own response.
+     * The bridge holds the authoritative link state, so when the backend has just
+     * restarted (and lost its in-memory state) the first poll re-learns whether an
+     * already-paired seller is connected — without waiting for a new bridge event.
+     */
+    private void syncStateFromBridge(String email, HttpResponse<String> response) {
+        if (response.statusCode() / 100 != 2 || response.body() == null || response.body().isBlank()) {
+            return;
+        }
+        try {
+            JsonNode body = objectMapper.readTree(response.body());
+            if (body.path("connected").asBoolean(false)) {
+                bridgeState.setConnected(email, true);
+            } else if (body.hasNonNull("qr")) {
+                bridgeState.setQr(email, body.get("qr").asText());
+            }
+        } catch (Exception ex) {
+            log.debug("[bridge] could not parse session state for {}: {}", email, ex.getMessage());
         }
     }
 

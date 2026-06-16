@@ -262,8 +262,10 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         var result = chatOrderCommandService.handle(command);
         var number = result.toOptional().map(ChatOrder::getOrderNumber).orElse("");
         double total = Math.round(line.unitPrice() * line.quantity() * 100.0) / 100.0;
-        return "Anotado tu pedido %s: %d x %s = S/%.2f. ¿A qué dirección te lo enviamos?"
-                .formatted(number, line.quantity(), line.productName(), total);
+        // Locale.US so the decimal separator is always a dot, regardless of the host locale.
+        return String.format(java.util.Locale.US,
+                "Anotado tu pedido %s: %d x %s = S/%.2f. ¿A qué dirección te lo enviamos?",
+                number, line.quantity(), line.productName(), total);
     }
 
     private String confirmDelivery(Conversation conversation, ChatOrder order, String address) {
