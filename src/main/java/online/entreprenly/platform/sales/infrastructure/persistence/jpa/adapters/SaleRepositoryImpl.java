@@ -6,6 +6,8 @@ import online.entreprenly.platform.sales.infrastructure.persistence.jpa.assemble
 import online.entreprenly.platform.sales.infrastructure.persistence.jpa.repositories.SalePersistenceRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +16,8 @@ import java.util.Optional;
  */
 @Repository
 public class SaleRepositoryImpl implements SaleRepository {
+
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("America/Lima");
 
     private final SalePersistenceRepository salePersistenceRepository;
 
@@ -24,6 +28,18 @@ public class SaleRepositoryImpl implements SaleRepository {
     @Override
     public List<Sale> findAllByOwnerEmail(String ownerEmail) {
         return salePersistenceRepository.findAllByOwnerEmail(ownerEmail).stream()
+                .map(SalePersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public List<Sale> findAllByOwnerEmailAndDate(String ownerEmail, LocalDate date) {
+        var startOfDay = date.atStartOfDay(BUSINESS_ZONE).toInstant();
+        var startOfNextDay = date.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
+        return salePersistenceRepository
+                .findAllByOwnerEmailAndSaleCreatedAtGreaterThanEqualAndSaleCreatedAtLessThan(
+                        ownerEmail, startOfDay, startOfNextDay)
+                .stream()
                 .map(SalePersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
