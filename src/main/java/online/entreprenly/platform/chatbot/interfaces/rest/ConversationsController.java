@@ -34,9 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST controller exposing conversation resources.
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/conversations", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Chatbot - Conversations", description = "WhatsApp conversation endpoints")

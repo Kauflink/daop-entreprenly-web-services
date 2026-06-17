@@ -20,9 +20,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * JPA persistence entity for chat orders.
- */
+
 @Entity
 @Table(name = "chat_orders")
 @Getter

@@ -13,20 +13,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * Rule-based {@link ProductReplyComposer}.
- *
- * <p>Matches the client message against the seller's catalog (by product name) and
- * answers with real price, stock and order totals. Recognises three intents: listing the
- * catalogue, asking about a product's price/availability, and ordering a quantity. When
- * nothing matches it returns empty so the generic responder takes over.</p>
- */
+
 @Service
 public class RuleBasedProductReplyComposer implements ProductReplyComposer {
 
     private static final Pattern NUMBER = Pattern.compile("(?<![\\w])(\\d+(?:[.,]\\d+)?)(?![\\w])");
 
-    /** Spanish number words the client may use instead of digits ("quisiera tres"). */
+    
     private static final Map<String, Double> NUMBER_WORDS = Map.ofEntries(
             Map.entry("un", 1.0), Map.entry("una", 1.0), Map.entry("uno", 1.0),
             Map.entry("dos", 2.0), Map.entry("tres", 3.0), Map.entry("cuatro", 4.0),
@@ -35,13 +28,13 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
             Map.entry("once", 11.0), Map.entry("doce", 12.0), Map.entry("media", 0.5),
             Map.entry("medio", 0.5));
 
-    /** Verbs/expressions that signal the client wants to order a quantity. */
+    
     private static final String[] ORDER_INTENT = {
             "quiero", "quisiera", "deseo", "dame", "necesito", "comprar", "pedir", "pedido",
             "llevar", "llevo", "ponme", "mandame", "enviame", "envieme", "vender", "me das",
             "kilos", "kilo", "kg", "unidad", "unidades"};
 
-    /** Words to strip when extracting the product name from an unrecognised order. */
+    
     private static final List<String> EXTRACTION_STOP_WORDS = List.of(
             "quiero", "quisiera", "deseo", "dame", "necesito", "comprar", "pedir", "pedido",
             "llevar", "llevo", "ponme", "mandame", "enviame", "envieme", "vender", "das",
@@ -66,11 +59,11 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
                 "que tienes", "que hay", "menu", "lista", "ofrecen")) {
             return Optional.of(replyWithCatalogue(safeCatalog));
         }
-        // Client is trying to order something that is not in the catalog.
+        
         if (mentionsAny(text, ORDER_INTENT)) {
             return Optional.of(replyWhenProductNotFound(safeCatalog, extractRequestedProduct(text)));
         }
-        // The client asked about product availability but nothing matched.
+        
         if (isProductIntent(text)) {
             return Optional.of(replyWhenProductNotFound(safeCatalog, null));
         }
@@ -90,8 +83,8 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         }
         var text = normalize(incomingContent);
 
-        // Prefer a product named in this very message; otherwise fall back to the product
-        // the bot was last talking about (e.g. it just asked "¿cuántos deseas?").
+        
+        
         var product = bestMatch(text, catalog);
         boolean usingContext = false;
         if (product == null) {
@@ -102,8 +95,8 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
             return Optional.empty();
         }
 
-        // With context we already know the product, so a bare quantity reply ("tres", "3")
-        // is enough; without context we still require an explicit ordering intent.
+        
+        
         var quantity = usingContext ? anyQuantity(text, product) : orderQuantity(text, product);
         if (quantity.isEmpty()) {
             return Optional.empty();
@@ -123,18 +116,14 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         return Optional.ofNullable(bestMatch(normalize(incomingContent), catalog));
     }
 
-    /** True when the message looks like a product or availability question. */
+    
     private boolean isProductIntent(String text) {
         return mentionsAny(text, "tienen", "tiene", "tienes", "precio", "cuanto cuesta", "cuesta",
                 "vale", "comprar", "vendes", "venden", "producto", "stock", "disponible",
                 "disponibilidad", "mercaderia", "consigo", "venta");
     }
 
-    /**
-     * Reply when no catalog product matched. If the client named a specific product
-     * ({@code requestedProduct} non-null), mentions it explicitly so the answer feels
-     * personal ("No contamos con atún, pero sí tenemos: …").
-     */
+    
     private String replyWhenProductNotFound(List<CatalogProduct> catalog, String requestedProduct) {
         var inStock = catalog.stream().filter(CatalogProduct::isInStock).toList();
         if (inStock.isEmpty()) {
@@ -153,11 +142,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         return "No tenemos ese producto por ahora, pero sí contamos con: %s. ¿Te interesa alguno?".formatted(items);
     }
 
-    /**
-     * Strips known stop words (order verbs, articles, numbers) from a normalised message
-     * and returns what remains as a rough product name. Used to personalise the
-     * "not found" reply.
-     */
+    
     private String extractRequestedProduct(String text) {
         var sb = new StringBuilder();
         for (var word : text.split("[^a-zñ]+")) {
@@ -204,7 +189,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         return "Tenemos disponible: %s. ¿Qué te gustaría pedir?".formatted(items);
     }
 
-    /** Returns the catalog product whose name best matches the message, or null. */
+    
     private CatalogProduct bestMatch(String text, List<CatalogProduct> catalog) {
         CatalogProduct best = null;
         int bestScore = 0;
@@ -223,7 +208,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         return best;
     }
 
-    /** Extracts an ordered quantity when the message expresses an ordering intent. */
+    
     private Optional<Double> orderQuantity(String text, CatalogProduct product) {
         if (!mentionsAny(text, ORDER_INTENT)) {
             return Optional.empty();
@@ -231,13 +216,9 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         return anyQuantity(text, product);
     }
 
-    /**
-     * Extracts a quantity from the message regardless of intent keywords, accepting both
-     * digits ("3", "2.5") and Spanish number words ("tres"). Used when the product is
-     * already known from the conversation context, so a bare number is a valid reply.
-     */
+    
     private Optional<Double> anyQuantity(String text, CatalogProduct product) {
-        // Remove the product name tokens so we don't read a number that is part of the name.
+        
         var cleaned = text;
         for (var token : normalize(product.name()).split("\\s+")) {
             if (token.length() >= 3) {
@@ -248,7 +229,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         if (matcher.find()) {
             return Optional.of(Double.parseDouble(matcher.group(1).replace(',', '.')));
         }
-        // No digits: try a Spanish number word ("quisiera tres").
+        
         for (var word : cleaned.split("[^a-zñ]+")) {
             var value = NUMBER_WORDS.get(word);
             if (value != null) {
@@ -270,7 +251,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
                 : String.format(Locale.US, "%d unidades", (long) quantity);
     }
 
-    // Locale.US so the decimal separator is always a dot, regardless of the host locale.
+    
     private static String price(double value) {
         return String.format(Locale.US, "S/%.2f", value);
     }
@@ -284,7 +265,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         return false;
     }
 
-    /** Lowercases and strips accents so matching is tolerant to diacritics. */
+    
     private static String normalize(String value) {
         var lower = value.toLowerCase(Locale.ROOT);
         var decomposed = Normalizer.normalize(lower, Normalizer.Form.NFD);

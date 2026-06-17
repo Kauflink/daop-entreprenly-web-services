@@ -9,11 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Anti-corruption layer adapter that deducts confirmed-order quantities from the Inventory
- * bounded context through its ACL facade, translating chatbot {@link OrderItem} lines into
- * the inventory deduction contract.
- */
+
 @Service
 public class InventoryStockAdjuster implements InventoryStockService {
 

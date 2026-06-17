@@ -7,14 +7,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * Conversation aggregate root.
- *
- * <p>Represents an ongoing WhatsApp dialogue between a seller's bot and a single
- * client. It tracks the lightweight conversation-list projection ({@code lastMessage},
- * {@code lastMessageTime}) and the {@link ConversationStatus} lifecycle, owning the
- * transitions that close or complete the dialogue.</p>
- */
+
 @Getter
 public class Conversation extends AbstractDomainAggregateRoot<Conversation> {
 
@@ -42,23 +35,13 @@ public class Conversation extends AbstractDomainAggregateRoot<Conversation> {
         this.lastMessageTime = "";
     }
 
-    /**
-     * Records the latest message preview shown in the conversation list.
-     *
-     * @param content the message content
-     * @param time    the display time label (e.g. {@code "10:18"})
-     */
+    
     public void registerLastMessage(String content, String time) {
         this.lastMessage = content;
         this.lastMessageTime = time;
     }
 
-    /**
-     * Applies a desired status transition, stamping {@code closedAt} when the
-     * conversation reaches a terminal state.
-     *
-     * @param status the desired status (ignored when null)
-     */
+    
     public void changeStatus(ConversationStatus status) {
         if (status == null) return;
         this.status = status;
@@ -67,9 +50,7 @@ public class Conversation extends AbstractDomainAggregateRoot<Conversation> {
                 : null;
     }
 
-    /**
-     * Restores an aggregate from persistence.
-     */
+    
     public void restoreState(Long id, Long sellerId, String clientPhone, String clientName,
                              String lastMessage, String lastMessageTime, ConversationStatus status,
                              Instant createdAt, Instant closedAt) {

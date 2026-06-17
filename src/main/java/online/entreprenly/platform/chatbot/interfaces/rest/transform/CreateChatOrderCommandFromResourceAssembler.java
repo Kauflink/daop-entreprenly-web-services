@@ -6,9 +6,7 @@ import online.entreprenly.platform.chatbot.interfaces.rest.resources.CreateChatO
 
 import java.util.List;
 
-/**
- * Assembler that translates a create resource into a create command.
- */
+
 public final class CreateChatOrderCommandFromResourceAssembler {
 
     private CreateChatOrderCommandFromResourceAssembler() {

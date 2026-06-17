@@ -4,9 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/**
- * Request body to start a new conversation.
- */
+
 @Schema(name = "CreateConversationRequest", description = "Data required to start a conversation")
 public record CreateConversationResource(
         @NotNull

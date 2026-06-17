@@ -6,9 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-/**
- * Resource representing a chat message returned by the REST API.
- */
+
 @Schema(name = "ChatMessageResponse", description = "A message within a conversation")
 public record ChatMessageResource(
         @Schema(description = "Message unique identifier", example = "1")

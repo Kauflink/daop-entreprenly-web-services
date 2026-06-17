@@ -3,10 +3,7 @@ package online.entreprenly.platform.chatbot.domain.model.valueobjects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-/**
- * Identifies who authored a {@code ChatMessage}: the human client on WhatsApp,
- * the automated bot, or the system itself (status notices).
- */
+
 public enum MessageSender {
     CLIENT("client"),
     BOT("bot"),

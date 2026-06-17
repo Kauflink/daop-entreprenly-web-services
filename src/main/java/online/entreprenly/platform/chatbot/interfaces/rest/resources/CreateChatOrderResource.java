@@ -7,9 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-/**
- * Request body to create an order captured through a conversation.
- */
+
 @Schema(name = "CreateChatOrderRequest", description = "Data required to create a chat order")
 public record CreateChatOrderResource(
         @NotNull

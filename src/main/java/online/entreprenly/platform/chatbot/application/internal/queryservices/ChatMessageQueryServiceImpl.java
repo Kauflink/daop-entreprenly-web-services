@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Chat message query service implementation.
- */
+
 @Service
 public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 

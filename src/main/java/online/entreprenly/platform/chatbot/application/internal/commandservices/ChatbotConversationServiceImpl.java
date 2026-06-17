@@ -39,9 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Default {@link ChatbotConversationService} implementation.
- */
+
 @Service
 public class ChatbotConversationServiceImpl implements ChatbotConversationService {
 
@@ -59,11 +57,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
     private final ChatOrderCommandService chatOrderCommandService;
     private final ChatOrderRepository chatOrderRepository;
 
-    /**
-     * Lightweight per-conversation memory of the product last discussed, so a follow-up
-     * such as "quisiera tres" binds to it. In-memory by design: it is a conversational
-     * hint, not authoritative state, and is safe to lose on restart.
-     */
+    
     private final Map<Long, CatalogProduct> lastProductByConversation = new ConcurrentHashMap<>();
 
     public ChatbotConversationServiceImpl(ConversationRepository conversationRepository,
@@ -105,7 +99,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         }
         var conversation = ((Result.Success<Conversation, ApplicationError>) conversationResult).value();
 
-        // Persist the inbound client message (refreshes the conversation projection and broadcasts).
+        
         var inbound = new CreateChatMessageCommand(conversation.getId(), command.content(),
                 MessageSender.CLIENT, MessageType.TEXT, Instant.now());
         var inboundResult = messageCommandService.handle(inbound);
@@ -113,8 +107,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
             return inboundResult;
         }
 
-        // Produce and persist the automatic reply, grounded in the seller's real catalog
-        // when the message is about products, and falling back to the generic responder.
+        
+        
         var replyText = composeReply(command.content(), conversation, command.ownerEmail());
         var outbound = new CreateChatMessageCommand(conversation.getId(), replyText,
                 MessageSender.BOT, MessageType.TEXT, Instant.now());
@@ -123,8 +117,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
             return outboundResult;
         }
 
-        // The bridge delivers this reply itself (it sends the webhook's returned content),
-        // so we must NOT also push it over /send here or the client receives it twice.
+        
+        
         return outboundResult;
     }
 
@@ -141,9 +135,9 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         }
         var conversation = conversationOpt.get();
 
-        // Record the inbound receipt as an image message in the conversation.
-        // We store a short sentinel ("receipt") instead of the raw base64 so the DB row and
-        // SSE event stay small. The frontend renders the actual image from order.receiptImage.
+        
+        
+        
         messageCommandService.handle(new CreateChatMessageCommand(conversation.getId(),
                 "receipt", MessageSender.CLIENT, MessageType.IMAGE, Instant.now()));
 
@@ -162,7 +156,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         var outbound = new CreateChatMessageCommand(conversation.getId(), replyText,
                 MessageSender.BOT, MessageType.TEXT, Instant.now());
         var outboundResult = messageCommandService.handle(outbound);
-        // The bridge delivers this reply itself (see handle(HandleInboundMessageCommand)).
+        
         return outboundResult;
     }
 
@@ -186,35 +180,27 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         return DEFAULT_SELLER_ID;
     }
 
-    /**
-     * Builds the bot reply, driving the order flow:
-     * <ol>
-     *   <li>a concrete purchase ("quiero 3 coca cola") registers a draft order and asks the address;</li>
-     *   <li>the next message, when a draft is pending, is taken as the delivery address and the order
-     *       moves to awaiting payment;</li>
-     *   <li>otherwise it answers catalogue questions or falls back to the generic responder.</li>
-     * </ol>
-     */
+    
     private String composeReply(String content, Conversation conversation, String ownerEmailFromBridge) {
         var catalog = resolveCatalog(conversation, ownerEmailFromBridge);
         var conversationId = conversation.getId();
 
-        // 1) An explicit order in this very message, e.g. "quiero 3 coca cola".
+        
         var orderLine = productReplyComposer.detectOrder(content, catalog);
         if (orderLine.isPresent()) {
             lastProductByConversation.remove(conversationId);
             return registerDraftOrder(conversation, orderLine.get());
         }
 
-        // 2) The delivery address for a draft order that is awaiting it.
+        
         var pending = findPendingOrder(conversationId);
         if (pending.isPresent() && looksLikeAddress(content)) {
             lastProductByConversation.remove(conversationId);
             return confirmDelivery(conversation, pending.get(), content.trim());
         }
 
-        // 3) A follow-up quantity ("quisiera tres", "3") that continues the previous turn,
-        //    bound to the product the bot was last talking about.
+        
+        
         var context = lastProductByConversation.get(conversationId);
         if (context != null) {
             var contextual = productReplyComposer.detectOrder(content, catalog, context);
@@ -224,8 +210,8 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
             }
         }
 
-        // 4) A product question (price/stock). Remember the product so the next message
-        //    can be interpreted as a quantity for it.
+        
+        
         var productReply = productReplyComposer.compose(content, catalog);
         if (productReply.isPresent()) {
             productReplyComposer.matchProduct(content, catalog)
@@ -233,15 +219,11 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
             return productReply.get();
         }
 
-        // 5) Generic conversational fallback.
+        
         return responder.reply(content, conversation.getClientName());
     }
 
-    /**
-     * Resolves the seller's catalog. Prefers the email the receiving bridge sent with this
-     * message (true multi-tenant: each seller's messages carry their own email); otherwise
-     * falls back to the last connected bridge email or the conversation's seller id.
-     */
+    
     private List<CatalogProduct> resolveCatalog(Conversation conversation, String ownerEmailFromBridge) {
         var email = (ownerEmailFromBridge != null && !ownerEmailFromBridge.isBlank())
                 ? Optional.of(ownerEmailFromBridge)
@@ -262,7 +244,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
         var result = chatOrderCommandService.handle(command);
         var number = result.toOptional().map(ChatOrder::getOrderNumber).orElse("");
         double total = Math.round(line.unitPrice() * line.quantity() * 100.0) / 100.0;
-        // Locale.US so the decimal separator is always a dot, regardless of the host locale.
+        
         return String.format(java.util.Locale.US,
                 "Anotado tu pedido %s: %d x %s = S/%.2f. ¿A qué dirección te lo enviamos?",
                 number, line.quantity(), line.productName(), total);
@@ -276,7 +258,7 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
                 .formatted(order.getOrderNumber(), address);
     }
 
-    /** Heuristic: after asking for the address, a non-greeting reply is treated as the address. */
+    
     private boolean looksLikeAddress(String content) {
         var text = content.trim().toLowerCase(java.util.Locale.ROOT);
         if (text.length() < 3) {

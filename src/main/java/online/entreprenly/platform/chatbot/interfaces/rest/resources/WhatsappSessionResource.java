@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-/**
- * Resource representing a WhatsApp session returned by the REST API.
- */
+
 @Schema(name = "WhatsappSessionResponse", description = "A seller's WhatsApp channel session")
 public record WhatsappSessionResource(
         @Schema(description = "Session unique identifier", example = "1")

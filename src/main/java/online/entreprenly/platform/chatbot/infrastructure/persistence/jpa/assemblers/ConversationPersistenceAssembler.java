@@ -3,9 +3,7 @@ package online.entreprenly.platform.chatbot.infrastructure.persistence.jpa.assem
 import online.entreprenly.platform.chatbot.domain.model.aggregates.Conversation;
 import online.entreprenly.platform.chatbot.infrastructure.persistence.jpa.entities.ConversationPersistenceEntity;
 
-/**
- * Static assembler between conversation domain and persistence representations.
- */
+
 public final class ConversationPersistenceAssembler {
 
     private ConversationPersistenceAssembler() {

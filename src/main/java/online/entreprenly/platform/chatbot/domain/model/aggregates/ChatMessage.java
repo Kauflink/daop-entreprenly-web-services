@@ -8,13 +8,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * ChatMessage aggregate root.
- *
- * <p>Represents a single message exchanged within a {@link Conversation}. Messages
- * are immutable records authored by the {@link MessageSender} (client, bot or system)
- * and carry their {@link MessageType} and the instant they were sent.</p>
- */
+
 @Getter
 public class ChatMessage extends AbstractDomainAggregateRoot<ChatMessage> {
 
@@ -37,9 +31,7 @@ public class ChatMessage extends AbstractDomainAggregateRoot<ChatMessage> {
         this.sentAt = sentAt == null ? Instant.now() : sentAt;
     }
 
-    /**
-     * Restores an aggregate from persistence.
-     */
+    
     public void restoreState(Long id, Long conversationId, String content,
                              MessageSender sender, MessageType type, Instant sentAt) {
         this.id = id;

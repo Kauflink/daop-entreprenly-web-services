@@ -13,18 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-/**
- * Server-Sent Events stream for chatbot real-time updates.
- *
- * <p>Browser clients subscribe with an {@code EventSource}; the server pushes
- * {@code message}, {@code conversation} and {@code order} events as they happen, so the
- * dashboard reflects changes immediately without polling.</p>
- *
- * <p>The {@code EventSource} API cannot send an {@code Authorization} header, so this
- * endpoint is whitelisted (JWT-free) at the security layer and instead authenticates the
- * subscriber from a {@code token} query parameter carrying the same JWT. The token is
- * validated here and the subscriber's plan access is checked before any emitter is opened.</p>
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/chatbot/stream")
 @Tag(name = "Chatbot - Realtime", description = "Server-Sent Events stream")

@@ -5,9 +5,7 @@ import online.entreprenly.platform.chatbot.domain.model.aggregates.WhatsappSessi
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Domain repository port for {@link WhatsappSession} aggregates.
- */
+
 public interface WhatsappSessionRepository {
 
     List<WhatsappSession> findAll();

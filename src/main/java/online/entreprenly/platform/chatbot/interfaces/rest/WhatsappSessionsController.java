@@ -34,9 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST controller exposing WhatsApp session resources.
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/whatsapp-sessions", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Chatbot - WhatsApp Sessions", description = "WhatsApp channel session endpoints")

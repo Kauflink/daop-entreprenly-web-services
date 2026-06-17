@@ -15,14 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Server-Sent Events broadcaster for chatbot changes.
- *
- * <p>Implements the {@link ChatbotEventPublisher} outbound port and keeps the set of
- * active browser subscriptions. Each domain change is pushed as a named SSE event
- * ({@code message}, {@code conversation}, {@code order}) so the frontend can update its
- * state immediately without polling.</p>
- */
+
 @Service
 public class ChatbotSseService implements ChatbotEventPublisher {
 
@@ -31,11 +24,7 @@ public class ChatbotSseService implements ChatbotEventPublisher {
 
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-    /**
-     * Registers a new subscriber and returns its emitter.
-     *
-     * @return the emitter bound to the subscription lifecycle
-     */
+    
     public SseEmitter subscribe() {
         var emitter = new SseEmitter(TIMEOUT_MILLIS);
         emitter.onCompletion(() -> emitters.remove(emitter));
@@ -58,8 +47,8 @@ public class ChatbotSseService implements ChatbotEventPublisher {
 
     @Override
     public void publishOrderChanged(ChatOrder order) {
-        // Publish without receiptImage to keep SSE payloads small.
-        // The frontend reloads the full order (with image) from the HTTP endpoint on demand.
+        
+        
         Map<String, Object> slim = new LinkedHashMap<>();
         slim.put("id",              order.getId());
         slim.put("conversationId",  order.getConversationId());

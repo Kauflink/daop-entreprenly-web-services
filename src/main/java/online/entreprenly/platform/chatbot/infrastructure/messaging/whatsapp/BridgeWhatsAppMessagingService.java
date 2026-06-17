@@ -14,18 +14,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
-/**
- * {@link WhatsAppMessagingService} adapter that delivers outbound messages through the
- * Node WhatsApp bridge ({@code POST /send}).
- *
- * <p>This is what actually reaches the client beyond the bridge's synchronous reply to an
- * inbound message: when the seller approves or rejects a payment from the app, or replies
- * manually, the resulting bot message is pushed here so the client is notified on WhatsApp.</p>
- *
- * <p>Marked {@link Primary} so it supersedes the logging stub. When
- * {@code chatbot.whatsapp.bridge-send-url} is not configured it degrades to a no-op (logging
- * only), so local runs without a live bridge keep working at zero cost.</p>
- */
+
 @Service
 @Primary
 public class BridgeWhatsAppMessagingService implements WhatsAppMessagingService {
@@ -83,7 +72,7 @@ public class BridgeWhatsAppMessagingService implements WhatsAppMessagingService 
         }
     }
 
-    /** Minimal JSON string escaping for the small, controlled payload sent to the bridge. */
+    
     private static String jsonString(String value) {
         var escaped = value
                 .replace("\\", "\\\\")

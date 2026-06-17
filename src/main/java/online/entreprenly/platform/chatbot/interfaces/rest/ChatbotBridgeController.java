@@ -32,9 +32,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-/**
- * Endpoints used by the WhatsApp bridge to relay pairing QR and connection state.
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/chatbot/whatsapp/bridge", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Chatbot - WhatsApp Bridge", description = "Real WhatsApp pairing relay")
@@ -65,7 +63,7 @@ public class ChatbotBridgeController {
         this.bridgeBaseUrl = bridgeBaseUrl;
     }
 
-    /** Called by the bridge when a new pairing QR is generated for a seller. */
+    
     @PostMapping("/qr")
     @Operation(summary = "Relay the latest pairing QR (from the bridge)")
     public ResponseEntity<Void> pushQr(
@@ -78,7 +76,7 @@ public class ChatbotBridgeController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Called by the bridge when a seller's WhatsApp connects or disconnects. */
+    
     @PostMapping("/status")
     @Operation(summary = "Report the bridge connection state (from the bridge)")
     public ResponseEntity<Void> pushStatus(
@@ -95,10 +93,7 @@ public class ChatbotBridgeController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Called by the frontend to get the current QR and connection state.
-     * If no session is active yet, triggers the bridge to start one.
-     */
+    
     @GetMapping("/qr")
     @Operation(summary = "Get the current pairing QR and link state (for the frontend)")
     public ResponseEntity<BridgeQrStateResource> getQrState(Authentication authentication) {
@@ -136,12 +131,7 @@ public class ChatbotBridgeController {
         }
     }
 
-    /**
-     * Reconciles the in-memory bridge state from the bridge's own response.
-     * The bridge holds the authoritative link state, so when the backend has just
-     * restarted (and lost its in-memory state) the first poll re-learns whether an
-     * already-paired seller is connected — without waiting for a new bridge event.
-     */
+    
     private void syncStateFromBridge(String email, HttpResponse<String> response) {
         if (response.statusCode() / 100 != 2 || response.body() == null || response.body().isBlank()) {
             return;

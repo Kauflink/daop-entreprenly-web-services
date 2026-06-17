@@ -9,9 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Repository adapter that bridges the chat message domain port with Spring Data JPA.
- */
+
 @Repository
 public class ChatMessageRepositoryImpl implements ChatMessageRepository {
 

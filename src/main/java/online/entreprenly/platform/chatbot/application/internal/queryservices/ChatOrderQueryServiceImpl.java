@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Chat order query service implementation.
- */
+
 @Service
 public class ChatOrderQueryServiceImpl implements ChatOrderQueryService {
 

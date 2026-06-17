@@ -8,9 +8,7 @@ import online.entreprenly.platform.chatbot.domain.model.commands.UpdateChatOrder
 import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 
-/**
- * Command service for chat order write operations.
- */
+
 public interface ChatOrderCommandService {
 
     Result<ChatOrder, ApplicationError> handle(CreateChatOrderCommand command);

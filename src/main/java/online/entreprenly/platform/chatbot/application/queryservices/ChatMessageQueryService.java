@@ -6,9 +6,7 @@ import online.entreprenly.platform.chatbot.domain.model.queries.GetChatMessagesB
 
 import java.util.List;
 
-/**
- * Query service for chat message read operations.
- */
+
 public interface ChatMessageQueryService {
 
     List<ChatMessage> handle(GetAllChatMessagesQuery query);

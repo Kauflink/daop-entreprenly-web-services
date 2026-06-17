@@ -4,9 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/**
- * Request body to register a new WhatsApp session.
- */
+
 @Schema(name = "CreateWhatsappSessionRequest", description = "Data required to register a WhatsApp session")
 public record CreateWhatsappSessionResource(
         @NotNull

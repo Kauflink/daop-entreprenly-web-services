@@ -7,9 +7,7 @@ import online.entreprenly.platform.chatbot.domain.model.queries.GetChatOrderById
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Query service for chat order read operations.
- */
+
 public interface ChatOrderQueryService {
 
     List<ChatOrder> handle(GetAllChatOrdersQuery query);

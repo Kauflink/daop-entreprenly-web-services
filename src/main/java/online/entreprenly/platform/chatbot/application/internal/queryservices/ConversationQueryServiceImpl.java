@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Conversation query service implementation.
- */
+
 @Service
 public class ConversationQueryServiceImpl implements ConversationQueryService {
 
