@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -107,6 +108,38 @@ public class ChatbotBridgeController {
             triggerBridgeSession(email);
         }
         return ResponseEntity.ok(new BridgeQrStateResource(qr, connected));
+    }
+
+    @DeleteMapping("/session")
+    @Operation(summary = "Disconnect the WhatsApp session (from the frontend)")
+    public ResponseEntity<Void> disconnectSession(Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        String email = authentication.getName();
+        bridgeState.clear(email);
+        notifyBridgeDisconnect(email);
+        return ResponseEntity.noContent().build();
+    }
+
+    private void notifyBridgeDisconnect(String email) {
+        if (bridgeBaseUrl == null || bridgeBaseUrl.isBlank()) return;
+        try {
+            var url = URI.create(bridgeBaseUrl + "/disconnect?email="
+                    + java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8));
+            var request = HttpRequest.newBuilder(url)
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .header("X-Bridge-Token", bridgeToken)
+                    .timeout(Duration.ofSeconds(5))
+                    .build();
+            http.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .exceptionally(ex -> {
+                        log.debug("[bridge] disconnect notify failed for {}: {}", email, ex.getMessage());
+                        return null;
+                    });
+        } catch (Exception ex) {
+            log.debug("[bridge] could not notify disconnect for {}: {}", email, ex.getMessage());
+        }
     }
 
     private void triggerBridgeSession(String email) {

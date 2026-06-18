@@ -39,6 +39,10 @@ public class WhatsAppBridgeState implements ConnectedSellerProvider {
     }
 
     
+    public void clear(String ownerEmail) {
+        states.remove(ownerEmail);
+    }
+
     @Override
     public Optional<String> currentOwnerEmail() {
         return Optional.empty();
