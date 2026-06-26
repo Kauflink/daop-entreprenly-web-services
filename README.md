@@ -58,6 +58,22 @@ docker run --env-file .env -p 8092:8092 entreprenly-platform
 The API is served under `/api/v1` and Swagger UI is available at
 `http://localhost:8092/swagger-ui.html`.
 
+## Deployment
+
+The service is deployed to **Google Cloud Run**. A Cloud Build trigger builds the
+container from the `Dockerfile` and rolls out a new revision automatically on every
+push to `main` (no manual steps required).
+
+In production the app connects to **Cloud SQL (MySQL)** through the Cloud SQL Java
+socket factory, so no public IP or host/port is configured. The Cloud Run service
+is set up with:
+
+- Environment variables: `SPRING_PROFILES_ACTIVE=prod`, `CLOUD_SQL_CONNECTION_NAME`
+  (`project:region:instance`), `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`,
+  `JWT_SECRET`.
+- The Cloud SQL instance attached to the service, and the runtime service account
+  granted the `roles/cloudsql.client` role.
+
 ## License
 
 See [LICENSE](LICENSE).
