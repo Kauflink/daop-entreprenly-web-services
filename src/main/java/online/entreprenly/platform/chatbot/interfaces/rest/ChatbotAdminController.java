@@ -31,7 +31,8 @@ public class ChatbotAdminController {
 
     
     @DeleteMapping("/chatbot-data")
-    @Operation(summary = "Purge all chatbot data (protected by X-Admin-Token)")
+    @Operation(summary = "Purge all chatbot data (protected by X-Admin-Token)",
+            description = "Deletes all chatbot data (sessions, conversations, messages and orders); protected by the X-Admin-Token header.")
     public ResponseEntity<Map<String, Object>> purgeTestData(
             @RequestHeader(value = "X-Admin-Token", required = false) String token) {
 

@@ -70,7 +70,9 @@ public class ChatOrdersController {
     }
 
     @GetMapping("/{orderId}")
-    @Operation(summary = "Get chat order by ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get chat order by ID",
+            description = "Retrieves a single chat order by its unique identifier.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order found",
                     content = @Content(schema = @Schema(implementation = ChatOrderResource.class))),
@@ -86,7 +88,9 @@ public class ChatOrdersController {
     }
 
     @PostMapping
-    @Operation(summary = "Create a chat order", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Create a chat order",
+            description = "Creates a new chat order from a conversation.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Order created",
                     content = @Content(schema = @Schema(implementation = ChatOrderResource.class))),
@@ -102,7 +106,9 @@ public class ChatOrdersController {
     }
 
     @PutMapping("/{orderId}")
-    @Operation(summary = "Update a chat order", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update a chat order",
+            description = "Updates the status or details of an existing chat order.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order updated",
                     content = @Content(schema = @Schema(implementation = ChatOrderResource.class))),

@@ -66,7 +66,8 @@ public class ChatbotBridgeController {
 
     
     @PostMapping("/qr")
-    @Operation(summary = "Relay the latest pairing QR (from the bridge)")
+    @Operation(summary = "Relay the latest pairing QR (from the bridge)",
+            description = "Receives the latest WhatsApp pairing QR pushed by the bridge process.")
     public ResponseEntity<Void> pushQr(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @RequestBody BridgeQrResource resource) {
@@ -79,7 +80,8 @@ public class ChatbotBridgeController {
 
     
     @PostMapping("/status")
-    @Operation(summary = "Report the bridge connection state (from the bridge)")
+    @Operation(summary = "Report the bridge connection state (from the bridge)",
+            description = "Receives connection state updates pushed by the bridge process.")
     public ResponseEntity<Void> pushStatus(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @Valid @RequestBody BridgeStatusResource resource) {
@@ -96,7 +98,8 @@ public class ChatbotBridgeController {
 
     
     @GetMapping("/qr")
-    @Operation(summary = "Get the current pairing QR and link state (for the frontend)")
+    @Operation(summary = "Get the current pairing QR and link state (for the frontend)",
+            description = "Returns the current pairing QR and link state for the frontend to display.")
     public ResponseEntity<BridgeQrStateResource> getQrState(Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -111,7 +114,8 @@ public class ChatbotBridgeController {
     }
 
     @DeleteMapping("/session")
-    @Operation(summary = "Disconnect the WhatsApp session (from the frontend)")
+    @Operation(summary = "Disconnect the WhatsApp session (from the frontend)",
+            description = "Clears the current WhatsApp session and notifies the bridge to disconnect.")
     public ResponseEntity<Void> disconnectSession(Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

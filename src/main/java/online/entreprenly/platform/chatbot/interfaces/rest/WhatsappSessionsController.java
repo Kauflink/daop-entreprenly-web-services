@@ -70,7 +70,9 @@ public class WhatsappSessionsController {
     }
 
     @GetMapping("/{sessionId}")
-    @Operation(summary = "Get WhatsApp session by ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get WhatsApp session by ID",
+            description = "Retrieves a single WhatsApp session by its unique identifier.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Session found",
                     content = @Content(schema = @Schema(implementation = WhatsappSessionResource.class))),
@@ -86,7 +88,9 @@ public class WhatsappSessionsController {
     }
 
     @PostMapping
-    @Operation(summary = "Register a WhatsApp session", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Register a WhatsApp session",
+            description = "Registers a new WhatsApp channel session for a seller.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Session registered",
                     content = @Content(schema = @Schema(implementation = WhatsappSessionResource.class))),
@@ -102,7 +106,9 @@ public class WhatsappSessionsController {
     }
 
     @PutMapping("/{sessionId}")
-    @Operation(summary = "Update a WhatsApp session status", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update a WhatsApp session status",
+            description = "Updates the status of an existing WhatsApp session.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Session updated",
                     content = @Content(schema = @Schema(implementation = WhatsappSessionResource.class))),

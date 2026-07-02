@@ -88,7 +88,9 @@ public class ChatMessagesController {
     }
 
     @PostMapping
-    @Operation(summary = "Append a chat message", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Append a chat message",
+            description = "Appends a new message to an existing conversation.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Message appended",
                     content = @Content(schema = @Schema(implementation = ChatMessageResource.class))),

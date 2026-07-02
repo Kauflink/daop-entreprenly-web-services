@@ -69,7 +69,9 @@ public class ConversationsController {
     }
 
     @GetMapping("/{conversationId}")
-    @Operation(summary = "Get conversation by ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get conversation by ID",
+            description = "Retrieves a single conversation by its unique identifier.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Conversation found",
                     content = @Content(schema = @Schema(implementation = ConversationResource.class))),
@@ -85,7 +87,9 @@ public class ConversationsController {
     }
 
     @PostMapping
-    @Operation(summary = "Start a conversation", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Start a conversation",
+            description = "Starts a new conversation for a WhatsApp session.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Conversation created",
                     content = @Content(schema = @Schema(implementation = ConversationResource.class))),
@@ -101,7 +105,9 @@ public class ConversationsController {
     }
 
     @PutMapping("/{conversationId}")
-    @Operation(summary = "Update a conversation", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update a conversation",
+            description = "Updates the state or details of an existing conversation.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Conversation updated",
                     content = @Content(schema = @Schema(implementation = ConversationResource.class))),
