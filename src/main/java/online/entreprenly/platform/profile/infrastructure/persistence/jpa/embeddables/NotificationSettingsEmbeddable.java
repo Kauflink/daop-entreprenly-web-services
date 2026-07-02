@@ -18,15 +18,7 @@ public class NotificationSettingsEmbeddable {
     @Column(name = "notify_stock_alerts", nullable = false)
     private boolean stockAlerts;
 
-    @Column(name = "notify_payment_alerts", nullable = false)
-    private boolean paymentAlerts;
-
-    @Column(name = "notify_chatbot_messages", nullable = false)
-    private boolean chatbotMessages;
-
-    public NotificationSettingsEmbeddable(boolean stockAlerts, boolean paymentAlerts, boolean chatbotMessages) {
+    public NotificationSettingsEmbeddable(boolean stockAlerts) {
         this.stockAlerts = stockAlerts;
-        this.paymentAlerts = paymentAlerts;
-        this.chatbotMessages = chatbotMessages;
     }
 }
