@@ -3,11 +3,9 @@ package online.entreprenly.platform.profile.domain.model.valueobjects;
 /**
  * Notification settings value object.
  *
- * @param stockAlerts     whether stock alerts are enabled
- * @param paymentAlerts   whether payment alerts are enabled
- * @param chatbotMessages whether chatbot message notifications are enabled
+ * @param stockAlerts whether stock alerts are enabled
  */
-public record NotificationSettings(boolean stockAlerts, boolean paymentAlerts, boolean chatbotMessages) {
+public record NotificationSettings(boolean stockAlerts) {
 
     /**
      * Returns the default notification settings applied to a freshly created profile.
@@ -15,6 +13,6 @@ public record NotificationSettings(boolean stockAlerts, boolean paymentAlerts, b
      * @return default notification settings
      */
     public static NotificationSettings defaults() {
-        return new NotificationSettings(true, false, false);
+        return new NotificationSettings(true);
     }
 }

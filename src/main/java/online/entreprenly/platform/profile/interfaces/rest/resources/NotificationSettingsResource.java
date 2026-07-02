@@ -9,12 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(name = "NotificationSettings", description = "User notification settings")
 public record NotificationSettingsResource(
     @Schema(description = "Whether stock alerts are enabled", example = "true")
-    boolean stockAlerts,
-
-    @Schema(description = "Whether payment alerts are enabled", example = "false")
-    boolean paymentAlerts,
-
-    @Schema(description = "Whether chatbot message notifications are enabled", example = "false")
-    boolean chatbotMessages
+    boolean stockAlerts
 ) {
 }

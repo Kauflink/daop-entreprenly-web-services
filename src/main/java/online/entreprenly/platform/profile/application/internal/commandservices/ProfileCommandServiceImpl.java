@@ -61,8 +61,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     public Result<Profile, ApplicationError> handle(UpdateNotificationSettingsCommand command) {
         return profileRepository.findById(command.profileId())
                 .<Result<Profile, ApplicationError>>map(profile -> {
-                    profile.updateNotificationSettings(new NotificationSettings(
-                            command.stockAlerts(), command.paymentAlerts(), command.chatbotMessages()));
+                    profile.updateNotificationSettings(new NotificationSettings(command.stockAlerts()));
                     return Result.success(profileRepository.save(profile));
                 })
                 .orElseGet(() -> Result.failure(ApplicationError.notFound("Profile", String.valueOf(command.profileId()))));
