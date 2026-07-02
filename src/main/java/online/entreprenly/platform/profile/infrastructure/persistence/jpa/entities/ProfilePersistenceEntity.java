@@ -33,7 +33,7 @@ public class ProfilePersistenceEntity extends AuditableAbstractPersistenceEntity
     @Column(name = "phone", length = 30)
     private String phone;
 
-    @Column(name = "avatar_url", columnDefinition = "MEDIUMTEXT")
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
     @Column(name = "role", length = 60)

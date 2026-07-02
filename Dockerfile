@@ -27,7 +27,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # Environment variables required by the 'prod' profile (define them in the hosting provider):
 # - CLOUD_SQL_CONNECTION_NAME  Cloud SQL instance connection name (project:region:instance).
-# - DATABASE_NAME      Name of the MySQL database to connect to (default daop-entreprenly).
+# - DATABASE_NAME      Name of the PostgreSQL database to connect to (default daop-entreprenly).
 # - DATABASE_USER      Username for the database connection.
 # - DATABASE_PASSWORD  Password for the database connection.
 # - JWT_SECRET         Secret used to sign JWT tokens.
