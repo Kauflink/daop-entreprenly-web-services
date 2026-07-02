@@ -6,7 +6,7 @@ RESTful API backend for the Entreprenly application, built with **Domain-Driven 
 
 - **Language:** Java 26
 - **Framework:** Spring Boot 4.0.6
-- **Database:** MySQL 8+ (Google Cloud SQL in production)
+- **Database:** PostgreSQL 15+ (Google Cloud SQL in production)
 - **Build:** Maven (via the included Maven Wrapper)
 - **Security:** Spring Security with JWT (BCrypt password hashing)
 - **Documentation:** SpringDoc OpenAPI (Swagger UI)
@@ -32,19 +32,23 @@ Each context is layered as `domain` / `application` / `infrastructure` / `interf
 ### Prerequisites
 
 - Java 26 JDK
-- MySQL 8+ (a local instance for development)
+- PostgreSQL 15+ (a local instance for development)
 - Docker (optional, for containerized runs)
 
 ### Configuration
 
 Copy `.env.example` to `.env` (or export the variables) and adjust the values.
-The development profile defaults to a local MySQL instance and creates the
-`entreprenly` database automatically.
+The development profile defaults to a local PostgreSQL instance. Create the
+`daop-entreprenly` database first (PostgreSQL does not auto-create it), e.g.:
+
+```bash
+createdb daop-entreprenly
+```
 
 ### Run
 
 ```bash
-# Development (default profile, local MySQL)
+# Development (default profile, local PostgreSQL)
 ./mvnw spring-boot:run
 
 # Build a runnable jar
@@ -64,7 +68,7 @@ The service is deployed to **Google Cloud Run**. A Cloud Build trigger builds th
 container from the `Dockerfile` and rolls out a new revision automatically on every
 push to `main` (no manual steps required).
 
-In production the app connects to **Cloud SQL (MySQL)** through the Cloud SQL Java
+In production the app connects to **Cloud SQL (PostgreSQL)** through the Cloud SQL Java
 socket factory, so no public IP or host/port is configured. The Cloud Run service
 is set up with:
 

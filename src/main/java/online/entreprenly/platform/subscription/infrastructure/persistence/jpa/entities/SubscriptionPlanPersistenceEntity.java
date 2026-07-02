@@ -35,7 +35,7 @@ public class SubscriptionPlanPersistenceEntity extends AuditableAbstractPersiste
     @Column(name = "code", nullable = false, unique = true, length = 80)
     private String code;
 
-    @Column(name = "description", columnDefinition = "MEDIUMTEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
