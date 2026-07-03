@@ -6,9 +6,7 @@ import online.entreprenly.platform.chatbot.interfaces.rest.resources.OrderItemRe
 
 import java.util.List;
 
-/**
- * Assembler that converts {@link ChatOrder} aggregates into resources.
- */
+
 public final class ChatOrderResourceFromEntityAssembler {
 
     private ChatOrderResourceFromEntityAssembler() {

@@ -6,11 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-/**
- * Anti-corruption layer adapter that resolves a seller's account email and identifier from
- * the IAM bounded context through its ACL facade, so the chatbot can use them to look up the
- * seller's catalog.
- */
+
 @Service
 public class IamSellerEmailResolver implements SellerEmailResolver {
 

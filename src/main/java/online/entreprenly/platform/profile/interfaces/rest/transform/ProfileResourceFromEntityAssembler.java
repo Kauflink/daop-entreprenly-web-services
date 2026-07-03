@@ -22,9 +22,7 @@ public class ProfileResourceFromEntityAssembler {
                 profile.getPreferences().theme(),
                 profile.getPreferences().currency());
         var notificationSettings = new NotificationSettingsResource(
-                profile.getNotificationSettings().stockAlerts(),
-                profile.getNotificationSettings().paymentAlerts(),
-                profile.getNotificationSettings().chatbotMessages());
+                profile.getNotificationSettings().stockAlerts());
         return new ProfileResource(
                 profile.getId(),
                 profile.getUserId(),

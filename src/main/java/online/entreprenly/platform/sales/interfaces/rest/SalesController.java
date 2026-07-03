@@ -4,6 +4,7 @@ import online.entreprenly.platform.sales.application.commandservices.SaleCommand
 import online.entreprenly.platform.sales.application.queryservices.SaleQueryService;
 import online.entreprenly.platform.sales.domain.model.queries.GetAllSalesQuery;
 import online.entreprenly.platform.sales.domain.model.queries.GetSaleByIdQuery;
+import online.entreprenly.platform.sales.domain.model.queries.GetSalesByDateQuery;
 import online.entreprenly.platform.sales.interfaces.rest.resources.CreateSaleResource;
 import online.entreprenly.platform.sales.interfaces.rest.resources.SaleResource;
 import online.entreprenly.platform.sales.interfaces.rest.transform.CreateSaleCommandFromResourceAssembler;
@@ -26,9 +27,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -70,12 +74,18 @@ public class SalesController {
     @GetMapping
     @Operation(
         summary = "List sales",
-        description = "Retrieves every registered sale.",
+        description = "Retrieves the registered sales. When the optional 'date' parameter is provided, only the sales of that business day are returned.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "Sales found")
-    public ResponseEntity<List<SaleResource>> getAllSales(@AuthenticationPrincipal UserDetails userDetails) {
-        var sales = saleQueryService.handle(new GetAllSalesQuery(userDetails.getUsername())).stream()
+    public ResponseEntity<List<SaleResource>> getAllSales(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        var owner = userDetails.getUsername();
+        var sales = (date != null
+                ? saleQueryService.handle(new GetSalesByDateQuery(owner, date))
+                : saleQueryService.handle(new GetAllSalesQuery(owner)))
+                .stream()
                 .map(SaleResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(sales);

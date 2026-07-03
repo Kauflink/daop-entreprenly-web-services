@@ -6,12 +6,16 @@ import online.entreprenly.platform.subscription.domain.model.aggregates.Subscrip
 import online.entreprenly.platform.subscription.domain.model.aggregates.SubscriptionPlan;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.BillingPeriod;
 import online.entreprenly.platform.subscription.domain.model.valueobjects.SubscriptionStatus;
+import online.entreprenly.platform.subscription.domain.repositories.BillingSetupRepository;
 import online.entreprenly.platform.subscription.domain.repositories.SubscriptionPlanRepository;
 import online.entreprenly.platform.subscription.domain.repositories.SubscriptionRepository;
+import online.entreprenly.platform.subscription.interfaces.events.SubscriptionPlanChangedIntegrationEvent;
 import online.entreprenly.platform.subscription.interfaces.rest.resources.SubscriptionDashboardResource;
+import online.entreprenly.platform.subscription.interfaces.rest.transform.DashboardBillingSetupAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,9 +30,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Compatibility controller for the current Angular subscription dashboard.
@@ -43,18 +45,22 @@ public class SubscriptionDashboardController {
     private final SubscriptionCatalogReadyEventHandler catalogReadyEventHandler;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final BillingSetupRepository billingSetupRepository;
     private final IamContextFacade iamContextFacade;
-    private final Map<Long, SubscriptionDashboardResource.DashboardBillingSetupResource> billingSetupByUserId =
-            new ConcurrentHashMap<>();
+    private final ApplicationEventPublisher eventPublisher;
 
     public SubscriptionDashboardController(SubscriptionCatalogReadyEventHandler catalogReadyEventHandler,
                                            SubscriptionPlanRepository subscriptionPlanRepository,
                                            SubscriptionRepository subscriptionRepository,
-                                           IamContextFacade iamContextFacade) {
+                                           BillingSetupRepository billingSetupRepository,
+                                           IamContextFacade iamContextFacade,
+                                           ApplicationEventPublisher eventPublisher) {
         this.catalogReadyEventHandler = catalogReadyEventHandler;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.billingSetupRepository = billingSetupRepository;
         this.iamContextFacade = iamContextFacade;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -95,10 +101,22 @@ public class SubscriptionDashboardController {
                                                                        Authentication authentication) {
         var resolvedUserId = resolveUserId(authentication, userId);
         if (resource != null && resource.billingSetup() != null) {
-            billingSetupByUserId.put(resolvedUserId, resource.billingSetup());
+            saveBillingSetup(resolvedUserId, resource.billingSetup());
         }
         applyPlanChange(resolvedUserId, resource);
         return ResponseEntity.ok(toDashboard(resolvedUserId, false));
+    }
+
+    /**
+     * Upserts the user's billing setup, preserving the existing identity so the row is updated
+     * rather than duplicated.
+     */
+    private void saveBillingSetup(Long userId,
+                                  SubscriptionDashboardResource.DashboardBillingSetupResource resource) {
+        var billingSetup = DashboardBillingSetupAssembler.toDomain(userId, resource);
+        billingSetupRepository.findByUserId(userId)
+                .ifPresent(existing -> billingSetup.setId(existing.getId()));
+        billingSetupRepository.save(billingSetup);
     }
 
     /**
@@ -134,6 +152,7 @@ public class SubscriptionDashboardController {
                     subscription.resumeActive();
                 }
                 subscriptionRepository.save(subscription);
+                publishPlanChanged(userId, controlPlan);
                 return;
             }
             activeSubscription.ifPresent(subscription -> {
@@ -143,6 +162,7 @@ public class SubscriptionDashboardController {
             var subscription = new Subscription(userId, controlPlan);
             subscription.activate(billingPeriod);
             subscriptionRepository.save(subscription);
+            publishPlanChanged(userId, controlPlan);
             return;
         }
 
@@ -161,7 +181,16 @@ public class SubscriptionDashboardController {
                 subscription.activateWithoutExpiration();
                 subscriptionRepository.save(subscription);
             }
+            publishPlanChanged(userId, freePlan);
         }
+    }
+
+    /**
+     * Publishes the Subscription context's integration event so other bounded contexts (e.g.
+     * Profile) can react to a plan change without coupling to the subscription domain.
+     */
+    private void publishPlanChanged(Long userId, SubscriptionPlan plan) {
+        eventPublisher.publishEvent(new SubscriptionPlanChangedIntegrationEvent(userId, plan.getName()));
     }
 
     @GetMapping("/subscription-payment-confirmation/{userId}")
@@ -194,7 +223,9 @@ public class SubscriptionDashboardController {
                 currentPlan,
                 toControlPlan(controlPlan, Optional.empty(), true),
                 limitsForPlan(currentPlan),
-                billingSetupByUserId.getOrDefault(userId, emptyBillingSetup()),
+                billingSetupRepository.findByUserId(userId)
+                        .map(DashboardBillingSetupAssembler::toResource)
+                        .orElseGet(this::emptyBillingSetup),
                 defaultActivity(currentPlan));
     }
 

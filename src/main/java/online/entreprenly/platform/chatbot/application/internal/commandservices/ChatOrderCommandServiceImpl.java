@@ -20,13 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/**
- * Chat order command service implementation.
- *
- * <p>Order writes keep the aggregate authoritative over the payment-review flow
- * (receipt attachment, rejection counting and automatic blocking) and push every
- * change to subscribed clients in real time.</p>
- */
+
 @Service
 public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
 
@@ -79,9 +73,9 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                     applyTransition(order, command);
                     var saved = orderRepository.save(order);
                     eventPublisher.publishOrderChanged(saved);
-                    // Deduct sold quantities from inventory the first time an order is
-                    // confirmed, so re-confirming an already-confirmed order never
-                    // double-counts.
+                    
+                    
+                    
                     if (!wasConfirmed && saved.getStatus() == OrderStatus.CONFIRMED) {
                         try {
                             decrementStock(saved);
@@ -100,14 +94,14 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                         ApplicationError.notFound("ChatOrder", String.valueOf(command.orderId()))));
     }
 
-    /** Resolves the order's seller and deducts its line items from inventory stock. */
+    
     private void decrementStock(ChatOrder order) {
         conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
                 .flatMap(conversation -> sellerEmailResolver.resolveEmail(conversation.getSellerId()))
                 .ifPresent(ownerEmail -> inventoryStockService.decrementForOrder(ownerEmail, order.getItems()));
     }
 
-    /** Registers a confirmed chat order as a completed sale in the Sales BC. */
+    
     private void registerSale(ChatOrder order) {
         conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
                 .ifPresent(conversation -> {

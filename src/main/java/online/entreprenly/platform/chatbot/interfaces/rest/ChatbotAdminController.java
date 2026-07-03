@@ -14,17 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Temporary admin endpoint for purging chatbot test data.
- * <p>
- * Protected by a shared secret sent in the {@code X-Admin-Token} header.
- * The secret must be set via the {@code ADMIN_CLEANUP_TOKEN} environment variable.
- * When the env var is absent the endpoint is effectively disabled (returns 403).
- * </p>
- * <p>
- * <b>Remove or disable this controller once the cleanup has been performed in production.</b>
- * </p>
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/admin", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Admin (temporary)", description = "One-off maintenance endpoints — remove after use")
@@ -39,21 +29,10 @@ public class ChatbotAdminController {
         this.adminToken = adminToken;
     }
 
-    /**
-     * Deletes ALL chatbot conversations, messages and orders from the database.
-     * The WhatsApp session row is preserved so the QR does not need to be re-scanned.
-     *
-     * <p>Usage:
-     * <pre>
-     *   curl -X DELETE https://daop-api.entreprenly.online/api/v1/admin/chatbot-data \
-     *        -H "X-Admin-Token: YOUR_TOKEN_HERE"
-     * </pre>
-     *
-     * @param token the shared secret from the {@code X-Admin-Token} request header
-     * @return 200 with a summary, or 403 if the token is wrong / not configured
-     */
+    
     @DeleteMapping("/chatbot-data")
-    @Operation(summary = "Purge all chatbot data (protected by X-Admin-Token)")
+    @Operation(summary = "Purge all chatbot data (protected by X-Admin-Token)",
+            description = "Deletes all chatbot data (sessions, conversations, messages and orders); protected by the X-Admin-Token header.")
     public ResponseEntity<Map<String, Object>> purgeTestData(
             @RequestHeader(value = "X-Admin-Token", required = false) String token) {
 

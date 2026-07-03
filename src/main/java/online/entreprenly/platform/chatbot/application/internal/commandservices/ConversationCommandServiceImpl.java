@@ -10,9 +10,7 @@ import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 
-/**
- * Conversation command service implementation.
- */
+
 @Service
 public class ConversationCommandServiceImpl implements ConversationCommandService {
 

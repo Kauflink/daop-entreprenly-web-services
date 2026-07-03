@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 
-/**
- * Anti-corruption adapter that validates chatbot access against the Subscription BC.
- */
+
 @Service
 public class SubscriptionFeatureAccessChecker implements SubscriptionAccessChecker {
 

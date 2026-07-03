@@ -1,12 +1,7 @@
 package online.entreprenly.platform.sales.application.acl;
 
-import online.entreprenly.platform.sales.application.commandservices.CashRegisterCommandService;
 import online.entreprenly.platform.sales.application.commandservices.SaleCommandService;
-import online.entreprenly.platform.sales.application.queryservices.CashRegisterQueryService;
-import online.entreprenly.platform.sales.domain.model.commands.CreateCashRegisterCommand;
 import online.entreprenly.platform.sales.domain.model.commands.CreateSaleCommand;
-import online.entreprenly.platform.sales.domain.model.commands.UpdateCashRegisterCommand;
-import online.entreprenly.platform.sales.domain.model.queries.GetCashRegisterByDateQuery;
 import online.entreprenly.platform.sales.domain.model.valueobjects.PaymentMethod;
 import online.entreprenly.platform.sales.domain.model.valueobjects.PaymentReceipt;
 import online.entreprenly.platform.sales.domain.model.valueobjects.SaleItem;
@@ -18,15 +13,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 
 /**
  * Application-layer implementation of the Sales ACL facade.
  *
- * <p>Registers a sale and updates the daily cash register, exposing the operation to other
- * bounded contexts without coupling them to the Sales internal model.</p>
+ * <p>Registers a sale coming from another bounded context (e.g. a confirmed chatbot order)
+ * without coupling the caller to the Sales internal model. The day takings are derived from
+ * the registered sales, so no separate cash-register update is needed here.</p>
  */
 @Service
 public class SalesContextFacadeImpl implements SalesContextFacade {
@@ -34,15 +28,9 @@ public class SalesContextFacadeImpl implements SalesContextFacade {
     private static final Logger log = LoggerFactory.getLogger(SalesContextFacadeImpl.class);
 
     private final SaleCommandService saleCommandService;
-    private final CashRegisterCommandService cashRegisterCommandService;
-    private final CashRegisterQueryService cashRegisterQueryService;
 
-    public SalesContextFacadeImpl(SaleCommandService saleCommandService,
-                                  CashRegisterCommandService cashRegisterCommandService,
-                                  CashRegisterQueryService cashRegisterQueryService) {
+    public SalesContextFacadeImpl(SaleCommandService saleCommandService) {
         this.saleCommandService = saleCommandService;
-        this.cashRegisterCommandService = cashRegisterCommandService;
-        this.cashRegisterQueryService = cashRegisterQueryService;
     }
 
     @Override
@@ -66,25 +54,6 @@ public class SalesContextFacadeImpl implements SalesContextFacade {
             return false;
         }
 
-        updateCashRegister(ownerEmail, total);
         return true;
-    }
-
-    private void updateCashRegister(String ownerEmail, double amount) {
-        var today = LocalDate.now(ZoneId.of("America/Lima"));
-        var existing = cashRegisterQueryService.handle(new GetCashRegisterByDateQuery(ownerEmail, today));
-
-        if (existing.isPresent()) {
-            var reg = existing.get();
-            cashRegisterCommandService.handle(new UpdateCashRegisterCommand(
-                    ownerEmail,
-                    reg.getId(),
-                    reg.getTotalCash(),
-                    Math.round((reg.getTotalDigital() + amount) * 100.0) / 100.0,
-                    reg.getSaleCount() + 1));
-        } else {
-            cashRegisterCommandService.handle(new CreateCashRegisterCommand(
-                    ownerEmail, today, 0.0, amount));
-        }
     }
 }

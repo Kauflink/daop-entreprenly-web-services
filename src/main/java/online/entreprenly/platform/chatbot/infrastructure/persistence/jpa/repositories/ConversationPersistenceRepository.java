@@ -7,9 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Spring Data repository for conversation persistence entities.
- */
+
 @Repository
 public interface ConversationPersistenceRepository extends JpaRepository<ConversationPersistenceEntity, Long> {
 

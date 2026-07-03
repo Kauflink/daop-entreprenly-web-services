@@ -8,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/**
- * ACL adapter that registers a confirmed {@link ChatOrder} as a sale in the Sales bounded
- * context through its ACL facade, translating chatbot order lines into the sales contract.
- */
+
 @Service
 public class SalesBcChatSaleService implements ChatSaleService {
 

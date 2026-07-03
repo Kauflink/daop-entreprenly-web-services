@@ -9,7 +9,6 @@ import online.entreprenly.platform.profile.interfaces.rest.resources.Notificatio
  */
 public class UpdateNotificationSettingsCommandFromResourceAssembler {
     public static UpdateNotificationSettingsCommand toCommandFromResource(Long profileId, NotificationSettingsResource resource) {
-        return new UpdateNotificationSettingsCommand(
-                profileId, resource.stockAlerts(), resource.paymentAlerts(), resource.chatbotMessages());
+        return new UpdateNotificationSettingsCommand(profileId, resource.stockAlerts());
     }
 }

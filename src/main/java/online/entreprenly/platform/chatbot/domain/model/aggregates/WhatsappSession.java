@@ -7,14 +7,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * WhatsappSession aggregate root.
- *
- * <p>Represents the link between a seller and their WhatsApp number that the
- * chatbot uses to receive and send messages. The session owns its connection
- * lifecycle ({@link SessionStatus}) and exposes intention-revealing operations
- * to {@code connect} and {@code disconnect} rather than mutating status directly.</p>
- */
+
 @Getter
 public class WhatsappSession extends AbstractDomainAggregateRoot<WhatsappSession> {
 
@@ -39,28 +32,19 @@ public class WhatsappSession extends AbstractDomainAggregateRoot<WhatsappSession
         this.connectedAt = null;
     }
 
-    /**
-     * Marks the session as connected and stamps the connection instant.
-     */
+    
     public void connect() {
         this.status = SessionStatus.CONNECTED;
         this.connectedAt = Instant.now();
     }
 
-    /**
-     * Marks the session as disconnected and clears the connection instant.
-     */
+    
     public void disconnect() {
         this.status = SessionStatus.DISCONNECTED;
         this.connectedAt = null;
     }
 
-    /**
-     * Applies a desired status transition coming from an update command,
-     * keeping the {@code connectedAt} stamp consistent with the new status.
-     *
-     * @param status the desired status (defaults to current when null)
-     */
+    
     public void changeStatus(SessionStatus status) {
         if (status == null) return;
         switch (status) {
@@ -72,9 +56,7 @@ public class WhatsappSession extends AbstractDomainAggregateRoot<WhatsappSession
         }
     }
 
-    /**
-     * Restores an aggregate from persistence.
-     */
+    
     public void restoreState(Long id, Long sellerId, String phone, String businessName,
                              SessionStatus status, Instant connectedAt, String qrCode) {
         this.id = id;

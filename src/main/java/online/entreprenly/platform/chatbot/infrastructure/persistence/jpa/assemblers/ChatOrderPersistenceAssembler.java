@@ -9,9 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Static assembler between chat order domain and persistence representations.
- */
+
 public final class ChatOrderPersistenceAssembler {
 
     private ChatOrderPersistenceAssembler() {

@@ -7,11 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Anti-corruption layer adapter that builds the chatbot's {@link CatalogProduct} view from
- * the Inventory bounded context through its ACL facade, keeping the chatbot decoupled from
- * the inventory domain model.
- */
+
 @Service
 public class InventoryProductCatalogService implements ProductCatalogService {
 

@@ -22,14 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Inbound WhatsApp webhook.
- *
- * <p>Receives client messages, routes them to a conversation, persists them, lets the
- * chatbot answer automatically and pushes the changes in real time. The verification
- * endpoint mirrors the WhatsApp Cloud API handshake so a real channel can be plugged
- * in later without changing this contract.</p>
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/chatbot/whatsapp/webhook")
 @Tag(name = "Chatbot - WhatsApp Webhook", description = "Inbound WhatsApp message endpoints")

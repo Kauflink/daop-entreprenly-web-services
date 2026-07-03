@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-/**
- * Resource representing a conversation returned by the REST API.
- */
+
 @Schema(name = "ConversationResponse", description = "A WhatsApp conversation with a client")
 public record ConversationResource(
         @Schema(description = "Conversation unique identifier", example = "1")

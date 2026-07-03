@@ -37,9 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST controller exposing chat message resources.
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/chat-messages", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Chatbot - Chat Messages", description = "Conversation message endpoints")
@@ -90,7 +88,9 @@ public class ChatMessagesController {
     }
 
     @PostMapping
-    @Operation(summary = "Append a chat message", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Append a chat message",
+            description = "Appends a new message to an existing conversation.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Message appended",
                     content = @Content(schema = @Schema(implementation = ChatMessageResource.class))),

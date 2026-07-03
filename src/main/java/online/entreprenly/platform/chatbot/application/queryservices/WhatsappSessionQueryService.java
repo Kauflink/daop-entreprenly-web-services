@@ -7,9 +7,7 @@ import online.entreprenly.platform.chatbot.domain.model.queries.GetWhatsappSessi
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Query service for WhatsApp session read operations.
- */
+
 public interface WhatsappSessionQueryService {
 
     List<WhatsappSession> handle(GetAllWhatsappSessionsQuery query);

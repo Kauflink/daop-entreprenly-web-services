@@ -14,9 +14,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * JPA persistence entity for chat messages.
- */
+
 @Entity
 @Table(name = "chat_messages")
 @Getter

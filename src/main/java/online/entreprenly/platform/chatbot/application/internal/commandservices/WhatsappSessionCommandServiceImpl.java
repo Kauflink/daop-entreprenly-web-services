@@ -11,9 +11,7 @@ import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 
-/**
- * WhatsApp session command service implementation.
- */
+
 @Service
 public class WhatsappSessionCommandServiceImpl implements WhatsappSessionCommandService {
 

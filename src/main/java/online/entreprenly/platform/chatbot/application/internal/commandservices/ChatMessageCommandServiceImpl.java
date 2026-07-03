@@ -12,12 +12,7 @@ import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 
-/**
- * Chat message command service implementation.
- *
- * <p>Persisting a message also refreshes its conversation's last-message projection
- * and pushes both changes to subscribed clients in real time.</p>
- */
+
 @Service
 public class ChatMessageCommandServiceImpl implements ChatMessageCommandService {
 
@@ -46,7 +41,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         var saved = messageRepository.save(message);
 
         conversationRepository.findById(saved.getConversationId()).ifPresent(conversation -> {
-            // Never store raw image data (base64) as the conversation preview — use a label instead.
+            
             var preview = saved.getType() == MessageType.IMAGE ? "📷 Comprobante" : saved.getContent();
             conversation.registerLastMessage(preview, MessageTimeFormatter.toLabel(saved.getSentAt()));
             var updatedConversation = conversationRepository.save(conversation);

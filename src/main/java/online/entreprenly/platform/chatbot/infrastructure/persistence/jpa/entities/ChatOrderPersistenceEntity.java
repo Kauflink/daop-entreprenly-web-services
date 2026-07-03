@@ -20,9 +20,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * JPA persistence entity for chat orders.
- */
+
 @Entity
 @Table(name = "chat_orders")
 @Getter
@@ -62,6 +60,6 @@ public class ChatOrderPersistenceEntity extends AuditableAbstractPersistenceEnti
     @Column(name = "order_created_at")
     private Instant orderCreatedAt;
 
-    @Column(name = "receipt_image", columnDefinition = "LONGTEXT")
+    @Column(name = "receipt_image", columnDefinition = "TEXT")
     private String receiptImage;
 }

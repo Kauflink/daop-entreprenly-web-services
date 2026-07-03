@@ -4,9 +4,7 @@ import online.entreprenly.platform.chatbot.application.internal.outboundservices
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-/**
- * REST guard for chatbot endpoints that require Plan Control access.
- */
+
 @Service
 public class ChatbotSubscriptionGuard {
 

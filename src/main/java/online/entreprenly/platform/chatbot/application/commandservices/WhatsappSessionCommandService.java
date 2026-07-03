@@ -7,17 +7,13 @@ import online.entreprenly.platform.chatbot.domain.model.commands.UpdateWhatsappS
 import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 
-/**
- * Command service for WhatsApp session write operations.
- */
+
 public interface WhatsappSessionCommandService {
 
     Result<WhatsappSession, ApplicationError> handle(CreateWhatsappSessionCommand command);
 
     Result<WhatsappSession, ApplicationError> handle(UpdateWhatsappSessionCommand command);
 
-    /**
-     * Creates or updates the seller's session from a bridge connection report.
-     */
+    
     Result<WhatsappSession, ApplicationError> handle(ReportBridgeConnectionCommand command);
 }

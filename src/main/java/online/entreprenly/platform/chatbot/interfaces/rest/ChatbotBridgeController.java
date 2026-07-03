@@ -7,6 +7,8 @@ import online.entreprenly.platform.chatbot.infrastructure.messaging.whatsapp.Wha
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.BridgeQrResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.BridgeQrStateResource;
 import online.entreprenly.platform.chatbot.interfaces.rest.resources.BridgeStatusResource;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,9 +33,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-/**
- * Endpoints used by the WhatsApp bridge to relay pairing QR and connection state.
- */
+
 @RestController
 @RequestMapping(value = "/api/v1/chatbot/whatsapp/bridge", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Chatbot - WhatsApp Bridge", description = "Real WhatsApp pairing relay")
@@ -47,6 +48,7 @@ public class ChatbotBridgeController {
     private final String bridgeToken;
     private final String bridgeBaseUrl;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ChatbotBridgeController(WhatsAppBridgeState bridgeState,
                                    WhatsappSessionCommandService sessionCommandService,
@@ -62,9 +64,10 @@ public class ChatbotBridgeController {
         this.bridgeBaseUrl = bridgeBaseUrl;
     }
 
-    /** Called by the bridge when a new pairing QR is generated for a seller. */
+    
     @PostMapping("/qr")
-    @Operation(summary = "Relay the latest pairing QR (from the bridge)")
+    @Operation(summary = "Relay the latest pairing QR (from the bridge)",
+            description = "Receives the latest WhatsApp pairing QR pushed by the bridge process.")
     public ResponseEntity<Void> pushQr(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @RequestBody BridgeQrResource resource) {
@@ -75,9 +78,10 @@ public class ChatbotBridgeController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Called by the bridge when a seller's WhatsApp connects or disconnects. */
+    
     @PostMapping("/status")
-    @Operation(summary = "Report the bridge connection state (from the bridge)")
+    @Operation(summary = "Report the bridge connection state (from the bridge)",
+            description = "Receives connection state updates pushed by the bridge process.")
     public ResponseEntity<Void> pushStatus(
             @RequestHeader(value = "X-Bridge-Token", required = false) String token,
             @Valid @RequestBody BridgeStatusResource resource) {
@@ -92,12 +96,10 @@ public class ChatbotBridgeController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Called by the frontend to get the current QR and connection state.
-     * If no session is active yet, triggers the bridge to start one.
-     */
+    
     @GetMapping("/qr")
-    @Operation(summary = "Get the current pairing QR and link state (for the frontend)")
+    @Operation(summary = "Get the current pairing QR and link state (for the frontend)",
+            description = "Returns the current pairing QR and link state for the frontend to display.")
     public ResponseEntity<BridgeQrStateResource> getQrState(Authentication authentication) {
         if (!subscriptionGuard.canAccess(authentication)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -111,6 +113,39 @@ public class ChatbotBridgeController {
         return ResponseEntity.ok(new BridgeQrStateResource(qr, connected));
     }
 
+    @DeleteMapping("/session")
+    @Operation(summary = "Disconnect the WhatsApp session (from the frontend)",
+            description = "Clears the current WhatsApp session and notifies the bridge to disconnect.")
+    public ResponseEntity<Void> disconnectSession(Authentication authentication) {
+        if (!subscriptionGuard.canAccess(authentication)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        String email = authentication.getName();
+        bridgeState.clear(email);
+        notifyBridgeDisconnect(email);
+        return ResponseEntity.noContent().build();
+    }
+
+    private void notifyBridgeDisconnect(String email) {
+        if (bridgeBaseUrl == null || bridgeBaseUrl.isBlank()) return;
+        try {
+            var url = URI.create(bridgeBaseUrl + "/disconnect?email="
+                    + java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8));
+            var request = HttpRequest.newBuilder(url)
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .header("X-Bridge-Token", bridgeToken)
+                    .timeout(Duration.ofSeconds(5))
+                    .build();
+            http.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .exceptionally(ex -> {
+                        log.debug("[bridge] disconnect notify failed for {}: {}", email, ex.getMessage());
+                        return null;
+                    });
+        } catch (Exception ex) {
+            log.debug("[bridge] could not notify disconnect for {}: {}", email, ex.getMessage());
+        }
+    }
+
     private void triggerBridgeSession(String email) {
         if (bridgeBaseUrl == null || bridgeBaseUrl.isBlank()) return;
         try {
@@ -122,13 +157,31 @@ public class ChatbotBridgeController {
                     .GET()
                     .timeout(Duration.ofSeconds(5))
                     .build();
-            http.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+            http.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenAccept(response -> syncStateFromBridge(email, response))
                     .exceptionally(ex -> {
                         log.debug("[bridge] session trigger failed for {}: {}", email, ex.getMessage());
                         return null;
                     });
         } catch (Exception ex) {
             log.debug("[bridge] could not trigger session for {}: {}", email, ex.getMessage());
+        }
+    }
+
+    
+    private void syncStateFromBridge(String email, HttpResponse<String> response) {
+        if (response.statusCode() / 100 != 2 || response.body() == null || response.body().isBlank()) {
+            return;
+        }
+        try {
+            JsonNode body = objectMapper.readTree(response.body());
+            if (body.path("connected").asBoolean(false)) {
+                bridgeState.setConnected(email, true);
+            } else if (body.hasNonNull("qr")) {
+                bridgeState.setQr(email, body.get("qr").asText());
+            }
+        } catch (Exception ex) {
+            log.debug("[bridge] could not parse session state for {}: {}", email, ex.getMessage());
         }
     }
 

@@ -3,10 +3,7 @@ package online.entreprenly.platform.chatbot.domain.model.valueobjects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-/**
- * Content type of a {@code ChatMessage}. Text covers ordinary chat lines;
- * image covers payment receipts and other media references.
- */
+
 public enum MessageType {
     TEXT("text"),
     IMAGE("image");

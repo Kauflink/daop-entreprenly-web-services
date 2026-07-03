@@ -13,9 +13,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * JPA persistence entity for conversations.
- */
+
 @Entity
 @Table(name = "conversations")
 @Getter

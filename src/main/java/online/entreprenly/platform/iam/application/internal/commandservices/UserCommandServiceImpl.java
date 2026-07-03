@@ -4,6 +4,8 @@ import online.entreprenly.platform.iam.application.commandservices.UserCommandSe
 import online.entreprenly.platform.iam.application.internal.outboundservices.hashing.HashingService;
 import online.entreprenly.platform.iam.application.internal.outboundservices.tokens.TokenService;
 import online.entreprenly.platform.iam.domain.model.aggregates.User;
+import online.entreprenly.platform.iam.domain.model.commands.ChangeEmailCommand;
+import online.entreprenly.platform.iam.domain.model.commands.ChangePasswordCommand;
 import online.entreprenly.platform.iam.domain.model.commands.SignInCommand;
 import online.entreprenly.platform.iam.domain.model.commands.SignUpCommand;
 import online.entreprenly.platform.iam.domain.model.events.UserSignedUpEvent;
@@ -74,5 +76,34 @@ public class UserCommandServiceImpl implements UserCommandService {
                     return Result.success(savedUser);
                 })
                 .orElseGet(() -> Result.failure(ApplicationError.unexpected("sign-up", "Created user could not be reloaded")));
+    }
+
+    @Override
+    public Result<User, ApplicationError> handle(ChangePasswordCommand command) {
+        var user = userRepository.findByEmail(command.email());
+        if (user.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("User", command.email()));
+        }
+        if (!hashingService.matches(command.currentPassword(), user.get().getPassword())) {
+            return Result.failure(ApplicationError.validationError("currentPassword", "Current password is incorrect"));
+        }
+        user.get().setPassword(hashingService.encode(command.newPassword()));
+        return Result.success(userRepository.save(user.get()));
+    }
+
+    @Override
+    public Result<User, ApplicationError> handle(ChangeEmailCommand command) {
+        var user = userRepository.findByEmail(command.currentEmail());
+        if (user.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("User", command.currentEmail()));
+        }
+        if (command.newEmail().equalsIgnoreCase(command.currentEmail())) {
+            return Result.failure(ApplicationError.validationError("email", "New email matches the current email"));
+        }
+        if (userRepository.existsByEmail(command.newEmail())) {
+            return Result.failure(ApplicationError.conflict("User", "Email already exists"));
+        }
+        user.get().setEmail(command.newEmail());
+        return Result.success(userRepository.save(user.get()));
     }
 }

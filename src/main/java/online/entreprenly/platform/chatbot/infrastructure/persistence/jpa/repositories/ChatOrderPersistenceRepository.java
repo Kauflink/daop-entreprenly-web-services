@@ -4,9 +4,7 @@ import online.entreprenly.platform.chatbot.infrastructure.persistence.jpa.entiti
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-/**
- * Spring Data repository for chat order persistence entities.
- */
+
 @Repository
 public interface ChatOrderPersistenceRepository extends JpaRepository<ChatOrderPersistenceEntity, Long> {
 

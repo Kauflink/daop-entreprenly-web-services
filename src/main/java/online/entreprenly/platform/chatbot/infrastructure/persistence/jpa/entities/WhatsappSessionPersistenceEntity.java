@@ -13,9 +13,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * JPA persistence entity for WhatsApp sessions.
- */
+
 @Entity
 @Table(name = "whatsapp_sessions")
 @Getter

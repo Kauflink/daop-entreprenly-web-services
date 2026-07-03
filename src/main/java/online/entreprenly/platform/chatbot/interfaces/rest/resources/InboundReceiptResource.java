@@ -3,9 +3,7 @@ package online.entreprenly.platform.chatbot.interfaces.rest.resources;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
-/**
- * Inbound WhatsApp payment receipt (image) forwarded by the bridge.
- */
+
 @Schema(name = "InboundWhatsAppReceipt", description = "An inbound WhatsApp payment receipt")
 public record InboundReceiptResource(
         @NotBlank

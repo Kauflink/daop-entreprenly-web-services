@@ -3,9 +3,7 @@ package online.entreprenly.platform.chatbot.interfaces.rest.resources;
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.ConversationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * Request body to update a conversation's status and last-message projection.
- */
+
 @Schema(name = "UpdateConversationRequest", description = "Data required to update a conversation")
 public record UpdateConversationResource(
         @Schema(description = "Desired status", example = "COMPLETED", nullable = true)

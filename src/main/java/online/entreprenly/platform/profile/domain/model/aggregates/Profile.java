@@ -75,6 +75,17 @@ public class Profile extends AbstractDomainAggregateRoot<Profile> {
     }
 
     /**
+     * Updates the display plan shown on the profile, kept in sync with the Subscription context.
+     *
+     * @param plan new display plan name (e.g. {@code Plan Control})
+     * @return this profile
+     */
+    public Profile changePlan(String plan) {
+        this.plan = plan;
+        return this;
+    }
+
+    /**
      * Replaces the user's notification settings.
      *
      * @param notificationSettings new notification settings

@@ -6,9 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Resource representing a chat order returned by the REST API.
- */
+
 @Schema(name = "ChatOrderResponse", description = "An order captured through a conversation")
 public record ChatOrderResource(
         @Schema(description = "Order unique identifier", example = "1")

@@ -5,9 +5,7 @@ import online.entreprenly.platform.chatbot.domain.model.commands.CreateChatMessa
 import online.entreprenly.platform.shared.application.result.ApplicationError;
 import online.entreprenly.platform.shared.application.result.Result;
 
-/**
- * Command service for chat message write operations.
- */
+
 public interface ChatMessageCommandService {
 
     Result<ChatMessage, ApplicationError> handle(CreateChatMessageCommand command);

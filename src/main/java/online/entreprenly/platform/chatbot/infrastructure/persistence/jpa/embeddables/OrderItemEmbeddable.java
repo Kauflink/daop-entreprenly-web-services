@@ -7,9 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * Embeddable persistence representation of a chat order line item.
- */
+
 @Embeddable
 @Getter
 @Setter

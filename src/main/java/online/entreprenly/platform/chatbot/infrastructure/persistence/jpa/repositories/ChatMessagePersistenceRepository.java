@@ -6,9 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/**
- * Spring Data repository for chat message persistence entities.
- */
+
 @Repository
 public interface ChatMessagePersistenceRepository extends JpaRepository<ChatMessagePersistenceEntity, Long> {
 

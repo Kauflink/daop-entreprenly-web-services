@@ -3,9 +3,7 @@ package online.entreprenly.platform.chatbot.interfaces.rest.resources;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
-/**
- * Request body reporting the WhatsApp bridge connection state.
- */
+
 @Schema(name = "BridgeStatusRequest", description = "WhatsApp bridge connection report")
 public record BridgeStatusResource(
         @Schema(description = "Whether the bridge is linked to WhatsApp", example = "true")

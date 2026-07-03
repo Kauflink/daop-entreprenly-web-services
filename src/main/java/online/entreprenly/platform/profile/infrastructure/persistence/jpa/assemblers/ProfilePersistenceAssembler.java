@@ -26,10 +26,7 @@ public final class ProfilePersistenceAssembler {
                         entity.getPreferences().getCurrency());
         var notificationSettings = entity.getNotificationSettings() == null
                 ? NotificationSettings.defaults()
-                : new NotificationSettings(
-                        entity.getNotificationSettings().isStockAlerts(),
-                        entity.getNotificationSettings().isPaymentAlerts(),
-                        entity.getNotificationSettings().isChatbotMessages());
+                : new NotificationSettings(entity.getNotificationSettings().isStockAlerts());
         var profile = new Profile();
         profile.restoreState(
                 entity.getId(),
@@ -63,8 +60,7 @@ public final class ProfilePersistenceAssembler {
                 prefs.language(), prefs.timezone(), prefs.theme(), prefs.currency()));
         var notif = profile.getNotificationSettings() == null
                 ? NotificationSettings.defaults() : profile.getNotificationSettings();
-        entity.setNotificationSettings(new NotificationSettingsEmbeddable(
-                notif.stockAlerts(), notif.paymentAlerts(), notif.chatbotMessages()));
+        entity.setNotificationSettings(new NotificationSettingsEmbeddable(notif.stockAlerts()));
         return entity;
     }
 }

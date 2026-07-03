@@ -8,9 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 
-/**
- * Request body to append a message to a conversation.
- */
+
 @Schema(name = "CreateChatMessageRequest", description = "Data required to append a message")
 public record CreateChatMessageResource(
         @NotNull
