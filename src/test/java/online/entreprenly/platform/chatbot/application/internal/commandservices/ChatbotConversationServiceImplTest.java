@@ -57,7 +57,7 @@ class ChatbotConversationServiceImplTest {
         messageCommandService = new ChatMessageCommandServiceImpl(messages, conversations, publisher);
         orders = new InMemoryChatOrderRepository();
         chatOrderCommandService = new ChatOrderCommandServiceImpl(orders, publisher,
-                new EmptyConversationQueryService(), noEmail, noStock, noSale, whatsApp);
+                new EmptyConversationQueryService(), noEmail, noStock, noSale);
     }
 
     private ChatbotConversationServiceImpl service(ProductCatalogService catalog, SellerEmailResolver resolver) {

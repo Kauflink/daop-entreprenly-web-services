@@ -30,15 +30,13 @@ class ChatOrderCommandServiceImplTest {
     private final InventoryStockService noStock = (ownerEmail, items) -> { };
     private final online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService noSale =
             (ownerEmail, sellerId, order) -> { };
-    private final online.entreprenly.platform.chatbot.application.internal.outboundservices.whatsapp.WhatsAppMessagingService noWhatsApp =
-            (ownerEmail, toPhone, content) -> false;
 
     @BeforeEach
     void setUp() {
         orders = new InMemoryChatOrderRepository();
         publisher = new RecordingEventPublisher();
         service = new ChatOrderCommandServiceImpl(orders, publisher,
-                new EmptyConversationQueryService(), noEmail, noStock, noSale, noWhatsApp);
+                new EmptyConversationQueryService(), noEmail, noStock, noSale);
     }
 
     private Long createSampleOrder() {
