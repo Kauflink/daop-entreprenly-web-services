@@ -191,13 +191,22 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
 
     
     private CatalogProduct bestMatch(String text, List<CatalogProduct> catalog) {
+        var textWords = List.of(text.split("[^a-z0-9]+"));
         CatalogProduct best = null;
         int bestScore = 0;
         for (var product : catalog) {
             int score = 0;
             for (var token : normalize(product.name()).split("[^a-z0-9]+")) {
-                if (token.length() >= 3 && text.contains(token)) {
-                    score++;
+                if (token.length() < 3) continue;
+                if (text.contains(token)) {
+                    score += 2;
+                    continue;
+                }
+                for (var word : textWords) {
+                    if (word.length() >= 3 && (token.startsWith(word) || word.startsWith(token))) {
+                        score++;
+                        break;
+                    }
                 }
             }
             if (score > bestScore) {
@@ -205,7 +214,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
                 best = product;
             }
         }
-        return best;
+        return bestScore > 0 ? best : null;
     }
 
     
