@@ -195,7 +195,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
         int bestScore = 0;
         for (var product : catalog) {
             int score = 0;
-            for (var token : normalize(product.name()).split("\\s+")) {
+            for (var token : normalize(product.name()).split("[^a-z0-9]+")) {
                 if (token.length() >= 3 && text.contains(token)) {
                     score++;
                 }
@@ -220,7 +220,7 @@ public class RuleBasedProductReplyComposer implements ProductReplyComposer {
     private Optional<Double> anyQuantity(String text, CatalogProduct product) {
         
         var cleaned = text;
-        for (var token : normalize(product.name()).split("\\s+")) {
+        for (var token : normalize(product.name()).split("[^a-z0-9]+")) {
             if (token.length() >= 3) {
                 cleaned = cleaned.replace(token, " ");
             }
