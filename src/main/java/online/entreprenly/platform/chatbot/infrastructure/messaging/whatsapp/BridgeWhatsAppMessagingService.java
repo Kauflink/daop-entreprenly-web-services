@@ -29,8 +29,13 @@ public class BridgeWhatsAppMessagingService implements WhatsAppMessagingService 
 
     public BridgeWhatsAppMessagingService(
             @Value("${chatbot.whatsapp.bridge-send-url:}") String sendUrl,
+            @Value("${chatbot.whatsapp.bridge-base-url:}") String bridgeBaseUrl,
             @Value("${chatbot.whatsapp.bridge-token:entreprenly-bridge-secret}") String bridgeToken) {
-        this.sendUrl = sendUrl;
+        // Prefer the explicit send-url; fall back to base-url + /send so only
+        // one env var (WHATSAPP_BRIDGE_BASE_URL) is required in production.
+        this.sendUrl = (sendUrl != null && !sendUrl.isBlank())
+                ? sendUrl
+                : (bridgeBaseUrl != null && !bridgeBaseUrl.isBlank() ? bridgeBaseUrl + "/send" : "");
         this.bridgeToken = bridgeToken;
     }
 
