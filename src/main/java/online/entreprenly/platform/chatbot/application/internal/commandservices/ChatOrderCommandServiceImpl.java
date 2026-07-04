@@ -5,6 +5,7 @@ import online.entreprenly.platform.chatbot.application.internal.outboundservices
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.InventoryStockService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.events.ChatbotEventPublisher;
+import online.entreprenly.platform.chatbot.application.internal.outboundservices.whatsapp.WhatsAppMessagingService;
 import online.entreprenly.platform.chatbot.application.queryservices.ConversationQueryService;
 import online.entreprenly.platform.chatbot.domain.model.aggregates.ChatOrder;
 import online.entreprenly.platform.chatbot.domain.model.commands.AttachReceiptCommand;
@@ -32,19 +33,22 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
     private final SellerEmailResolver sellerEmailResolver;
     private final InventoryStockService inventoryStockService;
     private final ChatSaleService chatSaleService;
+    private final WhatsAppMessagingService whatsAppMessagingService;
 
     public ChatOrderCommandServiceImpl(ChatOrderRepository orderRepository,
                                        ChatbotEventPublisher eventPublisher,
                                        ConversationQueryService conversationQueryService,
                                        SellerEmailResolver sellerEmailResolver,
                                        InventoryStockService inventoryStockService,
-                                       ChatSaleService chatSaleService) {
+                                       ChatSaleService chatSaleService,
+                                       WhatsAppMessagingService whatsAppMessagingService) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
         this.conversationQueryService = conversationQueryService;
         this.sellerEmailResolver = sellerEmailResolver;
         this.inventoryStockService = inventoryStockService;
         this.chatSaleService = chatSaleService;
+        this.whatsAppMessagingService = whatsAppMessagingService;
     }
 
     @Override
@@ -87,6 +91,11 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                         } catch (Exception e) {
                             log.error("[chatbot] sale registration failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
                         }
+                        try {
+                            notifyClientConfirmed(saved);
+                        } catch (Exception e) {
+                            log.error("[chatbot] WhatsApp confirmation failed for order {}: {}", saved.getOrderNumber(), e.getMessage());
+                        }
                     }
                     return Result.<ChatOrder, ApplicationError>success(saved);
                 })
@@ -94,7 +103,18 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                         ApplicationError.notFound("ChatOrder", String.valueOf(command.orderId()))));
     }
 
-    
+    private void notifyClientConfirmed(ChatOrder order) {
+        conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
+                .ifPresent(conversation -> {
+                    var ownerEmailOpt = sellerEmailResolver.resolveEmail(conversation.getSellerId());
+                    if (ownerEmailOpt.isEmpty()) return;
+                    var msg = "Tu pago fue recibido y verificado correctamente.\n" +
+                              "El pedido " + order.getOrderNumber() + " está confirmado y en preparación. ¡Gracias por tu compra!";
+                    whatsAppMessagingService.sendText(ownerEmailOpt.get(), conversation.getClientPhone(), msg);
+                });
+    }
+
+
     private void decrementStock(ChatOrder order) {
         conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
                 .flatMap(conversation -> sellerEmailResolver.resolveEmail(conversation.getSellerId()))
