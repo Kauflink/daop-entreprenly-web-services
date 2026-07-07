@@ -258,12 +258,32 @@ public class ChatbotConversationServiceImpl implements ChatbotConversationServic
                 .formatted(order.getOrderNumber(), address);
     }
 
-    
+
+    private static final String[] CATALOG_INTENT_KEYWORDS = {
+            "catalogo", "productos", "que venden", "que vende", "que vendes",
+            "que tienes", "que tiene", "que hay", "menu", "lista de precios", "ofrecen",
+            "precio", "precios", "cuanto cuesta", "cuanto vale", "stock", "disponible", "disponibilidad"
+    };
+
     private boolean looksLikeAddress(String content) {
-        var text = content.trim().toLowerCase(java.util.Locale.ROOT);
+        var text = normalizeForIntentCheck(content.trim());
         if (text.length() < 3) {
             return false;
         }
-        return !text.matches("^(hola|buenas|buenos dias|buenas tardes|buenas noches|gracias|ok|si|no)\\.?$");
+        if (text.matches("^(hola|buenas|buenos dias|buenas tardes|buenas noches|gracias|ok|si|no)\\.?$")) {
+            return false;
+        }
+        for (var keyword : CATALOG_INTENT_KEYWORDS) {
+            if (text.contains(keyword)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String normalizeForIntentCheck(String value) {
+        var lower = value.toLowerCase(java.util.Locale.ROOT);
+        var decomposed = java.text.Normalizer.normalize(lower, java.text.Normalizer.Form.NFD);
+        return decomposed.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
     }
 }
