@@ -87,6 +87,7 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                         } catch (Exception e) {
                             log.error("[chatbot] sale registration failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
                         }
+
                     }
                     return Result.<ChatOrder, ApplicationError>success(saved);
                 })
@@ -94,7 +95,7 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                         ApplicationError.notFound("ChatOrder", String.valueOf(command.orderId()))));
     }
 
-    
+
     private void decrementStock(ChatOrder order) {
         conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
                 .flatMap(conversation -> sellerEmailResolver.resolveEmail(conversation.getSellerId()))
