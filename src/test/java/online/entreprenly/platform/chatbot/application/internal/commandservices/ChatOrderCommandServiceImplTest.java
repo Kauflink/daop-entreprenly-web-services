@@ -1,6 +1,5 @@
 package online.entreprenly.platform.chatbot.application.internal.commandservices;
 
-import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.InventoryStockService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.domain.model.commands.CreateChatOrderCommand;
 import online.entreprenly.platform.chatbot.domain.model.commands.UpdateChatOrderCommand;
@@ -27,7 +26,6 @@ class ChatOrderCommandServiceImplTest {
 
     /** No conversation/seller resolved, so stock deduction stays a no-op. */
     private final SellerEmailResolver noEmail = new StubSellerEmailResolver(sellerId -> Optional.empty());
-    private final InventoryStockService noStock = (ownerEmail, items) -> { };
     private final online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService noSale =
             (ownerEmail, sellerId, order) -> { };
 
@@ -36,7 +34,7 @@ class ChatOrderCommandServiceImplTest {
         orders = new InMemoryChatOrderRepository();
         publisher = new RecordingEventPublisher();
         service = new ChatOrderCommandServiceImpl(orders, publisher,
-                new EmptyConversationQueryService(), noEmail, noStock, noSale);
+                new EmptyConversationQueryService(), noEmail, noSale);
     }
 
     private Long createSampleOrder() {

@@ -10,7 +10,6 @@ import online.entreprenly.platform.chatbot.domain.model.valueobjects.MessageSend
 import online.entreprenly.platform.chatbot.domain.model.valueobjects.OrderStatus;
 import online.entreprenly.platform.chatbot.domain.services.RuleBasedChatbotResponder;
 import online.entreprenly.platform.chatbot.domain.services.RuleBasedProductReplyComposer;
-import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.InventoryStockService;
 import online.entreprenly.platform.chatbot.support.EmptyConversationQueryService;
 import online.entreprenly.platform.chatbot.support.StubSellerEmailResolver;
 import online.entreprenly.platform.chatbot.support.InMemoryChatMessageRepository;
@@ -42,7 +41,6 @@ class ChatbotConversationServiceImplTest {
     /** Empty catalog by default, so the generic responder is used. */
     private final ProductCatalogService emptyCatalog = ownerEmail -> List.of();
     private final SellerEmailResolver noEmail = new StubSellerEmailResolver(sellerId -> Optional.empty());
-    private final InventoryStockService noStock = (ownerEmail, items) -> { };
     private final online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService noSale =
             (ownerEmail, sellerId, order) -> { };
 
@@ -57,7 +55,7 @@ class ChatbotConversationServiceImplTest {
         messageCommandService = new ChatMessageCommandServiceImpl(messages, conversations, publisher);
         orders = new InMemoryChatOrderRepository();
         chatOrderCommandService = new ChatOrderCommandServiceImpl(orders, publisher,
-                new EmptyConversationQueryService(), noEmail, noStock, noSale);
+                new EmptyConversationQueryService(), noEmail, noSale);
     }
 
     private ChatbotConversationServiceImpl service(ProductCatalogService catalog, SellerEmailResolver resolver) {

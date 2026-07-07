@@ -2,7 +2,6 @@ package online.entreprenly.platform.chatbot.application.internal.commandservices
 
 import online.entreprenly.platform.chatbot.application.commandservices.ChatOrderCommandService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.ChatSaleService;
-import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.InventoryStockService;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.acl.SellerEmailResolver;
 import online.entreprenly.platform.chatbot.application.internal.outboundservices.events.ChatbotEventPublisher;
 import online.entreprenly.platform.chatbot.application.queryservices.ConversationQueryService;
@@ -30,20 +29,17 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
     private final ChatbotEventPublisher eventPublisher;
     private final ConversationQueryService conversationQueryService;
     private final SellerEmailResolver sellerEmailResolver;
-    private final InventoryStockService inventoryStockService;
     private final ChatSaleService chatSaleService;
 
     public ChatOrderCommandServiceImpl(ChatOrderRepository orderRepository,
                                        ChatbotEventPublisher eventPublisher,
                                        ConversationQueryService conversationQueryService,
                                        SellerEmailResolver sellerEmailResolver,
-                                       InventoryStockService inventoryStockService,
                                        ChatSaleService chatSaleService) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
         this.conversationQueryService = conversationQueryService;
         this.sellerEmailResolver = sellerEmailResolver;
-        this.inventoryStockService = inventoryStockService;
         this.chatSaleService = chatSaleService;
     }
 
@@ -77,17 +73,13 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
                     
                     
                     if (!wasConfirmed && saved.getStatus() == OrderStatus.CONFIRMED) {
-                        try {
-                            decrementStock(saved);
-                        } catch (Exception e) {
-                            log.error("[chatbot] stock decrement failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
-                        }
+                        // Registering the sale decrements inventory stock through the Sales context,
+                        // so the chatbot no longer deducts stock on its own (avoids a double deduction).
                         try {
                             registerSale(saved);
                         } catch (Exception e) {
                             log.error("[chatbot] sale registration failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
                         }
-
                     }
                     return Result.<ChatOrder, ApplicationError>success(saved);
                 })
@@ -96,13 +88,6 @@ public class ChatOrderCommandServiceImpl implements ChatOrderCommandService {
     }
 
 
-    private void decrementStock(ChatOrder order) {
-        conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
-                .flatMap(conversation -> sellerEmailResolver.resolveEmail(conversation.getSellerId()))
-                .ifPresent(ownerEmail -> inventoryStockService.decrementForOrder(ownerEmail, order.getItems()));
-    }
-
-    
     private void registerSale(ChatOrder order) {
         conversationQueryService.handle(new GetConversationByIdQuery(order.getConversationId()))
                 .ifPresent(conversation -> {
