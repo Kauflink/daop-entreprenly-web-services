@@ -100,7 +100,7 @@ public class InventoryContextFacadeImpl implements InventoryContextFacade {
                     .filter(p -> p.getName() != null && p.getName().trim().equalsIgnoreCase(name))
                     .findFirst();
             if (unitProduct.isPresent()) {
-                deductFromUnitLots(ownerEmail, unitProduct.get().getId(), name, item.quantity());
+                deductFromUnitLots(ownerEmail, unitProduct.get().getId(), name, (int) Math.round(item.quantity()));
                 continue;
             }
 

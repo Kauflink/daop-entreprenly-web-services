@@ -5,7 +5,8 @@ package online.entreprenly.platform.inventory.interfaces.acl;
  * contexts through the {@link InventoryContextFacade}.
  *
  * @param productName the product display name, matched case-insensitively
- * @param quantity    the quantity to deduct (units for unit products, kilograms for weight products)
+ * @param quantity    the quantity to deduct (whole units for unit products, kilograms —
+ *                    fractional allowed — for weight products)
  */
-public record StockDeductionItem(String productName, int quantity) {
+public record StockDeductionItem(String productName, double quantity) {
 }
