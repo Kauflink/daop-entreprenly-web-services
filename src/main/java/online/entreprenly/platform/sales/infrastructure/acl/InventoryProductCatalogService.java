@@ -12,7 +12,7 @@ import java.util.List;
  * context's published facade, translating its catalog items into the Sales-owned
  * {@link CatalogProduct}. This keeps the dependency on Inventory isolated to this adapter.
  */
-@Service
+@Service("salesInventoryProductCatalogService")
 public class InventoryProductCatalogService implements ProductCatalogService {
 
     private final InventoryContextFacade inventoryContextFacade;
