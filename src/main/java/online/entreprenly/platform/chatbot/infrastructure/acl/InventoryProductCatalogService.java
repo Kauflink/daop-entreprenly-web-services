@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 
-@Service
+@Service("chatbotInventoryProductCatalogService")
 public class InventoryProductCatalogService implements ProductCatalogService {
 
     private final InventoryContextFacade inventoryContextFacade;
